@@ -1,5 +1,17 @@
 import React from "react";
 import { Modal, Button, Row, Col, Tab, Nav, Card, Table } from "react-bootstrap";
+import { 
+  FaFileInvoice, 
+  FaUser, 
+  FaBriefcase, 
+  FaChartLine, 
+  FaEnvelope, 
+  FaUsers, 
+  FaShieldAlt, 
+  FaBuilding, 
+  FaMobileAlt, 
+  FaCommentDots 
+} from "react-icons/fa";
 
 const LoanDetailsModal = ({ show, handleClose, loan }) => {
   if (!loan) return null;
@@ -53,34 +65,54 @@ const LoanDetailsModal = ({ show, handleClose, loan }) => {
             <Col md={3}>
               <Nav variant="pills" className="flex-column">
                 <Nav.Item>
-                  <Nav.Link eventKey="loan-info">📋 Loan Information</Nav.Link>
+                  <Nav.Link eventKey="loan-info">
+                    <FaFileInvoice className="me-2" /> Loan Information
+                  </Nav.Link>
                 </Nav.Item>
                 <Nav.Item>
-                  <Nav.Link eventKey="applicant-info">👤 Applicant Information</Nav.Link>
+                  <Nav.Link eventKey="applicant-info">
+                    <FaUser className="me-2" /> Applicant Information
+                  </Nav.Link>
                 </Nav.Item>
                 <Nav.Item>
-                  <Nav.Link eventKey="employment-info">💼 Employment Details</Nav.Link>
+                  <Nav.Link eventKey="employment-info">
+                    <FaBriefcase className="me-2" /> Employment Details
+                  </Nav.Link>
                 </Nav.Item>
                 <Nav.Item>
-                  <Nav.Link eventKey="financial-assessment">📊 Financial  Assessment</Nav.Link>
+                  <Nav.Link eventKey="financial-assessment">
+                    <FaChartLine className="me-2" /> Financial Assessment
+                  </Nav.Link>
                 </Nav.Item>
                 <Nav.Item>
-                  <Nav.Link eventKey="evaluation">✅ Contact Information</Nav.Link>
+                  <Nav.Link eventKey="evaluation">
+                    <FaEnvelope className="me-2" /> Contact Information
+                  </Nav.Link>
                 </Nav.Item>
                 <Nav.Item>
-                  <Nav.Link eventKey="references">👥 References</Nav.Link>
+                  <Nav.Link eventKey="references">
+                    <FaUsers className="me-2" /> References
+                  </Nav.Link>
                 </Nav.Item>
                 <Nav.Item>
-                  <Nav.Link eventKey="guarantor">🛡️ Guarantor Information</Nav.Link>
+                  <Nav.Link eventKey="guarantor">
+                    <FaShieldAlt className="me-2" /> Guarantor Information
+                  </Nav.Link>
                 </Nav.Item>
                 <Nav.Item>
-                  <Nav.Link eventKey="collateral">🏦 Collateral Details</Nav.Link>
+                  <Nav.Link eventKey="collateral">
+                    <FaBuilding className="me-2" /> Collateral Details
+                  </Nav.Link>
                 </Nav.Item>
                 <Nav.Item>
-                  <Nav.Link eventKey="momo">📱 Mobile Money</Nav.Link>
+                  <Nav.Link eventKey="momo">
+                    <FaMobileAlt className="me-2" /> Mobile Money
+                  </Nav.Link>
                 </Nav.Item>
                 <Nav.Item>
-                  <Nav.Link eventKey="documents">Comments</Nav.Link>
+                  <Nav.Link eventKey="documents">
+                    <FaCommentDots className="me-2" /> Comments
+                  </Nav.Link>
                 </Nav.Item>
               </Nav>
             </Col>
@@ -416,15 +448,15 @@ const LoanDetailsModal = ({ show, handleClose, loan }) => {
                                         <tr key={key}>
                                           <td style={{ width: "40%" }}>
                                             <strong>{key.replace(/_/g, " ").replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</strong>
-                                          </td>
-                                          <td>
+                                           </td>
+                                           <td>
                                             {typeof value === "object"
                                               ? Array.isArray(value)
                                                 ? value.join(", ")
                                                 : JSON.stringify(value)
                                               : value.toString()}
-                                          </td>
-                                        </tr>
+                                           </td>
+                                         </tr>
                                       );
                                     }).filter(Boolean);
                                   })()}
