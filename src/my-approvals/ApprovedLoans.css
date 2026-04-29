@@ -1,0 +1,155 @@
+/* ApprovedLoans.css */
+.approved-loans-container {
+  padding: 20px;
+  background-color: #f8f9fa;
+  min-height: 100vh;
+}
+
+.professional-loading {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  background-color: #f8f9fa;
+}
+
+/* Professional Table Styling */
+.professional-table {
+  font-size: 0.95rem;
+}
+
+.professional-table thead th {
+  background-color: #f8f9fa;
+  border-bottom: 2px solid #dee2e6;
+  color: #495057;
+  font-weight: 600;
+  padding: 1rem;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.professional-table tbody td {
+  padding: 1rem;
+  vertical-align: middle;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.professional-table tbody tr:hover {
+  background-color: #f8f9fa;
+  transition: background-color 0.2s ease;
+}
+
+/* Badge Styling */
+.badge {
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  font-size: 0.75rem;
+  border-radius: 6px;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.empty-state i {
+  font-size: 4rem;
+  color: #adb5bd;
+  margin-bottom: 1rem;
+}
+
+.empty-state p {
+  color: #6c757d;
+  font-size: 1rem;
+}
+
+/* Filter Section */
+.filter-section {
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Pagination Styling */
+.pagination-wrapper {
+  background-color: #fff;
+  border-top: 1px solid #e9ecef;
+}
+
+.pagination {
+  gap: 5px;
+}
+
+.page-link {
+  border: none;
+  padding: 0.5rem 0.75rem;
+  color: #495057;
+  background-color: transparent;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.page-link:hover {
+  background-color: #e9ecef;
+  color: #0d6efd;
+}
+
+.page-item.active .page-link {
+  background-color: #0d6efd;
+  color: white;
+}
+
+.page-item.disabled .page-link {
+  color: #ced4da;
+  cursor: not-allowed;
+}
+
+/* Form Controls */
+.form-control:focus {
+  border-color: #86b7fe;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+}
+
+/* Alert Styling */
+.alert-info {
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdef5 100%);
+  border: none;
+  color: #0c5460;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .approved-loans-container {
+    padding: 10px;
+  }
+  
+  .professional-table thead th,
+  .professional-table tbody td {
+    padding: 0.75rem;
+  }
+  
+  .badge {
+    padding: 0.35rem 0.75rem;
+  }
+}
+
+/* Card Animations */
+.card {
+  transition: box-shadow 0.3s ease;
+}
+
+.card:hover {
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.08) !important;
+}
