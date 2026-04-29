@@ -177,6 +177,7 @@ import PortfolioAtRiskReport from './reports/loan-reports/PortfolioAtRiskReport'
 import NonPerformingLoansReport from './reports/loan-reports/NonPerformingLoansReport';
 import LoanAgingAnalysisReport from './reports/loan-reports/LoanAgingAnalysisReport';
 import WrittenOffLoansReport from './reports/loan-reports/WrittenOffLoansReport';
+import ApprovedLoansReport from './reports/loan-reports/ApprovedLoansReport';
 
 // Customer Reports
 import CustomerMasterList from './reports/customer-reports/CustomerMasterList';
@@ -745,6 +746,7 @@ const AdminDashboard = () => {
     if (activeMenu === 'Reports') {
       const reportComponents = {
         'Loan Portfolio Report': LoanPortfolioReport,
+         'Approved Loans Report': ApprovedLoansReport,  // Add this line
         'Loan Disbursement Report': LoanDisbursementReport,
         'Loan Repayment Report': LoanRepaymentReport,
         'Loan Arrears Report': LoanArrearsReport,
