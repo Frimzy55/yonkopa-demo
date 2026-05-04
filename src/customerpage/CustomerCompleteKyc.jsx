@@ -136,121 +136,95 @@ const CustomerCompleteKyc = ({ user }) => {
 
   // ==========================
   const checkNationalIdDuplicate = useCallback(async (nationalId) => {
-  const cleanId = nationalId?.trim().toUpperCase();
+    const cleanId = nationalId?.trim().toUpperCase();
 
-  if (!cleanId) return;
+    if (!cleanId) return;
 
-  // cancel previous request
-  if (abortControllerRef.current) {
-    abortControllerRef.current.abort();
-  }
+    // cancel previous request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
 
-  const controller = new AbortController();
-  abortControllerRef.current = controller;
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
 
-  setCheckingNationalId(true);
+    setCheckingNationalId(true);
 
-  try {
-    const token = localStorage.getItem("token");
+    try {
+      const token = localStorage.getItem("token");
 
-    const res = await fetch(
-      `${process.env.REACT_APP_API_URL}/api/kyc/check-national-id/${cleanId}`,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-        signal: controller.signal,
+      const res = await fetch(
+        `${process.env.REACT_APP_API_URL}/api/kyc/check-national-id/${cleanId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          signal: controller.signal,
+        }
+      );
+
+      const data = res.ok ? await res.json() : { exists: false };
+
+      if (data.exists) {
+        setFormErrors(prev => ({
+          ...prev,
+          nationalId: "❌ This National ID is already registered"
+        }));
+        setNationalIdAvailable(false);
+      } else {
+        setFormErrors(prev => {
+          const newErrors = { ...prev };
+          if (newErrors.nationalId?.includes("already registered")) {
+            delete newErrors.nationalId;
+          }
+          return newErrors;
+        });
+
+        setNationalIdAvailable(true);
       }
-    );
 
-    const data = res.ok ? await res.json() : { exists: false };
+    } catch (err) {
+      if (err.name !== "AbortError") {
+        console.error(err);
+      }
+    } finally {
+      setCheckingNationalId(false);
+    }
+  }, []);
+  
+  useEffect(() => {
+    const id = formData.nationalId?.trim();
 
-    if (data.exists) {
+    if (!id) {
+      setNationalIdAvailable(true);
+      setCheckingNationalId(false);
+      return;
+    }
+
+    // 1. FORMAT CHECK ONLY (NO DB HERE)
+    const formatError = validateNationalId(id, { allowPartial: true });
+
+    if (formatError) {
       setFormErrors(prev => ({
         ...prev,
-        nationalId: "❌ This National ID is already registered"
+        nationalId: formatError
       }));
       setNationalIdAvailable(false);
-    } else {
-      setFormErrors(prev => {
-        const newErrors = { ...prev };
-        if (newErrors.nationalId?.includes("already registered")) {
-          delete newErrors.nationalId;
-        }
-        return newErrors;
-      });
-
-      setNationalIdAvailable(true);
+      return;
     }
 
-  } catch (err) {
-    if (err.name !== "AbortError") {
-      console.error(err);
-    }
-  } finally {
-    setCheckingNationalId(false);
-  }
-}, []);
-  // ==========================
-  // DEBOUNCED NATIONAL ID CHECK
-  // ==========================
-  /*useEffect(() => {
+    // 2. debounce API check
     if (nationalIdCheckTimeout.current) {
       clearTimeout(nationalIdCheckTimeout.current);
     }
-    
+
+    setCheckingNationalId(true);
+
     nationalIdCheckTimeout.current = setTimeout(() => {
-      if (formData.nationalId && formData.nationalId.length >= 5) {
-        checkNationalIdDuplicate(formData.nationalId);
-      } else if (formData.nationalId === "") {
-        setNationalIdAvailable(true);
-        setFormErrors(prev => {
-          const newErrors = { ...prev };
-          delete newErrors.nationalId;
-          return newErrors;
-        });
-      }
-    }, 800);
-    
-    return () => {
-      if (nationalIdCheckTimeout.current) {
-        clearTimeout(nationalIdCheckTimeout.current);
-      }
-    };
-  }, [formData.nationalId, checkNationalIdDuplicate]);   */
-   
-  useEffect(() => {
-  const id = formData.nationalId?.trim();
+      checkNationalIdDuplicate(id);
+    }, 600);
 
-  if (!id) {
-    setNationalIdAvailable(true);
-    setCheckingNationalId(false);
-    return;
-  }
+    return () => clearTimeout(nationalIdCheckTimeout.current);
+  }, [formData.nationalId, checkNationalIdDuplicate]);
 
-  // 1. FORMAT CHECK ONLY (NO DB HERE)
-  const formatError = validateNationalId(id, { allowPartial: true });
-
-  if (formatError) {
-    setFormErrors(prev => ({
-      ...prev,
-      nationalId: formatError
-    }));
-    setNationalIdAvailable(false);
-    return;
-  }
-
-  // 2. debounce API check
-  if (nationalIdCheckTimeout.current) {
-    clearTimeout(nationalIdCheckTimeout.current);
-  }
-
-  setCheckingNationalId(true);
-
-  nationalIdCheckTimeout.current = setTimeout(() => {
-    checkNationalIdDuplicate(id);
-  }, 600);
-
-  return () => clearTimeout(nationalIdCheckTimeout.current);
-}, [formData.nationalId, checkNationalIdDuplicate]);
   // ==========================
   // REAL-TIME FIELD VALIDATION
   // ==========================
@@ -274,7 +248,6 @@ const CustomerCompleteKyc = ({ user }) => {
         }
         break;
       
-        //break;
       default:
         if (formErrors[name]) {
           setFormErrors(prev => {
@@ -339,6 +312,14 @@ const CustomerCompleteKyc = ({ user }) => {
         return false;
       }
       
+      // Capture the kycCode from the response
+      if (result.success && result.kycCode) {
+        setFormData(prev => ({
+          ...prev,
+          kycCode: result.kycCode
+        }));
+      }
+      
       return result.success;
     } catch (err) {
       console.error(err);
@@ -397,6 +378,13 @@ const CustomerCompleteKyc = ({ user }) => {
 
     if (success) {
       setSubmitMessage({ type: "success", text: "✅ KYC submitted successfully!" });
+      
+      // Ensure KYC code is preserved
+      setFormData(prev => ({
+        ...prev,
+        kycCode: prev.kycCode || user?.kycCode || ""
+      }));
+
       setSubmitted(true);
     } else {
       setSubmitMessage({ type: "error", text: "❌ Failed to submit KYC. Please try again." });
@@ -441,6 +429,10 @@ const CustomerCompleteKyc = ({ user }) => {
       <h3 className="kyc-title">✅ KYC Submitted Successfully!</h3>
       <div className="kyc-grid">
         <div className="kyc-item">
+          <span className="kyc-label">KYC Code:</span>
+          <span className="kyc-value kyc-code-value">{formData.kycCode || "Pending"}</span>
+        </div>
+        <div className="kyc-item">
           <span className="kyc-label">Name:</span>
           <span className="kyc-value">
             {formData.title} {formData.firstName} {formData.middleName} {formData.lastName}
@@ -463,7 +455,7 @@ const CustomerCompleteKyc = ({ user }) => {
   );
 
   // ==========================
-  // STEP CARDS
+  // STEP CARDS (Green color removed)
   // ==========================
   const StepCards = () => {
     const steps = [
@@ -506,20 +498,46 @@ const CustomerCompleteKyc = ({ user }) => {
         <p>Loading...</p>
       ) : hasKyc ? (
         <div className="kyc-preview">
-          <div className="kyc-card">
-            <div className="kyc-header">
-              <div className="kyc-icon">✔</div>
-              <h3>KYC Completed Successfully</h3>
-            </div>
-            <div className="kyc-body">
-              <p>Your identity verification has been completed successfully.</p>
-              <div className="kyc-code-box">
-                <span>KYC Code</span>
-                <h2>{formData.kycCode}</h2>
-              </div>
-            </div>
+  <div className="kyc-card">
+    {/* Header Section */}
+    <div className="kyc-header">
+      <div className="kyc-icon">
+        <i className="bi bi-check-circle-fill"></i>✔
+      </div>
+      <h3>KYC Completed Successfully</h3>
+      <p className="kyc-subtitle">Your identity verification has been completed successfully.</p>
+    </div>
+    
+    {/* KYC Code Section */}
+    <div className="kyc-code-section">
+      <div className="kyc-code-box">
+        <span className="kyc-code-label">KYC Code</span>
+        <h2 className="kyc-code-value">{formData.kycCode}</h2>
+      </div>
+    </div>
+    
+    {/* Personal Information Section */}
+    <div className="kyc-info-section">
+      <h4 className="section-title">Personal Information</h4>
+      
+      <div className="kyc-items-grid">
+        <div className="kyc-item">
+          <div className="kyc-label">Full Name</div>
+          <div className="kyc-value">
+            {formData.title} {formData.firstName} {formData.middleName} {formData.lastName}
           </div>
         </div>
+        
+       
+        <div className="kyc-item">
+          <div className="kyc-label">Email Address</div>
+          <div className="kyc-value">{formData.email}</div>
+        </div>
+        
+      </div>
+    </div>
+  </div>
+</div>
       ) : submitted ? (
         renderPreview()
       ) : (
@@ -554,17 +572,17 @@ const CustomerCompleteKyc = ({ user }) => {
               )}
               {currentStep < 4 && (
                 <button
-  type="button"
-  onClick={nextStep}
-  className="btn btn-primary"
- disabled={
-  checkingNationalId ||
-  !nationalIdAvailable ||
-  !!formErrors.nationalId
-}
->
-  Next
-</button>
+                  type="button"
+                  onClick={nextStep}
+                  className="btn btn-primary"
+                  disabled={
+                    checkingNationalId ||
+                    !nationalIdAvailable ||
+                    !!formErrors.nationalId
+                  }
+                >
+                  Next
+                </button>
               )}
               {currentStep === 4 && (
                 <button 
