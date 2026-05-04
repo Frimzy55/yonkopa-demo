@@ -17,7 +17,7 @@ function App() {
         <Routes>
 
           {/* PUBLIC ROUTES */}
-              <Route path="/Apply" element={<CustomerLanding />} />  
+              <Route path="/apply" element={<CustomerLanding />} />  
           <Route path="/access" element={<LoginPage />} />
           <Route path="/signup" element={<DefaultSuper />} />
            

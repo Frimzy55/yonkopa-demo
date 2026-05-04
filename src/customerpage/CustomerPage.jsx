@@ -144,7 +144,7 @@ const navigate = useNavigate();
 
 const handleLogout = () => {
   localStorage.removeItem('user');
-  navigate('/');
+  navigate('/apply');
 };
 
   const handleMenuClick = (itemId) => {
