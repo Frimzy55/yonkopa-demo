@@ -5,7 +5,7 @@ import logo from '../image/yonko.png';
 
 const CustomerLanding = () => {
   const [showSignUp, setShowSignUp] = useState(false);
-  const [showLogin, setShowLogin] =useState(false);
+  const [showLogin, setShowLogin] = useState(false);
 
   const handleCloseSignUp = () => setShowSignUp(false);
   const handleCloseLogin = () => setShowLogin(false);
@@ -32,7 +32,9 @@ const CustomerLanding = () => {
               alt="Yonkopa Logo" 
               style={{ width: "40px", height: "40px", objectFit: "contain" }}
             />
-            <h3 className="navbar-brand m-0">Yonkopa Micro Credit</h3>
+            <h3 className="navbar-brand m-0" style={{ fontSize: "clamp(1rem, 5vw, 1.5rem)" }}>
+              Yonkopa Micro Credit
+            </h3>
           </div>
           <button 
             className="btn btn-primary rounded-pill px-4"
@@ -46,10 +48,12 @@ const CustomerLanding = () => {
       {/* HERO SECTION */}
       <section className="py-5 bg-primary text-white text-center">
         <div className="container">
-          <h2 className="display-5 fw-bold">Get the Loan You Need</h2>
+          <h2 className="display-5 fw-bold" style={{ fontSize: "clamp(1.5rem, 6vw, 2.5rem)" }}>
+            Get the Loan You Need
+          </h2>
           <p className="lead mb-4">Simple, fast, and transparent loan process</p>
 
-          <div className="d-flex justify-content-center gap-3">
+          <div className="d-flex justify-content-center gap-3 flex-wrap">
             <button 
               className="btn btn-light text-primary px-4 rounded-pill"
               onClick={() => setShowSignUp(true)}
@@ -105,24 +109,42 @@ const CustomerLanding = () => {
 
       {/* SIGN UP MODAL */}
       {showSignUp && (
-        <div className="position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 d-flex justify-content-center align-items-center" style={{ zIndex: 1050 }}>
-          <div className="bg-white rounded-4 shadow p-3" style={{ width: "95%", maxWidth: "500px" }}>
-            <SignUpPage 
-              onClose={handleCloseSignUp}
-              onSwitchToLogin={handleSwitchToLogin}
-            />
+        <div 
+          className="position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-50" 
+          style={{ 
+            zIndex: 1050,
+            overflowY: "auto",
+            overflowX: "hidden"
+          }}
+        >
+          <div className="d-flex justify-content-center align-items-start py-4" style={{ minHeight: "100%" }}>
+            <div className="bg-white rounded-4 shadow" style={{ width: "95%", maxWidth: "500px", margin: "auto" }}>
+              <SignUpPage 
+                onClose={handleCloseSignUp}
+                onSwitchToLogin={handleSwitchToLogin}
+              />
+            </div>
           </div>
         </div>
       )}
 
       {/* LOGIN MODAL */}
       {showLogin && (
-        <div className="position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 d-flex justify-content-center align-items-center" style={{ zIndex: 1050 }}>
-          <div className="bg-white rounded-4 shadow p-3" style={{ width: "95%", maxWidth: "500px" }}>
-            <LoginPage 
-              onClose={handleCloseLogin}
-              onSwitchToSignUp={handleSwitchToSignUp}
-            />
+        <div 
+          className="position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-50" 
+          style={{ 
+            zIndex: 1050,
+            overflowY: "auto",
+            overflowX: "hidden"
+          }}
+        >
+          <div className="d-flex justify-content-center align-items-start py-4" style={{ minHeight: "100%" }}>
+            <div className="bg-white rounded-4 shadow" style={{ width: "95%", maxWidth: "500px", margin: "auto" }}>
+              <LoginPage 
+                onClose={handleCloseLogin}
+                onSwitchToSignUp={handleSwitchToSignUp}
+              />
+            </div>
           </div>
         </div>
       )}
