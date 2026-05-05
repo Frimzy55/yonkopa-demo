@@ -121,16 +121,20 @@ const CustomerLanding = () => {
       {/* SIGN UP MODAL */}
       {showSignUp && (
         <div
-          className="position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 d-flex justify-content-center align-items-start overflow-auto p-3"
-          style={{ zIndex: 1050 }}
+          className="position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 d-flex justify-content-center align-items-start p-0"
+          style={{ 
+            zIndex: 1050,
+            overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch'
+          }}
         >
           <div
-            className="bg-white rounded-4 shadow p-3 my-4"
+            className="bg-white rounded-4 shadow my-4 mx-auto"
             style={{
               width: "95%",
               maxWidth: "500px",
-              maxHeight: "90vh",
-              overflowY: "auto"
+              marginTop: "20px",
+              marginBottom: "20px"
             }}
           >
             <SignUpPage
@@ -144,16 +148,20 @@ const CustomerLanding = () => {
       {/* LOGIN MODAL */}
       {showLogin && (
         <div
-          className="position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 d-flex justify-content-center align-items-start overflow-auto p-3"
-          style={{ zIndex: 1050 }}
+          className="position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 d-flex justify-content-center align-items-start p-0"
+          style={{ 
+            zIndex: 1050,
+            overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch'
+          }}
         >
           <div
-            className="bg-white rounded-4 shadow p-3 my-4"
+            className="bg-white rounded-4 shadow my-4 mx-auto"
             style={{
               width: "95%",
               maxWidth: "500px",
-              maxHeight: "90vh",
-              overflowY: "auto"
+              marginTop: "20px",
+              marginBottom: "20px"
             }}
           >
             <LoginPage
