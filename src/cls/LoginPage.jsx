@@ -108,106 +108,104 @@ const LoginPage = ({ onClose, onSwitchToSignUp }) => {
   const canSubmit = Object.keys(errors).length === 0 && formData.identifier && formData.password && !isSubmitting;
 
   return (
-    <div className="position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 d-flex justify-content-center align-items-center" style={{ zIndex: 1050 }}>
-      <div className="bg-white rounded-4 shadow-lg p-4" style={{ maxWidth: '440px', width: '95%' }}>
-        {/* Header */}
-        <div className="d-flex justify-content-between align-items-center mb-4">
-          <div className="d-flex align-items-center gap-2">
-            <img src={logo} alt="Yonkopa" style={{ height: '40px', objectFit: 'contain' }} />
-            <h4 className="m-0 fw-semibold">Welcome Back</h4>
-          </div>
-          <button className="btn-close" onClick={onClose} aria-label="Close"></button>
+    <div className="bg-white rounded-4 shadow-lg p-4" style={{ maxWidth: '440px', width: '100%' }}>
+      {/* Header */}
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <div className="d-flex align-items-center gap-2">
+          <img src={logo} alt="Yonkopa" style={{ height: '40px', objectFit: 'contain' }} />
+          <h4 className="m-0 fw-semibold">Welcome Back</h4>
+        </div>
+        <button className="btn-close" onClick={onClose} aria-label="Close"></button>
+      </div>
+
+      <p className="text-muted mb-4">Sign in to access your account</p>
+
+      {serverError && (
+        <div className="alert alert-danger py-2 small">{serverError}</div>
+      )}
+
+      <form onSubmit={handleSubmit} noValidate>
+        {/* Email or Phone */}
+        <div className="mb-3">
+          <label className="form-label fw-medium">Email or Phone Number</label>
+          <input 
+            type="text" 
+            name="identifier"
+            className={`form-control ${touched.identifier && errors.identifier ? 'is-invalid' : ''}`}
+            placeholder="Enter your email or phone number"
+            value={formData.identifier}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            disabled={isSubmitting}
+          />
+          {touched.identifier && errors.identifier && (
+            <div className="invalid-feedback">{errors.identifier}</div>
+          )}
         </div>
 
-        <p className="text-muted mb-4">Sign in to access your account</p>
-
-        {serverError && (
-          <div className="alert alert-danger py-2 small">{serverError}</div>
-        )}
-
-        <form onSubmit={handleSubmit} noValidate>
-          {/* Email or Phone */}
-          <div className="mb-3">
-            <label className="form-label fw-medium">Email or Phone Number</label>
-            <input 
-              type="text" 
-              name="identifier"
-              className={`form-control ${touched.identifier && errors.identifier ? 'is-invalid' : ''}`}
-              placeholder="Enter your email or phone number"
-              value={formData.identifier}
+        {/* Password */}
+        <div className="mb-3">
+          <label className="form-label fw-medium">Password</label>
+          <div className="input-group">
+            <input
+              type={showPassword ? "text" : "password"}
+              name="password"
+              className={`form-control ${touched.password && errors.password ? 'is-invalid' : ''}`}
+              placeholder="Enter your password"
+              value={formData.password}
               onChange={handleChange}
               onBlur={handleBlur}
               disabled={isSubmitting}
             />
-            {touched.identifier && errors.identifier && (
-              <div className="invalid-feedback">{errors.identifier}</div>
-            )}
+            <span
+              className="input-group-text bg-white border-start-0"
+              style={{ cursor: "pointer" }}
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              <i className={`bi ${showPassword ? "bi-eye-slash" : "bi-eye"} text-secondary`}></i>
+            </span>
           </div>
+          {touched.password && errors.password && (
+            <div className="invalid-feedback d-block">{errors.password}</div>
+          )}
+        </div>
 
-          {/* Password */}
-          <div className="mb-3">
-            <label className="form-label fw-medium">Password</label>
-            <div className="input-group">
-              <input
-                type={showPassword ? "text" : "password"}
-                name="password"
-                className={`form-control ${touched.password && errors.password ? 'is-invalid' : ''}`}
-                placeholder="Enter your password"
-                value={formData.password}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                disabled={isSubmitting}
-              />
-              <span
-                className="input-group-text bg-white border-start-0"
-                style={{ cursor: "pointer" }}
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                <i className={`bi ${showPassword ? "bi-eye-slash" : "bi-eye"} text-secondary`}></i>
-              </span>
-            </div>
-            {touched.password && errors.password && (
-              <div className="invalid-feedback d-block">{errors.password}</div>
-            )}
+        {/* Options */}
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <div className="form-check">
+            <input className="form-check-input" type="checkbox" id="rememberMe" disabled={isSubmitting} />
+            <label className="form-check-label small" htmlFor="rememberMe">Remember me</label>
           </div>
+          <a href="/forgot-password" className="text-decoration-none small">Forgot password?</a>
+        </div>
 
-          {/* Options */}
-          <div className="d-flex justify-content-between align-items-center mb-4">
-            <div className="form-check">
-              <input className="form-check-input" type="checkbox" id="rememberMe" disabled={isSubmitting} />
-              <label className="form-check-label small" htmlFor="rememberMe">Remember me</label>
-            </div>
-            <a href="/forgot-password" className="text-decoration-none small">Forgot password?</a>
-          </div>
+        {/* Login Button */}
+        <button 
+          type="submit"
+          className="btn btn-primary w-100 py-2 fw-semibold rounded-pill"
+          disabled={!canSubmit}
+        >
+          {isSubmitting ? (
+            <span>
+              <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+              Logging in...
+            </span>
+          ) : (
+            'Sign In'
+          )}
+        </button>
+      </form>
 
-          {/* Login Button */}
-          <button 
-            type="submit"
-            className="btn btn-primary w-100 py-2 fw-semibold rounded-pill"
-            disabled={!canSubmit}
-          >
-            {isSubmitting ? (
-              <span>
-                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                Logging in...
-              </span>
-            ) : (
-              'Sign In'
-            )}
-          </button>
-        </form>
-
-        {/* Sign Up Link */}
-        <p className="text-center mt-4 mb-0">
-          Don't have an account?{' '}
-          <button 
-            className="btn btn-link p-0 text-primary text-decoration-none"
-            onClick={onSwitchToSignUp}
-          >
-            Create Account
-          </button>
-        </p>
-      </div>
+      {/* Sign Up Link */}
+      <p className="text-center mt-4 mb-0">
+        Don't have an account?{' '}
+        <button 
+          className="btn btn-link p-0 text-primary text-decoration-none"
+          onClick={onSwitchToSignUp}
+        >
+          Create Account
+        </button>
+      </p>
     </div>
   );
 };

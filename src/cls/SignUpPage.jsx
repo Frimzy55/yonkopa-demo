@@ -146,7 +146,6 @@ const SignUpPage = ({ onClose, onSwitchToLogin }) => {
         });
         setShowSuccessPopup(true);
         
-        // Close the popup after 3 seconds and then close signup and switch to login
         setTimeout(() => {
           setShowSuccessPopup(false);
           setTimeout(() => {
@@ -167,190 +166,188 @@ const SignUpPage = ({ onClose, onSwitchToLogin }) => {
 
   return (
     <>
-      <div className="position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 d-flex justify-content-center align-items-center" style={{ zIndex: 1050 }}>
-        <div className="bg-white rounded-4 shadow-lg p-4" style={{ width: "480px", maxWidth: "95%", maxHeight: "90vh", overflowY: "auto" }}>
-          {/* Header */}
-          <div className="d-flex justify-content-between align-items-center mb-4">
-            <div className="d-flex align-items-center gap-2">
-              <img src={logo} alt="Yonkopa" style={{ height: "35px", objectFit: "contain" }} />
-              <h4 className="m-0 fw-semibold">Create Account</h4>
-            </div>
-            <button className="btn-close" onClick={onClose} aria-label="Close"></button>
+      <div className="bg-white rounded-4 shadow-lg p-4" style={{ width: "480px", maxWidth: "100%", maxHeight: "90vh", overflowY: "auto" }}>
+        {/* Header */}
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <div className="d-flex align-items-center gap-2">
+            <img src={logo} alt="Yonkopa" style={{ height: "35px", objectFit: "contain" }} />
+            <h4 className="m-0 fw-semibold">Create Account</h4>
+          </div>
+          <button className="btn-close" onClick={onClose} aria-label="Close"></button>
+        </div>
+
+        <p className="text-muted mb-4">Join Yonkopa to access quick and affordable loans</p>
+
+        {/* Success Message */}
+        {message && message.includes("success") && (
+          <div className="alert alert-success text-center py-2">
+            <i className="bi bi-check-circle-fill me-2"></i>
+            {message}
+          </div>
+        )}
+        
+        {/* Error Message */}
+        {message && !message.includes("success") && (
+          <div className="alert alert-danger text-center py-2">
+            <i className="bi bi-exclamation-triangle-fill me-2"></i>
+            {message}
+          </div>
+        )}
+
+        {/* Validation Message */}
+        {validationMessage && (
+          <div className="alert alert-warning text-center py-2">
+            <i className="bi bi-exclamation-circle-fill me-2"></i>
+            {validationMessage}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} noValidate>
+          {/* Full Name */}
+          <div className="mb-3">
+            <label className="form-label fw-medium">Full Name</label>
+            <input
+              type="text"
+              name="fullName"
+              className={`form-control ${getFieldClass("fullName")}`}
+              placeholder="Enter your full name"
+              value={formData.fullName}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              disabled={isSubmitting}
+            />
+            {touched.fullName && errors.fullName && (
+              <div className="invalid-feedback">{errors.fullName}</div>
+            )}
           </div>
 
-          <p className="text-muted mb-4">Join Yonkopa to access quick and affordable loans</p>
-
-          {/* Success Message */}
-          {message && message.includes("success") && (
-            <div className="alert alert-success text-center py-2">
-              <i className="bi bi-check-circle-fill me-2"></i>
-              {message}
-            </div>
-          )}
-          
-          {/* Error Message */}
-          {message && !message.includes("success") && (
-            <div className="alert alert-danger text-center py-2">
-              <i className="bi bi-exclamation-triangle-fill me-2"></i>
-              {message}
-            </div>
-          )}
-
-          {/* Validation Message */}
-          {validationMessage && (
-            <div className="alert alert-warning text-center py-2">
-              <i className="bi bi-exclamation-circle-fill me-2"></i>
-              {validationMessage}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} noValidate>
-            {/* Full Name */}
-            <div className="mb-3">
-              <label className="form-label fw-medium">Full Name</label>
-              <input
-                type="text"
-                name="fullName"
-                className={`form-control ${getFieldClass("fullName")}`}
-                placeholder="Enter your full name"
-                value={formData.fullName}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                disabled={isSubmitting}
-              />
-              {touched.fullName && errors.fullName && (
-                <div className="invalid-feedback">{errors.fullName}</div>
-              )}
-            </div>
-
-            {/* Email / Phone */}
-            <div className="mb-3">
-              <label className="form-label fw-medium">Email or Phone Number</label>
-              <input
-                type="text"
-                name="identifier"
-                className={`form-control ${getFieldClass("identifier")}`}
-                placeholder="Enter your email or phone number"
-                value={formData.identifier}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                disabled={isSubmitting}
-              />
-              {touched.identifier && errors.identifier && (
-                <div className="invalid-feedback">{errors.identifier}</div>
-              )}
-            </div>
-
-            {/* Password */}
-            <div className="mb-3">
-              <label className="form-label fw-medium">Password</label>
-              <div className="input-group">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  name="password"
-                  className={`form-control ${getFieldClass("password")}`}
-                  placeholder="Create a password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  disabled={isSubmitting}
-                />
-                <span
-                  className="input-group-text bg-white border-start-0"
-                  onClick={() => setShowPassword(!showPassword)}
-                  style={{ cursor: "pointer" }}
-                >
-                  <i className={`bi ${showPassword ? "bi-eye-slash" : "bi-eye"} text-secondary`}></i>
-                </span>
-              </div>
-              {touched.password && errors.password && (
-                <div className="invalid-feedback d-block">{errors.password}</div>
-              )}
-              {touched.password && !errors.password && formData.password && (
-                <div className="form-text text-success">✓ Password strength: Good</div>
-              )}
-            </div>
-
-            {/* Confirm Password */}
-            <div className="mb-3">
-              <label className="form-label fw-medium">Confirm Password</label>
-              <div className="input-group">
-                <input
-                  type={showConfirmPassword ? "text" : "password"}
-                  name="confirmPassword"
-                  className={`form-control ${getFieldClass("confirmPassword")}`}
-                  placeholder="Confirm your password"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  disabled={isSubmitting}
-                />
-                <span
-                  className="input-group-text bg-white border-start-0"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  style={{ cursor: "pointer" }}
-                >
-                  <i className={`bi ${showConfirmPassword ? "bi-eye-slash" : "bi-eye"} text-secondary`}></i>
-                </span>
-              </div>
-              {touched.confirmPassword && errors.confirmPassword && (
-                <div className="invalid-feedback d-block">{errors.confirmPassword}</div>
-              )}
-            </div>
-
-            {/* Terms and Conditions */}
-            <div className="mb-4">
-              <div className="form-check">
-                <input
-                  type="checkbox"
-                  className="form-check-input"
-                  id="agreeToTerms"
-                  checked={agreeToTerms}
-                  onChange={(e) => setAgreeToTerms(e.target.checked)}
-                  disabled={isSubmitting}
-                />
-                <label className="form-check-label small" htmlFor="agreeToTerms">
-                  I agree to the{" "}
-                  <button
-                    type="button"
-                    className="btn btn-link p-0 text-primary text-decoration-none"
-                    onClick={() => setShowTermsModal(true)}
-                    style={{ fontSize: "inherit" }}
-                  >
-                    Terms and Conditions
-                  </button>
-                </label>
-              </div>
-            </div>
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              className="btn btn-primary w-100 py-2 fw-semibold rounded-pill"
+          {/* Email / Phone */}
+          <div className="mb-3">
+            <label className="form-label fw-medium">Email or Phone Number</label>
+            <input
+              type="text"
+              name="identifier"
+              className={`form-control ${getFieldClass("identifier")}`}
+              placeholder="Enter your email or phone number"
+              value={formData.identifier}
+              onChange={handleChange}
+              onBlur={handleBlur}
               disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <span>
-                  <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                  Creating Account...
-                </span>
-              ) : (
-                'Create Account'
-              )}
-            </button>
-          </form>
+            />
+            {touched.identifier && errors.identifier && (
+              <div className="invalid-feedback">{errors.identifier}</div>
+            )}
+          </div>
 
-          {/* Login Link */}
-          <p className="text-center mt-4 mb-0">
-            Already have an account?{' '}
-            <button
-              className="btn btn-link p-0 text-primary text-decoration-none"
-              onClick={onSwitchToLogin}
-            >
-              Sign In
-            </button>
-          </p>
-        </div>
+          {/* Password */}
+          <div className="mb-3">
+            <label className="form-label fw-medium">Password</label>
+            <div className="input-group">
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                className={`form-control ${getFieldClass("password")}`}
+                placeholder="Create a password"
+                value={formData.password}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                disabled={isSubmitting}
+              />
+              <span
+                className="input-group-text bg-white border-start-0"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{ cursor: "pointer" }}
+              >
+                <i className={`bi ${showPassword ? "bi-eye-slash" : "bi-eye"} text-secondary`}></i>
+              </span>
+            </div>
+            {touched.password && errors.password && (
+              <div className="invalid-feedback d-block">{errors.password}</div>
+            )}
+            {touched.password && !errors.password && formData.password && (
+              <div className="form-text text-success">✓ Password strength: Good</div>
+            )}
+          </div>
+
+          {/* Confirm Password */}
+          <div className="mb-3">
+            <label className="form-label fw-medium">Confirm Password</label>
+            <div className="input-group">
+              <input
+                type={showConfirmPassword ? "text" : "password"}
+                name="confirmPassword"
+                className={`form-control ${getFieldClass("confirmPassword")}`}
+                placeholder="Confirm your password"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                disabled={isSubmitting}
+              />
+              <span
+                className="input-group-text bg-white border-start-0"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                style={{ cursor: "pointer" }}
+              >
+                <i className={`bi ${showConfirmPassword ? "bi-eye-slash" : "bi-eye"} text-secondary`}></i>
+              </span>
+            </div>
+            {touched.confirmPassword && errors.confirmPassword && (
+              <div className="invalid-feedback d-block">{errors.confirmPassword}</div>
+            )}
+          </div>
+
+          {/* Terms and Conditions */}
+          <div className="mb-4">
+            <div className="form-check">
+              <input
+                type="checkbox"
+                className="form-check-input"
+                id="agreeToTerms"
+                checked={agreeToTerms}
+                onChange={(e) => setAgreeToTerms(e.target.checked)}
+                disabled={isSubmitting}
+              />
+              <label className="form-check-label small" htmlFor="agreeToTerms">
+                I agree to the{" "}
+                <button
+                  type="button"
+                  className="btn btn-link p-0 text-primary text-decoration-none"
+                  onClick={() => setShowTermsModal(true)}
+                  style={{ fontSize: "inherit" }}
+                >
+                  Terms and Conditions
+                </button>
+              </label>
+            </div>
+          </div>
+
+          {/* Submit Button */}
+          <button
+            type="submit"
+            className="btn btn-primary w-100 py-2 fw-semibold rounded-pill"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <span>
+                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                Creating Account...
+              </span>
+            ) : (
+              'Create Account'
+            )}
+          </button>
+        </form>
+
+        {/* Login Link */}
+        <p className="text-center mt-4 mb-0">
+          Already have an account?{' '}
+          <button
+            className="btn btn-link p-0 text-primary text-decoration-none"
+            onClick={onSwitchToLogin}
+          >
+            Sign In
+          </button>
+        </p>
       </div>
 
       {/* Success Popup Modal */}
@@ -378,13 +375,11 @@ const SignUpPage = ({ onClose, onSwitchToLogin }) => {
 
       {/* Terms Modal */}
       <TermsModal
-  show={showTermsModal}
-  onClose={() => setShowTermsModal(false)}
-/>
-      
+        show={showTermsModal}
+        onClose={() => setShowTermsModal(false)}
+      />
 
-      {/* Add animation styles */}
-      <style jsx>{`
+      <style>{`
         @keyframes slideIn {
           from {
             transform: translateY(-50px);
