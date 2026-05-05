@@ -172,7 +172,7 @@ const LoanDetails = ({ formData, handleInputChange }) => {
       background: "linear-gradient(135deg, #0d6efd, #6610f2)",
     }}
   >
-    <h5 className="mb-0 fw-bold">📊 Loan Summary</h5>
+    <h5 className="mb-0 fw-bold"> Loan Summary</h5>
   </div>
 
   {/* Body */}
