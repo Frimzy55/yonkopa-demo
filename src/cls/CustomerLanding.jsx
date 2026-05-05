@@ -121,21 +121,33 @@ const CustomerLanding = () => {
       {/* SIGN UP MODAL */}
       {showSignUp && (
         <div
-          className="position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 d-flex justify-content-center align-items-start p-0"
-          style={{ 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
             zIndex: 1050,
             overflowY: 'auto',
-            WebkitOverflowScrolling: 'touch'
+            WebkitOverflowScrolling: 'touch',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'flex-start',
+            padding: '20px'
           }}
+          onClick={handleCloseSignUp}
         >
           <div
-            className="bg-white rounded-4 shadow my-4 mx-auto"
             style={{
-              width: "95%",
-              maxWidth: "500px",
-              marginTop: "20px",
-              marginBottom: "20px"
+              backgroundColor: 'white',
+              borderRadius: '20px',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+              width: '100%',
+              maxWidth: '500px',
+              margin: 'auto'
             }}
+            onClick={(e) => e.stopPropagation()}
           >
             <SignUpPage
               onClose={handleCloseSignUp}
@@ -148,21 +160,33 @@ const CustomerLanding = () => {
       {/* LOGIN MODAL */}
       {showLogin && (
         <div
-          className="position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 d-flex justify-content-center align-items-start p-0"
-          style={{ 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
             zIndex: 1050,
             overflowY: 'auto',
-            WebkitOverflowScrolling: 'touch'
+            WebkitOverflowScrolling: 'touch',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'flex-start',
+            padding: '20px'
           }}
+          onClick={handleCloseLogin}
         >
           <div
-            className="bg-white rounded-4 shadow my-4 mx-auto"
             style={{
-              width: "95%",
-              maxWidth: "500px",
-              marginTop: "20px",
-              marginBottom: "20px"
+              backgroundColor: 'white',
+              borderRadius: '20px',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+              width: '100%',
+              maxWidth: '500px',
+              margin: 'auto'
             }}
+            onClick={(e) => e.stopPropagation()}
           >
             <LoginPage
               onClose={handleCloseLogin}
