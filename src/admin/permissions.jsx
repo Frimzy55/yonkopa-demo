@@ -26,72 +26,7 @@ export const basicPermissions = [
   { id: 'system_settings', name: 'System Settings', category: 'System' }
 ];
 
-// Convert menu items to permissions
-const convertMenuToPermissions = (items, parentCategory = '') => {
-  let permissions = [];
-  
-  items.forEach(item => {
-    // Add the main menu item as a permission
-    if (item.name && item.name !== 'Dashboard') {
-      permissions.push({
-        id: item.name.toLowerCase().replace(/ /g, '_'),
-        name: `Access ${item.name} Module`,
-        category: parentCategory || item.name,
-        originalName: item.name,
-        icon: item.icon
-      });
-    }
-    
-    // Process sub menus
-    if (item.subMenus && item.subMenus.length > 0) {
-      item.subMenus.forEach(subMenu => {
-        // Add sub menu as permission
-        if (subMenu.name) {
-          permissions.push({
-            id: `${item.name.toLowerCase()}_${subMenu.name.toLowerCase().replace(/ /g, '_')}`,
-            name: `${subMenu.name}`,
-            category: item.name,
-            parentMenu: item.name,
-            icon: subMenu.icon
-          });
-        }
-        
-        // Process nested menus
-        if (subMenu.nestedMenus && subMenu.nestedMenus.length > 0) {
-          subMenu.nestedMenus.forEach(nested => {
-            permissions.push({
-              id: `${item.name.toLowerCase()}_${subMenu.name.toLowerCase().replace(/ /g, '_')}_${nested.name.toLowerCase().replace(/ /g, '_')}`,
-              name: nested.name,
-              category: `${item.name} - ${subMenu.name}`,
-              parentMenu: item.name,
-              subMenu: subMenu.name,
-              icon: nested.icon
-            });
-          });
-        }
-        
-        // Process reports
-        if (subMenu.reports && subMenu.reports.length > 0) {
-          subMenu.reports.forEach(report => {
-            permissions.push({
-              id: `${item.name.toLowerCase()}_${subMenu.name.toLowerCase().replace(/ /g, '_')}_${report.name.toLowerCase().replace(/ /g, '_')}`,
-              name: report.name,
-              category: `${item.name} - ${subMenu.name}`,
-              parentMenu: item.name,
-              subMenu: subMenu.name,
-              icon: report.icon,
-              isReport: true
-            });
-          });
-        }
-      });
-    }
-  });
-  
-  return permissions;
-};
-
-// Menu items configuration
+// Complete Menu items configuration with all menus
 export const menuItems = [
   { name: 'Dashboard', icon: 'bi-speedometer2' },
   { 
@@ -327,16 +262,6 @@ export const menuItems = [
           { name: 'Customer by Relationship Officer Report', icon: 'bi-person-badge' }
         ]
       },
-      { name: 'KYC & Compliance Reports', icon: 'bi-shield-check', reportType: 'KYC & Compliance Reports',
-        reports: [
-          { name: 'Pending KYC Report', icon: 'bi-hourglass-split' },
-          { name: 'Verified KYC Report', icon: 'bi-check-circle-fill' },
-          { name: 'Rejected KYC Report', icon: 'bi-x-circle-fill' },
-          { name: 'Expired ID Report', icon: 'bi-calendar-x' },
-          { name: 'PEP Screening Report', icon: 'bi-shield-shaded' },
-          { name: 'High Risk Customer Report', icon: 'bi-exclamation-triangle-fill' }
-        ]
-      },
       { name: 'Teller Reports', icon: 'bi-cash-stack', reportType: 'Teller Reports',
         reports: [
           { name: 'Daily Teller Transactions Report', icon: 'bi-calendar-day' },
@@ -355,40 +280,11 @@ export const menuItems = [
           { name: 'Account Balance Report', icon: 'bi-calculator' }
         ]
       },
-      { name: 'Collection Reports', icon: 'bi-receipt', reportType: 'Collection Reports',
-        reports: [
-          { name: 'Collection Performance Report', icon: 'bi-graph-up' },
-          { name: 'Expected vs Actual Collections', icon: 'bi-bar-chart-steps' },
-          { name: 'Daily Collection Sheet', icon: 'bi-calendar-check' },
-          { name: 'Missed Payment Report', icon: 'bi-exclamation-circle' },
-          { name: 'Recovery Follow-up Report', icon: 'bi-telephone' }
-        ]
-      },
-      { name: 'Risk Reports', icon: 'bi-exclamation-triangle', reportType: 'Risk Reports',
-        reports: [
-          { name: 'Portfolio At Risk Report', icon: 'bi-pie-chart' },
-          { name: 'PAR > 30 Days Report', icon: 'bi-exclamation-triangle-fill' },
-          { name: 'Delinquency Trend Report', icon: 'bi-graph-up' },
-          { name: 'Top Exposure Customers Report', icon: 'bi-trophy' }
-        ]
-      },
       { name: 'Authorization Reports', icon: 'bi-shield-lock', reportType: 'Authorization Reports',
         reports: [
           { name: 'Pending Customer Authorization', icon: 'bi-person-check' },
           { name: 'Pending Loan Authorization', icon: 'bi-file-check' },
           { name: 'Pending Account Authorization', icon: 'bi-bank-check' }
-        ]
-      },
-      { name: 'Financial Reports', icon: 'bi-graph-up', reportType: 'Financial Reports',
-        reports: [
-          { name: 'Revenue Report', icon: 'bi-cash-stack' },
-          { name: 'Expense Report', icon: 'bi-receipt' },
-          { name: 'Revenue vs Expense', icon: 'bi-bar-chart-steps' }
-        ]
-      },
-      { name: 'Internal Account / GL Reports', icon: 'bi-diagram-3', reportType: 'Internal Account / GL Reports',
-        reports: [
-          { name: 'GL Transaction Report', icon: 'bi-journal-bookmark-fill' }
         ]
       }
     ]
@@ -409,13 +305,69 @@ export const menuItems = [
   }
 ];
 
-// Generate all permissions from menu items
-const menuPermissions = convertMenuToPermissions(menuItems);
+// Convert menu items to permissions
+const convertMenuToPermissions = (items, parentCategory = '') => {
+  let permissions = [];
+  
+  items.forEach(item => {
+    if (item.name && item.name !== 'Dashboard') {
+      permissions.push({
+        id: item.name.toLowerCase().replace(/ /g, '_'),
+        name: `Access ${item.name} Module`,
+        category: parentCategory || item.name,
+        originalName: item.name,
+        icon: item.icon
+      });
+    }
+    
+    if (item.subMenus && item.subMenus.length > 0) {
+      item.subMenus.forEach(subMenu => {
+        if (subMenu.name) {
+          permissions.push({
+            id: `${item.name.toLowerCase()}_${subMenu.name.toLowerCase().replace(/ /g, '_')}`,
+            name: `${subMenu.name}`,
+            category: item.name,
+            parentMenu: item.name,
+            icon: subMenu.icon
+          });
+        }
+        
+        if (subMenu.nestedMenus && subMenu.nestedMenus.length > 0) {
+          subMenu.nestedMenus.forEach(nested => {
+            permissions.push({
+              id: `${item.name.toLowerCase()}_${subMenu.name.toLowerCase().replace(/ /g, '_')}_${nested.name.toLowerCase().replace(/ /g, '_')}`,
+              name: nested.name,
+              category: `${item.name} - ${subMenu.name}`,
+              parentMenu: item.name,
+              subMenu: subMenu.name,
+              icon: nested.icon
+            });
+          });
+        }
+        
+        if (subMenu.reports && subMenu.reports.length > 0) {
+          subMenu.reports.forEach(report => {
+            permissions.push({
+              id: `${item.name.toLowerCase()}_${subMenu.name.toLowerCase().replace(/ /g, '_')}_${report.name.toLowerCase().replace(/ /g, '_')}`,
+              name: report.name,
+              category: `${item.name} - ${subMenu.name}`,
+              parentMenu: item.name,
+              subMenu: subMenu.name,
+              icon: report.icon,
+              isReport: true
+            });
+          });
+        }
+      });
+    }
+  });
+  
+  return permissions;
+};
 
-// Combine basic permissions with menu permissions
+const menuPermissions = convertMenuToPermissions(menuItems);
 export const availablePermissions = [...basicPermissions, ...menuPermissions];
 
-// Group permissions by category
 export const getGroupedPermissions = () => {
   return availablePermissions.reduce((groups, permission) => {
     if (!groups[permission.category]) {
@@ -424,64 +376,4 @@ export const getGroupedPermissions = () => {
     groups[permission.category].push(permission);
     return groups;
   }, {});
-};
-
-// Get permissions by category
-export const getPermissionsByCategory = (category) => {
-  return availablePermissions.filter(permission => permission.category === category);
-};
-
-// Get all categories
-export const getAllCategories = () => {
-  const categories = [...new Set(availablePermissions.map(p => p.category))];
-  return categories;
-};
-
-// Check if a permission exists
-export const permissionExists = (permissionId) => {
-  return availablePermissions.some(p => p.id === permissionId);
-};
-
-// Get permission details by ID
-export const getPermissionDetails = (permissionId) => {
-  return availablePermissions.find(p => p.id === permissionId);
-};
-
-// Get permission count by category
-export const getPermissionCountByCategory = () => {
-  return availablePermissions.reduce((counts, permission) => {
-    counts[permission.category] = (counts[permission.category] || 0) + 1;
-    return counts;
-  }, {});
-};
-
-// Helper function to find a menu item by path
-export const findMenuItemByPath = (path, items = menuItems) => {
-  for (const item of items) {
-    if (item.path === path) return item;
-    if (item.subMenus) {
-      const found = findMenuItemByPath(path, item.subMenus);
-      if (found) return found;
-    }
-    if (item.nestedMenus) {
-      const found = findMenuItemByPath(path, item.nestedMenus);
-      if (found) return found;
-    }
-    if (item.reports) {
-      const found = findMenuItemByPath(path, item.reports);
-      if (found) return found;
-    }
-  }
-  return null;
-};
-
-// Helper function to get all flattened menu paths
-export const getAllPaths = (items = menuItems, paths = []) => {
-  for (const item of items) {
-    if (item.path) paths.push(item.path);
-    if (item.subMenus) getAllPaths(item.subMenus, paths);
-    if (item.nestedMenus) getAllPaths(item.nestedMenus, paths);
-    if (item.reports) getAllPaths(item.reports, paths);
-  }
-  return paths;
 };

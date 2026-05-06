@@ -66,25 +66,6 @@ const UserManagement = () => {
     setShowModal(true);
   };
 
-  const handleDelete = async (userId) => {
-    if (window.confirm('Are you sure you want to delete this user?')) {
-      setLoading(true);
-      try {
-        const token = localStorage.getItem('token');
-        await axios.delete(`${process.env.REACT_APP_API_URL}/users/${userId}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        toast.success('User deleted successfully');
-        fetchUsers();
-      } catch (error) {
-        console.error('Error deleting user:', error);
-        toast.error('Failed to delete user');
-      } finally {
-        setLoading(false);
-      }
-    }
-  };
-
   const handleResetPassword = async (userId) => {
     if (window.confirm('Reset password for this user? A temporary password will be sent.')) {
       try {
@@ -256,7 +237,7 @@ const UserManagement = () => {
                   className="btn btn-outline-primary mt-2"
                   onClick={handleResetFilter}
                 >
-                  Clear 
+                  Clear Filter
                 </button>
               </div>
             ) : (
@@ -289,18 +270,11 @@ const UserManagement = () => {
                             <i className="bi bi-pencil"></i>
                           </button>
                           <button
-                            className="btn btn-sm btn-outline-warning me-2"
+                            className="btn btn-sm btn-outline-warning"
                             onClick={() => handleResetPassword(user.id)}
                             title="Reset Password"
                           >
                             <i className="bi bi-key"></i>
-                          </button>
-                          <button
-                            className="btn btn-sm btn-outline-danger"
-                            onClick={() => handleDelete(user.id)}
-                            title="Delete User"
-                          >
-                            <i className="bi bi-trash"></i>
                           </button>
                         </td>
                       </tr>
@@ -317,7 +291,7 @@ const UserManagement = () => {
             <i className="bi bi-funnel fs-1 text-muted mb-3 d-block"></i>
             <h5 className="text-muted">No Data to Display</h5>
             <p className="text-muted mb-0">
-              Please select a role and click "Filter Users" to view user details
+              Please select a role and click "Find Users" to view user details
             </p>
             <div className="mt-3">
               <select
