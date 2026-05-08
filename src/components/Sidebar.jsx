@@ -70,21 +70,28 @@ export const Sidebar = memo(({
                   }}
                   onMouseEnter={() => handleMouseEnter(mainItemId)}
                   onMouseLeave={handleMouseLeave}
-                  className={`menu-item nav-link w-100 text-start d-flex align-items-center justify-content-between ${
+                  className={`menu-item nav-link w-100 text-start d-flex align-items-center ${
                     isMainActive ? 'active' : ''
                   } ${isMainHovered && !isMainActive ? 'hovered' : ''}`}
+                  style={{
+                    justifyContent: 'space-between',
+                    gap: '8px'
+                  }}
                 >
-                  <div className="d-flex align-items-center">
+                  <div className="d-flex align-items-center" style={{ gap: '8px', flex: 1 }}>
                     <i className={`bi ${item.icon} menu-icon`}></i>
-                    {(!sidebarCollapsed || isMobile) && <span className="menu-text ms-2">{item.name}</span>}
+                    {(!sidebarCollapsed || isMobile) && (
+                      <span className="menu-text">{item.name}</span>
+                    )}
                   </div>
-                  {(!sidebarCollapsed || isMobile) && item.subMenus && (
-                    <i className={`bi ${expandedMenus[item.name] ? 'bi-chevron-down' : 'bi-chevron-right'} menu-arrow`}></i>
+                  {/* Fixed: Always render arrow if subMenus exist, just hide text when collapsed */}
+                  {item.subMenus && (
+                    <i className={`bi ${expandedMenus[item.name] ? 'bi-chevron-down' : 'bi-chevron-right'} menu-arrow ${(sidebarCollapsed && !isMobile) ? 'd-none' : ''}`}></i>
                   )}
                 </button>
                 
                 {item.subMenus && expandedMenus[item.name] && (
-                  <ul className="nav flex-column ms-3 mt-1 submenu-container">
+                  <ul className="nav flex-column mt-1 submenu-container">
                     {item.subMenus.map((subItem) => {
                       const subItemId = getMenuItemId(subItem, 'sub', item.name);
                       const isSubActive = isSubMenuActive(subItem);
@@ -103,21 +110,26 @@ export const Sidebar = memo(({
                             }}
                             onMouseEnter={() => handleMouseEnter(subItemId)}
                             onMouseLeave={handleMouseLeave}
-                            className={`submenu-item nav-link w-100 text-start d-flex align-items-center justify-content-between ${
+                            className={`submenu-item nav-link w-100 text-start d-flex align-items-center ${
                               isSubActive ? 'active' : ''
                             } ${isSubHovered && !isSubActive ? 'hovered' : ''}`}
+                            style={{
+                              justifyContent: 'space-between',
+                              gap: '8px'
+                            }}
                           >
-                            <div className="d-flex align-items-center">
+                            <div className="d-flex align-items-center" style={{ gap: '8px', flex: 1 }}>
                               <i className={`bi ${subItem.icon} submenu-icon`}></i>
-                              <span className="submenu-text ms-2">{subItem.name}</span>
+                              <span className="submenu-text">{subItem.name}</span>
                             </div>
+                            {/* Fixed: Always render if reports or nestedMenus exist */}
                             {(subItem.reports || subItem.nestedMenus) && (
                               <i className={`bi ${expandedSubMenus[`${item.name}-${subItem.name}`] ? 'bi-chevron-down' : 'bi-chevron-right'} submenu-arrow`}></i>
                             )}
                           </button>
                           
                           {subItem.reports && expandedSubMenus[`${item.name}-${subItem.name}`] && (
-                            <ul className="nav flex-column ms-3 mt-1 report-container">
+                            <ul className="nav flex-column mt-1 report-container">
                               {subItem.reports.map((report) => {
                                 const reportId = getMenuItemId(report, 'report', subItem.name);
                                 const isReportActiveFlag = isReportActive(report.name);
@@ -133,9 +145,10 @@ export const Sidebar = memo(({
                                       className={`report-item nav-link w-100 text-start d-flex align-items-center ${
                                         isReportActiveFlag ? 'active' : ''
                                       } ${isReportHovered && !isReportActiveFlag ? 'hovered' : ''}`}
+                                      style={{ gap: '8px' }}
                                     >
                                       <i className={`bi ${report.icon} report-icon`}></i>
-                                      <span className="report-text ms-2">{report.name}</span>
+                                      <span className="report-text">{report.name}</span>
                                     </button>
                                   </li>
                                 );
@@ -144,7 +157,7 @@ export const Sidebar = memo(({
                           )}
                           
                           {subItem.nestedMenus && expandedSubMenus[`${item.name}-${subItem.name}`] && (
-                            <ul className="nav flex-column ms-3 mt-1 nested-container">
+                            <ul className="nav flex-column mt-1 nested-container">
                               {subItem.nestedMenus.map((nestedItem) => {
                                 const nestedId = getMenuItemId(nestedItem, 'nested', subItem.name);
                                 const isNestedActiveFlag = isNestedActive(nestedItem.name);
@@ -160,9 +173,10 @@ export const Sidebar = memo(({
                                       className={`nested-item nav-link w-100 text-start d-flex align-items-center ${
                                         isNestedActiveFlag ? 'active' : ''
                                       } ${isNestedHovered && !isNestedActiveFlag ? 'hovered' : ''}`}
+                                      style={{ gap: '8px' }}
                                     >
                                       <i className={`bi ${nestedItem.icon} nested-icon`}></i>
-                                      <span className="nested-text ms-2">{nestedItem.name}</span>
+                                      <span className="nested-text">{nestedItem.name}</span>
                                     </button>
                                   </li>
                                 );

@@ -315,3 +315,107 @@ button:focus {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Add to AdminDashboard.css */
+
+/* Ensure proper flex alignment for menu items */
+.menu-item,
+.submenu-item,
+.report-item,
+.nested-item {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: 100%;
+  gap: 8px;
+}
+
+/* Fix for the content wrapper */
+.menu-item .d-flex,
+.submenu-item .d-flex {
+  flex: 1;
+  min-width: 0; /* Prevents overflow */
+}
+
+/* Ensure arrows stay on the right */
+.menu-arrow,
+.submenu-arrow {
+  flex-shrink: 0;
+  margin-left: auto;
+  font-size: 0.75rem;
+  transition: transform 0.2s ease;
+}
+
+/* Fix for collapsed sidebar */
+.sidebar-collapsed .menu-item {
+  justify-content: center !important;
+}
+
+.sidebar-collapsed .menu-arrow {
+  display: none;
+}
+
+/* Adjust submenu container margins */
+.submenu-container {
+  margin-left: 0 !important;
+  padding-left: 0 !important;
+}
+
+.submenu-item {
+  padding-left: 2rem !important;
+}
+
+.report-container {
+  margin-left: 0 !important;
+  padding-left: 0 !important;
+}
+
+.report-item {
+  padding-left: 3rem !important;
+}
+
+.nested-container {
+  margin-left: 0 !important;
+  padding-left: 0 !important;
+}
+
+.nested-item {
+  padding-left: 2rem !important;
+}
+
+/* Ensure text doesn't push arrows */
+.menu-text,
+.submenu-text,
+.report-text,
+.nested-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+/* Fix icon alignment */
+.menu-icon,
+.submenu-icon,
+.report-icon,
+.nested-icon {
+  flex-shrink: 0;
+}

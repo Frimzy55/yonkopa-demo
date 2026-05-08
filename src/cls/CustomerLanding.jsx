@@ -60,9 +60,9 @@ const CustomerLanding = () => {
               alt="Yonkopa Logo"
               className="logo-img"
             />
-            <h3 className="navbar-brand m-0">
-              Yonkopa Micro Credit
-            </h3>
+            <h3 className="m-0 fw-bold text-primary">
+  Yonkopa Micro Credit
+</h3>
           </div>
 
           <div className="d-flex gap-3">

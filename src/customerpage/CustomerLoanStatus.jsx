@@ -35,7 +35,7 @@ const STEPS = [
     name: "Approved",
     icon: CheckLg,
     description: "Loan approved",
-    color: "success",
+    color: "info",
     details: "Your loan has been approved."
   },
   {
@@ -64,7 +64,7 @@ const extractUserId = (user) => {
   return null;
 };
 
-// Normalize status (🔥 FIX HERE)
+// Normalize status
 const normalizeStatus = (status) => {
   if (!status) return "No Loan";
 
@@ -142,7 +142,7 @@ const CustomerLoanStatus = ({ user, onStatusChange, showDetails = true , onApply
     return (
       <Card className="shadow-sm border-0">
         <Card.Body className="text-center py-5">
-          <Spinner animation="border" />
+          <Spinner animation="border" variant="info" />
           <p className="mt-3 text-muted">Loading loan status...</p>
         </Card.Body>
       </Card>
@@ -156,7 +156,7 @@ const CustomerLoanStatus = ({ user, onStatusChange, showDetails = true , onApply
         <Card.Body>
           <Alert variant="danger">
             <p>{error}</p>
-            <Button onClick={() => window.location.reload()}>
+            <Button variant="info" onClick={() => window.location.reload()}>
               Retry
             </Button>
           </Alert>
@@ -174,7 +174,7 @@ const CustomerLoanStatus = ({ user, onStatusChange, showDetails = true , onApply
         <p className="text-muted">
           You have not applied for a loan yet.
         </p>
-        <Button onClick={onApplyLoan}>Apply for Loan</Button>
+        <Button variant="info" onClick={onApplyLoan}>Apply for Loan</Button>
       </Card>
     );
   }
@@ -192,7 +192,7 @@ const CustomerLoanStatus = ({ user, onStatusChange, showDetails = true , onApply
 
   const getVariant = () => {
     if (currentStatus === "Pending") return "warning";
-    if (currentStatus === "Approved") return "success";
+    if (currentStatus === "Approved") return "info";
     if (currentStatus === "Rejected") return "danger";
     return "secondary";
   };
@@ -225,18 +225,18 @@ const CustomerLoanStatus = ({ user, onStatusChange, showDetails = true , onApply
                 <div
                   className={
                     isDone
-                      ? "text-success"
+                      ? "text-info"
                       : isActive
-                      ? "text-warning"
+                      ? "text-info"
                       : "text-muted"
                   }
                 >
                   <div
                     className={`rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center ${
                       isDone
-                        ? "bg-success"
+                        ? "bg-info"
                         : isActive
-                        ? "bg-warning"
+                        ? "bg-info"
                         : "bg-light"
                     }`}
                     style={{ width: 40, height: 40 }}
@@ -244,7 +244,7 @@ const CustomerLoanStatus = ({ user, onStatusChange, showDetails = true , onApply
                     {isDone ? (
                       <CheckCircleFill className="text-white" />
                     ) : (
-                      <Icon />
+                      <Icon className={isActive ? "text-white" : "text-muted"} />
                     )}
                   </div>
                   <small>{step.name}</small>
