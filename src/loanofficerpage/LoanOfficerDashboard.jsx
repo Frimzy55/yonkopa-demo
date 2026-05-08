@@ -301,7 +301,7 @@ const LoanOfficerDashboard = () => {
           </button>
           <div className="navbar-brand">
             <FaTachometerAlt />
-            <span>Manager Portal</span>
+            <span>Loan Officer Portal</span>
           </div>
         </div>
         <div className="navbar-right">
