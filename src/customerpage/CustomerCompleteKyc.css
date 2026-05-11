@@ -1,4 +1,4 @@
-/* CustomerCompleteKyc.css - Mobile First with Fixed Navigation */
+/* CustomerCompleteKyc.css - Mobile First with Proper Scrolling */
 
 * {
   box-sizing: border-box;
@@ -7,7 +7,6 @@
 .content-section {
   max-width: 100%;
   padding: 15px;
-  padding-bottom: 100px; /* Extra padding for fixed buttons on mobile */
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
@@ -74,31 +73,17 @@
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
   position: relative;
   margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
 }
 
-/* Form Step Container */
+/* Form Step Container - Make it scrollable */
 .form-step {
   background: white;
   padding: 16px;
   border-radius: 12px;
-  max-height: calc(100vh - 280px);
-  overflow-y: auto;
-  margin-bottom: 20px;
-}
-
-/* Custom scrollbar for form-step */
-.form-step::-webkit-scrollbar {
-  width: 4px;
-}
-
-.form-step::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 4px;
-}
-
-.form-step::-webkit-scrollbar-thumb {
-  background: #667eea;
-  border-radius: 4px;
+  flex: 1;
+  overflow-y: visible;
 }
 
 .form-step h3 {
@@ -295,21 +280,18 @@
 }
 
 /* ============================================ */
-/* FIXED NAVIGATION BUTTONS - ALWAYS VISIBLE */
+/* NAVIGATION BUTTONS - IMPROVED FOR SCROLLING */
 /* ============================================ */
 .form-navigation {
   display: flex;
   flex-direction: row;
   gap: 10px;
-  margin-top: 16px;
-  padding: 12px 16px;
+  margin-top: 20px;
+  padding: 16px 0 8px 0;
   background: white;
-  border-radius: 12px;
-  position: sticky;
-  bottom: 0;
-  z-index: 100;
   border-top: 1px solid #e0e0e0;
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+  position: relative;
+  z-index: 10;
 }
 
 .form-navigation button {
@@ -583,50 +565,121 @@
 }
 
 /* ============================================ */
-/* MOBILE-SPECIFIC FIXES (Phone Portrait) */
+/* MOBILE-SPECIFIC STYLES - IMPROVED SCROLLING */
 /* ============================================ */
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .content-section {
     padding: 12px;
-    padding-bottom: 90px;
+    padding-bottom: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  
+  .content-section > h2 {
+    flex-shrink: 0;
+    margin-bottom: 12px;
+  }
+  
+  .step-cards-container {
+    flex-shrink: 0;
+    margin-bottom: 16px;
   }
   
   .kyc-form {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
     padding: 12px;
-    border-radius: 10px;
+    margin-bottom: 0;
   }
   
   .form-step {
-    padding: 8px;
-    max-height: calc(100vh - 320px);
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 12px;
+    margin-bottom: 0;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Custom scrollbar for mobile */
+  .form-step::-webkit-scrollbar {
+    width: 3px;
+  }
+  
+  .form-step::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+  }
+  
+  .form-step::-webkit-scrollbar-thumb {
+    background: #667eea;
+    border-radius: 3px;
   }
   
   .form-navigation {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    margin-top: 0;
-    border-radius: 0;
-    padding: 12px 16px;
-    box-shadow: 0 -2px 15px rgba(0, 0, 0, 0.15);
-    border-top: 1px solid #e0e0e0;
+    flex-shrink: 0;
+    margin-top: 12px;
+    padding: 12px 0 8px 0;
   }
   
   .form-navigation button {
     padding: 14px 8px;
     font-size: 15px;
-    font-weight: 600;
     min-height: 52px;
   }
   
+  /* Better touch targets for mobile */
+  .form-group input,
+  .form-group select,
+  .form-group textarea,
+  .doc-card {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+  
   .step-card {
-    min-width: 60px;
+    min-width: 65px;
     padding: 8px 4px;
   }
   
   .step-number {
-    font-size: 12px;
+    font-size: 13px;
+  }
+  
+  .step-title {
+    font-size: 10px;
+  }
+}
+
+/* Small phones */
+@media (max-width: 480px) {
+  .content-section {
+    padding: 8px;
+  }
+  
+  .kyc-form {
+    padding: 8px;
+  }
+  
+  .form-step {
+    padding: 4px 8px;
+  }
+  
+  .form-group {
+    margin-bottom: 12px;
+  }
+  
+  .form-navigation button {
+    padding: 12px 6px;
+    font-size: 14px;
+    min-height: 48px;
+  }
+  
+  .step-card {
+    min-width: 55px;
+    padding: 6px 2px;
   }
   
   .step-title {
@@ -637,12 +690,14 @@
 /* ============================================ */
 /* TABLET AND DESKTOP STYLES */
 /* ============================================ */
-@media (min-width: 768px) {
+@media (min-width: 769px) {
   .content-section {
     max-width: 800px;
     margin: 0 auto;
     padding: 20px;
-    padding-bottom: 20px;
+    height: auto;
+    display: block;
+    overflow: visible;
   }
   
   .step-cards-container {
@@ -668,15 +723,23 @@
     gap: 16px;
   }
   
+  .kyc-form {
+    display: block;
+    overflow: visible;
+    height: auto;
+  }
+  
+  .form-step {
+    overflow-y: visible;
+    height: auto;
+    max-height: none;
+  }
+  
   .form-navigation {
-    position: static;
     flex-direction: row;
     justify-content: space-between;
-    background: transparent;
-    box-shadow: none;
-    border-top: 1px solid #eee;
-    padding: 16px 0 0 0;
-    margin-top: 24px;
+    padding: 20px 0 8px 0;
+    margin-top: 20px;
   }
   
   .form-navigation button {
@@ -700,11 +763,6 @@
   .kyc-preview-card {
     padding: 24px;
   }
-  
-  .form-step {
-    max-height: none;
-    overflow-y: visible;
-  }
 }
 
 @media (min-width: 1024px) {
@@ -718,23 +776,38 @@
 }
 
 /* ============================================ */
-/* UTILITY CLASSES FOR BETTER MOBILE EXPERIENCE */
+/* SAFE AREA SUPPORT FOR NOTCHED PHONES */
 /* ============================================ */
-.touch-friendly {
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-
-/* Fix for iPhone notch and home indicator */
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
-  @media (max-width: 640px) {
+  @media (max-width: 768px) {
     .content-section {
-      padding-bottom: calc(90px + env(safe-area-inset-bottom));
+      padding-bottom: env(safe-area-inset-bottom);
     }
     
-    .form-navigation {
-      padding-bottom: calc(12px + env(safe-area-inset-bottom));
+    .form-step {
+      padding-bottom: env(safe-area-inset-bottom);
     }
+  }
+}
+
+/* Scroll hint indicator for mobile */
+@media (max-width: 768px) {
+  .form-step {
+    position: relative;
+  }
+  
+  /* Add a subtle gradient at the bottom to indicate more content */
+  .form-step::after {
+    content: '';
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 20px;
+    background: linear-gradient(to top, rgba(255,255,255,0.9), transparent);
+    pointer-events: none;
+    display: block;
+    margin-top: -20px;
   }
 }
 
@@ -750,24 +823,4 @@
   align-items: center;
   justify-content: center;
   z-index: 1000;
-}
-
-/* Scroll indicator for form-step on mobile */
-@media (max-width: 640px) {
-  .form-step {
-    position: relative;
-  }
-  
-  .form-step::after {
-    content: '';
-    position: sticky;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 30px;
-    background: linear-gradient(to top, white, transparent);
-    pointer-events: none;
-    display: block;
-    margin-top: -30px;
-  }
 }
