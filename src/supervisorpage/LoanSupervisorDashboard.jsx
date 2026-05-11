@@ -7,15 +7,15 @@ import {
   FaCog,
   FaDollarSign,
   FaStar,
-  FaCalendarAlt,
+  
   FaUser,
-  FaLock,
+  
   FaBell,
   FaSignOutAlt,
   FaChevronDown,
   FaChevronRight,
   FaClock,
-  FaBriefcase,
+  
   FaFileAlt,
   FaBars,
   FaAngleDoubleLeft,
@@ -25,9 +25,9 @@ import {
   FaCheckCircle
 } from "react-icons/fa";
 import { MdDashboard } from "react-icons/md";
-import { BiSolidReport } from "react-icons/bi";
+//import { BiSolidReport } from "react-icons/bi";
 import { IoMdTrendingUp } from "react-icons/io";
-import { GiAchievement } from "react-icons/gi";
+//import { GiAchievement } from "react-icons/gi";
 import "./LoanSupervisorDashboard.css";
 
 const LoanSupervisorDashboard = () => {
