@@ -368,12 +368,16 @@
     display: inline;
   }
 
-  .dashboard-container {
-    height: 100vh;
-    overflow: hidden;
-    position: fixed;
-    width: 100%;
-  }
+
+.dashboard-container {
+  min-height: 100vh;
+  height: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  position: relative;
+  width: 100%;
+}
+
 
   .dashboard-title {
     font-size: 1rem;
@@ -422,16 +426,17 @@
     transform: translateX(0);
   }
 
-  /* Main content takes full width on mobile and scrolls properly */
   .main-content {
-    margin-left: 0;
-    padding: 1rem;
-    width: 100%;
-    height: calc(100vh - 70px);
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    position: relative;
-  }
+  flex: 1;
+  margin-left: 0;
+  padding: 1rem;
+  width: 100%;
+  min-height: calc(100vh - 70px);
+  height: auto;
+  overflow-y: visible;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
 
   /* Ensure content inside main content scrolls properly */
   .main-content > * {
@@ -702,5 +707,46 @@ html {
   .content-section {
     height: auto;
     min-height: 100%;
+  }
+}
+
+
+
+
+
+
+
+@media (max-width: 768px) {
+
+  .dashboard-container {
+    height: 100vh;
+    overflow: hidden; /* keep outer fixed */
+  }
+
+  .dashboard-content {
+    margin-top: 70px;
+    height: calc(100vh - 70px);
+    overflow: hidden;
+  }
+
+  /* ✅ MAIN SCROLL AREA (FIXED) */
+  .main-content {
+    margin-left: 0;
+    padding: 1rem;
+    width: 100%;
+
+    height: calc(100vh - 70px);
+    overflow-y: auto;   /* 🔥 IMPORTANT */
+    overflow-x: hidden;
+
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+
+  /* Sidebar still works */
+  .sidebar-cards {
+    position: fixed;
+    top: 70px;
+    bottom: 0;
   }
 }
