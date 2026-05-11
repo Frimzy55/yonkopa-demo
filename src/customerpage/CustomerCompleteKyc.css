@@ -1,4 +1,4 @@
-/* CustomerCompleteKyc.css - Mobile First with Proper Scrolling */
+/* CustomerCompleteKyc.css - Fixed Scrolling for Submit Button */
 
 * {
   box-sizing: border-box;
@@ -24,6 +24,7 @@
   overflow-x: auto;
   padding-bottom: 8px;
   -webkit-overflow-scrolling: touch;
+  flex-shrink: 0;
 }
 
 .step-card {
@@ -71,19 +72,22 @@
   border-radius: 12px;
   padding: 16px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  position: relative;
-  margin-bottom: 0;
   display: flex;
   flex-direction: column;
 }
 
-/* Form Step Container - Make it scrollable */
+/* Form Step Container - Scrollable area */
 .form-step {
   background: white;
   padding: 16px;
   border-radius: 12px;
+  overflow-y: auto;
   flex: 1;
-  overflow-y: visible;
+}
+
+/* Ensure the last form group has proper spacing */
+.form-step > :last-child {
+  margin-bottom: 0;
 }
 
 .form-step h3 {
@@ -94,7 +98,7 @@
   padding-bottom: 8px;
 }
 
-/* Form Groups - Each field takes full width */
+/* Form Groups */
 .form-group {
   margin-bottom: 16px;
   width: 100%;
@@ -127,7 +131,7 @@
   box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
 }
 
-/* Form Grid - Make everything stack vertically on mobile */
+/* Form Grid */
 .form-grid {
   display: flex;
   flex-direction: column;
@@ -279,9 +283,7 @@
   margin-bottom: 4px;
 }
 
-/* ============================================ */
-/* NAVIGATION BUTTONS - IMPROVED FOR SCROLLING */
-/* ============================================ */
+/* Navigation Buttons - Always visible */
 .form-navigation {
   display: flex;
   flex-direction: row;
@@ -290,8 +292,7 @@
   padding: 16px 0 8px 0;
   background: white;
   border-top: 1px solid #e0e0e0;
-  position: relative;
-  z-index: 10;
+  flex-shrink: 0;
 }
 
 .form-navigation button {
@@ -565,15 +566,19 @@
 }
 
 /* ============================================ */
-/* MOBILE-SPECIFIC STYLES - IMPROVED SCROLLING */
+/* MOBILE STYLES - FIXED HEIGHT FOR SCROLLING */
 /* ============================================ */
 @media (max-width: 768px) {
+  html, body {
+    height: 100%;
+    overflow: hidden;
+  }
+  
   .content-section {
-    padding: 12px;
-    padding-bottom: 0;
     height: 100vh;
     display: flex;
     flex-direction: column;
+    padding: 12px;
     overflow: hidden;
   }
   
@@ -584,7 +589,7 @@
   
   .step-cards-container {
     flex-shrink: 0;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
   }
   
   .kyc-form {
@@ -594,6 +599,7 @@
     overflow: hidden;
     padding: 12px;
     margin-bottom: 0;
+    min-height: 0; /* Important for flex children to scroll */
   }
   
   .form-step {
@@ -601,6 +607,7 @@
     overflow-y: auto;
     padding: 8px 12px;
     margin-bottom: 0;
+    min-height: 0; /* Important for scrolling */
     -webkit-overflow-scrolling: touch;
   }
   
@@ -650,6 +657,11 @@
   
   .step-title {
     font-size: 10px;
+  }
+  
+  /* Ensure reference fields are visible */
+  .form-group:last-of-type {
+    margin-bottom: 8px;
   }
 }
 
@@ -803,24 +815,10 @@
     bottom: 0;
     left: 0;
     right: 0;
-    height: 20px;
-    background: linear-gradient(to top, rgba(255,255,255,0.9), transparent);
+    height: 30px;
+    background: linear-gradient(to top, rgba(255,255,255,0.95), transparent);
     pointer-events: none;
     display: block;
-    margin-top: -20px;
+    margin-top: -30px;
   }
-}
-
-/* Loading state */
-.loading-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(255,255,255,0.9);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
 }

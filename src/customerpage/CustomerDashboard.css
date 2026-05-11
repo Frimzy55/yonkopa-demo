@@ -4,7 +4,11 @@
 .dashboard-container {
   min-height: 100vh;
   background-color: #f5f7fa;
-  overflow-x: hidden; /* Prevent horizontal scroll */
+  overflow-x: hidden;
+  position: relative;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Top Bar */
@@ -137,10 +141,11 @@
 /* Dashboard Content */
 .dashboard-content {
   display: flex;
-  min-height: calc(100vh - 70px);
+  flex: 1;
   margin-top: 70px;
+  min-height: 0; /* Important for flex children to scroll */
   position: relative;
-  overflow: hidden; /* Prevent content overflow */
+  overflow: hidden;
 }
 
 /* Sidebar - Fixed Position with Scrolling */
@@ -291,10 +296,11 @@
   margin-left: 280px;
   padding: 1.5rem;
   background: #f5f7fa;
-  min-height: calc(100vh - 70px);
   overflow-y: auto;
   overflow-x: hidden;
-  max-height: calc(100vh - 70px); /* Fixed height for scrolling */
+  height: calc(100vh - 70px);
+  min-height: 0;
+  position: relative;
 }
 
 /* Custom scrollbar for main content */
@@ -346,7 +352,9 @@
   to { transform: rotate(360deg); }
 }
 
-/* Mobile Responsive Styles */
+/* ============================================ */
+/* MOBILE RESPONSIVE STYLES - IMPROVED SCROLLING */
+/* ============================================ */
 @media (max-width: 768px) {
   .mobile-menu-toggle {
     display: block;
@@ -358,6 +366,13 @@
 
   .mobile-only {
     display: inline;
+  }
+
+  .dashboard-container {
+    height: 100vh;
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
   }
 
   .dashboard-title {
@@ -400,18 +415,27 @@
     width: 280px;
     box-shadow: 2px 0 10px rgba(0,0,0,0.1);
     overflow-y: auto;
+    transition: transform 0.3s ease;
   }
 
   .sidebar-cards.mobile-open {
     transform: translateX(0);
   }
 
-  /* Main content takes full width on mobile */
+  /* Main content takes full width on mobile and scrolls properly */
   .main-content {
     margin-left: 0;
     padding: 1rem;
     width: 100%;
-    max-height: calc(100vh - 70px);
+    height: calc(100vh - 70px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    position: relative;
+  }
+
+  /* Ensure content inside main content scrolls properly */
+  .main-content > * {
+    max-width: 100%;
   }
 
   .mobile-menu-overlay {
@@ -432,12 +456,36 @@
   .menu-card {
     padding: 0.75rem;
   }
+
+  /* Improved touch scrolling */
+  .main-content {
+    scroll-behavior: smooth;
+  }
 }
 
 /* Small Mobile Devices */
 @media (max-width: 480px) {
   .top-bar {
     padding: 0.5rem;
+    height: 60px;
+  }
+
+  .dashboard-content {
+    margin-top: 60px;
+  }
+
+  .main-content {
+    margin-top: 0;
+    padding: 0.75rem;
+    height: calc(100vh - 60px);
+  }
+
+  .sidebar-cards {
+    top: 60px;
+  }
+
+  .mobile-menu-overlay {
+    top: 60px;
   }
 
   .dashboard-title {
@@ -450,15 +498,6 @@
 
   .notification-bell {
     padding: 0.25rem;
-  }
-
-  .main-content {
-    padding: 0.75rem;
-  }
-
-  .sidebar-cards {
-    width: 100%;
-    max-width: 280px;
   }
 
   .menu-card-content p {
@@ -479,6 +518,10 @@
   
   .dashboard-title {
     gap: 0.25rem;
+  }
+  
+  .main-content {
+    padding: 0.5rem;
   }
 }
 
@@ -576,17 +619,6 @@ html {
   transform: scale(1.05);
 }
 
-
-
-
-
-
-
-
-
-
-
-
 .notification-bell {
   position: relative;
   cursor: pointer;
@@ -615,4 +647,60 @@ html {
 .notification-badge.hide {
   opacity: 0;
   transform: scale(0);
+}
+
+/* ============================================ */
+/* ADDITIONAL FIXES FOR KYC FORM SCROLLING */
+/* ============================================ */
+
+/* Ensure any form inside main-content scrolls properly */
+.main-content form,
+.main-content .kyc-form,
+.main-content .form-container {
+  max-height: 100%;
+  overflow-y: visible;
+}
+
+/* Fix for any absolute/fixed positioned elements inside main-content */
+.main-content [style*="position: fixed"],
+.main-content [style*="position:fixed"] {
+  position: sticky !important;
+}
+
+/* Ensure modal-like elements don't break scrolling */
+.modal,
+.overlay,
+.popup {
+  position: fixed;
+  z-index: 1050;
+}
+
+/* Better scrolling for iOS devices */
+@supports (-webkit-touch-callout: none) {
+  .main-content,
+  .sidebar-cards {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .dashboard-container {
+    height: -webkit-fill-available;
+  }
+  
+  .main-content {
+    height: -webkit-fill-available;
+  }
+}
+
+/* Ensure KYC form step container scrolls within main-content */
+.content-section {
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 768px) {
+  .content-section {
+    height: auto;
+    min-height: 100%;
+  }
 }
