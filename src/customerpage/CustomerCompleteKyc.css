@@ -1,4 +1,4 @@
-/* CustomerCompleteKyc.css - Fixed Scrolling for Submit Button */
+/* CustomerCompleteKyc.css - Optimized for Dashboard Mobile Scrolling */
 
 * {
   box-sizing: border-box;
@@ -16,7 +16,7 @@
   color: #333;
 }
 
-/* Step Cards - No Green Color */
+/* Step Cards */
 .step-cards-container {
   display: flex;
   gap: 8px;
@@ -72,22 +72,13 @@
   border-radius: 12px;
   padding: 16px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  display: flex;
-  flex-direction: column;
 }
 
-/* Form Step Container - Scrollable area */
+/* Form Step Container */
 .form-step {
   background: white;
-  padding: 16px;
+  padding: 0;
   border-radius: 12px;
-  overflow-y: auto;
-  flex: 1;
-}
-
-/* Ensure the last form group has proper spacing */
-.form-step > :last-child {
-  margin-bottom: 0;
 }
 
 .form-step h3 {
@@ -283,7 +274,7 @@
   margin-bottom: 4px;
 }
 
-/* Navigation Buttons - Always visible */
+/* Navigation Buttons */
 .form-navigation {
   display: flex;
   flex-direction: row;
@@ -292,7 +283,10 @@
   padding: 16px 0 8px 0;
   background: white;
   border-top: 1px solid #e0e0e0;
-  flex-shrink: 0;
+  position: sticky;
+  bottom: 0;
+  background: white;
+  z-index: 10;
 }
 
 .form-navigation button {
@@ -566,70 +560,41 @@
 }
 
 /* ============================================ */
-/* MOBILE STYLES - FIXED HEIGHT FOR SCROLLING */
+/* MOBILE STYLES - LET DASHBOARD HANDLE SCROLLING */
 /* ============================================ */
 @media (max-width: 768px) {
-  html, body {
-    height: 100%;
-    overflow: hidden;
-  }
-  
   .content-section {
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
     padding: 12px;
-    overflow: hidden;
+    height: auto;
+    min-height: 100%;
+    display: block;
+    overflow: visible;
   }
   
   .content-section > h2 {
-    flex-shrink: 0;
     margin-bottom: 12px;
+    font-size: 1.3rem;
   }
   
   .step-cards-container {
-    flex-shrink: 0;
-    margin-bottom: 12px;
+    margin-bottom: 16px;
   }
   
   .kyc-form {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
     padding: 12px;
-    margin-bottom: 0;
-    min-height: 0; /* Important for flex children to scroll */
   }
   
   .form-step {
-    flex: 1;
-    overflow-y: auto;
-    padding: 8px 12px;
-    margin-bottom: 0;
-    min-height: 0; /* Important for scrolling */
-    -webkit-overflow-scrolling: touch;
-  }
-  
-  /* Custom scrollbar for mobile */
-  .form-step::-webkit-scrollbar {
-    width: 3px;
-  }
-  
-  .form-step::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 3px;
-  }
-  
-  .form-step::-webkit-scrollbar-thumb {
-    background: #667eea;
-    border-radius: 3px;
+    padding: 0;
+    overflow-y: visible;
+    max-height: none;
   }
   
   .form-navigation {
-    flex-shrink: 0;
-    margin-top: 12px;
-    padding: 12px 0 8px 0;
+    position: relative;
+    bottom: auto;
+    margin-top: 20px;
+    padding: 12px 0;
   }
   
   .form-navigation button {
@@ -643,7 +608,7 @@
   .form-group select,
   .form-group textarea,
   .doc-card {
-    font-size: 16px; /* Prevents zoom on iOS */
+    font-size: 16px;
   }
   
   .step-card {
@@ -659,9 +624,9 @@
     font-size: 10px;
   }
   
-  /* Ensure reference fields are visible */
-  .form-group:last-of-type {
-    margin-bottom: 8px;
+  /* Add bottom padding for better scroll experience */
+  .kyc-form {
+    margin-bottom: 20px;
   }
 }
 
@@ -673,10 +638,6 @@
   
   .kyc-form {
     padding: 8px;
-  }
-  
-  .form-step {
-    padding: 4px 8px;
   }
   
   .form-group {
@@ -707,9 +668,6 @@
     max-width: 800px;
     margin: 0 auto;
     padding: 20px;
-    height: auto;
-    display: block;
-    overflow: visible;
   }
   
   .step-cards-container {
@@ -737,13 +695,10 @@
   
   .kyc-form {
     display: block;
-    overflow: visible;
-    height: auto;
   }
   
   .form-step {
     overflow-y: visible;
-    height: auto;
     max-height: none;
   }
   
@@ -752,6 +707,7 @@
     justify-content: space-between;
     padding: 20px 0 8px 0;
     margin-top: 20px;
+    position: relative;
   }
   
   .form-navigation button {
@@ -787,38 +743,9 @@
   }
 }
 
-/* ============================================ */
-/* SAFE AREA SUPPORT FOR NOTCHED PHONES */
-/* ============================================ */
-@supports (padding-bottom: env(safe-area-inset-bottom)) {
-  @media (max-width: 768px) {
-    .content-section {
-      padding-bottom: env(safe-area-inset-bottom);
-    }
-    
-    .form-step {
-      padding-bottom: env(safe-area-inset-bottom);
-    }
-  }
-}
-
-/* Scroll hint indicator for mobile */
+/* Scroll hint indicator for long forms */
 @media (max-width: 768px) {
   .form-step {
     position: relative;
-  }
-  
-  /* Add a subtle gradient at the bottom to indicate more content */
-  .form-step::after {
-    content: '';
-    position: sticky;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 30px;
-    background: linear-gradient(to top, rgba(255,255,255,0.95), transparent);
-    pointer-events: none;
-    display: block;
-    margin-top: -30px;
   }
 }
