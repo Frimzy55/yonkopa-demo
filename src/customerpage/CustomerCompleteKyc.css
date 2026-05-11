@@ -540,44 +540,36 @@
 
 /* ============================================ */
 /* MOBILE STYLES - Buttons Always Visible */
-/* ============================================ */
 @media (max-width: 768px) {
+
   .content-section {
     padding: 12px;
   }
-  
-  .content-section > h2 {
-    margin-bottom: 12px;
-    font-size: 1.3rem;
-  }
-  
-  .step-cards-container {
-    margin-bottom: 16px;
-  }
-  
-  .kyc-form {
-    border-radius: 12px;
-  }
-  
+
   .form-step {
     padding: 16px;
-    max-height: calc(100vh - 280px);
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    max-height: none;
+    overflow-y: visible;
   }
-  
+
   .form-navigation {
-    padding: 12px 16px;
     position: sticky;
     bottom: 0;
-    background: white;
-    z-index: 10;
+    left: 0;
+    right: 0;
+    background: #fff;
+    padding: 12px 16px;
+    border-top: 1px solid #ddd;
+    z-index: 999;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.08);
   }
-  
+
   .form-navigation button {
     padding: 14px 8px;
     font-size: 15px;
   }
+
+
   
   /* Better touch targets */
   .form-group input,
