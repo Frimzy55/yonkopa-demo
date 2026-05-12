@@ -257,7 +257,7 @@ const CustomerLoanForm = ({ user, handleReset }) => {
     else if (formData.loanAmount > 1000000) newErrors.loanAmount = "Maximum loan amount is 1,000,000";
     
     if (!formData.loanPurpose?.trim()) newErrors.loanPurpose = "Loan purpose is required";
-    else if (formData.loanPurpose.length < 10) newErrors.loanPurpose = "Please provide a more detailed purpose (min 10 characters)";
+    else if (formData.loanPurpose.length < 1) newErrors.loanPurpose = "Please provide a more detailed purpose (min 1 character)";
     
     if (!formData.loanTerm) newErrors.loanTerm = "Loan term is required";
     else if (isNaN(formData.loanTerm) || formData.loanTerm <= 0) 
