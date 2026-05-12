@@ -129,7 +129,7 @@ const LoanDetails = ({ formData, handleInputChange, errors, touchedFields, handl
                 step="100"
               />
             </div>
-            <div className="helper-text">Minimum: GHS 100 | Maximum: GHS 1,000,000</div>
+          
             {getFieldError('loanAmount') && (
               <div className="error-message">{getFieldError('loanAmount')}</div>
             )}
@@ -178,7 +178,7 @@ const LoanDetails = ({ formData, handleInputChange, errors, touchedFields, handl
               />
               <span className="input-suffix">months</span>
             </div>
-            <div className="helper-text">Minimum: 1 month | Maximum: 60 months</div>
+      
             {getFieldError('loanTerm') && (
               <div className="error-message">{getFieldError('loanTerm')}</div>
             )}

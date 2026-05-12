@@ -285,15 +285,15 @@ const CustomerLoanForm = ({ user, handleReset }) => {
     if (!formData.guarantorEmployeeType) newErrors.guarantorEmployeeType = "Employment type is required";
     
     if (!formData.guarantorProfilePicture) newErrors.guarantorProfilePicture = "Profile picture is required";
-    else if (formData.guarantorProfilePicture.size > 5 * 1024 * 1024) 
+    else if (formData.guarantorProfilePicture.size > 15 * 1024 * 1024) 
       newErrors.guarantorProfilePicture = "File size must be less than 5MB";
     
     if (!formData.guarantorGhanaCardFront) newErrors.guarantorGhanaCardFront = "Ghana Card front is required";
-    else if (formData.guarantorGhanaCardFront.size > 5 * 1024 * 1024) 
+    else if (formData.guarantorGhanaCardFront.size > 15 * 1024 * 1024) 
       newErrors.guarantorGhanaCardFront = "File size must be less than 5MB";
     
     if (!formData.guarantorGhanaCardBack) newErrors.guarantorGhanaCardBack = "Ghana Card back is required";
-    else if (formData.guarantorGhanaCardBack.size > 5 * 1024 * 1024) 
+    else if (formData.guarantorGhanaCardBack.size > 15 * 1024 * 1024) 
       newErrors.guarantorGhanaCardBack = "File size must be less than 5MB";
     
     if (formData.guarantorEmployeeType === "salary worker") {
@@ -304,7 +304,7 @@ const CustomerLoanForm = ({ user, handleReset }) => {
       else if (isNaN(formData.guarantorYearsInService) || formData.guarantorYearsInService < 0) 
         newErrors.guarantorYearsInService = "Valid years in service is required";
       if (!formData.guarantorPayslip) newErrors.guarantorPayslip = "Payslip is required";
-      else if (formData.guarantorPayslip.size > 5 * 1024 * 1024) 
+      else if (formData.guarantorPayslip.size > 15 * 1024 * 1024) 
         newErrors.guarantorPayslip = "File size must be less than 5MB";
     } 
     else if (formData.guarantorEmployeeType === "self-employed") {
@@ -314,7 +314,7 @@ const CustomerLoanForm = ({ user, handleReset }) => {
       else if (isNaN(formData.guarantorYearsInBusiness) || formData.guarantorYearsInBusiness < 0) 
         newErrors.guarantorYearsInBusiness = "Valid years in business is required";
       if (!formData.guarantorBusinessPicture) newErrors.guarantorBusinessPicture = "Business picture is required";
-      else if (formData.guarantorBusinessPicture.size > 5 * 1024 * 1024) 
+      else if (formData.guarantorBusinessPicture.size > 15 * 1024 * 1024) 
         newErrors.guarantorBusinessPicture = "File size must be less than 5MB";
     }
     

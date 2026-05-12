@@ -1528,3 +1528,49 @@ html, body {
     padding: 0.75rem !important;
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@media (max-width: 768px) {
+  /* … existing mobile overrides … */
+
+  /* Fix currency symbol position inside input */
+  .input-with-icon {
+    position: relative;
+    width: 100%;
+  }
+
+  .input-with-icon .input-icon {
+    left: 0.75rem;        /* adjust spacing on small screens */
+    font-size: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .input-with-icon input {
+    padding-left: 2.25rem !important;  /* enough space for symbol */
+    padding-right: 1rem !important;
+    font-size: 1rem !important;
+  }
+
+  /* If you have suffix (e.g., "months"), keep it from overlapping */
+  .input-suffix {
+    right: 0.75rem;
+    font-size: 0.8rem;
+    background: white;      /* optional: avoid text overlap */
+    padding-left: 0.25rem;
+  }
+}

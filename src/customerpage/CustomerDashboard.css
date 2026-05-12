@@ -864,3 +864,106 @@ html {
 .notification-bell.has-notification {
   animation: bellPulse 1s ease 3;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* ============================================ */
+/* FIX: Ensure avatar remains perfectly round on mobile */
+/* ============================================ */
+@media (max-width: 768px) {
+  .avatar-img,
+  .avatar-placeholder {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px;
+    min-height: 40px;
+    border-radius: 50% !important;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+
+  .user-avatar {
+    flex-shrink: 0;
+    line-height: 0; /* prevents extra spacing issues */
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* ============================================ */
+/* FIX: Avatar dropdown fully visible - not cut off */
+/* ============================================ */
+
+/* Ensure the avatar container is the positioning context */
+.user-avatar {
+  position: relative !important;
+  overflow: visible !important;
+}
+
+/* Prevent top bar from clipping dropdown */
+.top-bar,
+.top-bar-right {
+  overflow: visible !important;
+}
+
+/* Dropdown menu base styles (if not already defined in AvatarDropdown.css) */
+.avatar-dropdown {
+  position: absolute;
+  top: 50px;
+  right: 0;
+  min-width: 200px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  z-index: 2000;
+  overflow: visible;
+}
+
+/* On mobile, reposition dropdown to avoid right-edge cutoff */
+@media (max-width: 768px) {
+  .avatar-dropdown {
+    right: auto;
+    left: -100px;  /* Adjust as needed; shift left so it fits */
+    min-width: 160px;
+  }
+  
+  /* If dropdown normally appears on the left side of avatar, ensure it doesn't go off left edge */
+  .avatar-dropdown.left-aligned {
+    right: auto;
+    left: 0;
+  }
+  
+  /* Alternative: for very small screens, make dropdown full-width-minus-padding */
+  @media (max-width: 480px) {
+    .avatar-dropdown {
+      position: fixed;
+      top: 60px;
+      right: 10px;
+      left: auto;
+      width: auto;
+      min-width: 180px;
+      max-width: calc(100% - 20px);
+    }
+  }
+}
