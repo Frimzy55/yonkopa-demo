@@ -392,14 +392,14 @@ const visibleMenuItems = useMemo(() => {
 
 
 
-  useEffect(() => {
+  /*useEffect(() => {
   const fetchTasks = async () => {
     try {
       const user = JSON.parse(localStorage.getItem("user"));
 
      /* const response = await fetch(
         `http://localhost:5000/tasks2/${user.userId}`
-      );*/
+      );
 
       const response = await fetch(
      `${process.env.REACT_APP_API_URL}/tasks2/${user.userId}`
@@ -408,6 +408,34 @@ const visibleMenuItems = useMemo(() => {
       const data = await response.json();
 
       setUserTasks(data);
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+    }
+  };
+
+  fetchTasks();
+}, []); */
+
+
+useEffect(() => {
+  const fetchTasks = async () => {
+    try {
+      const storedUser = localStorage.getItem("user");
+      if (!storedUser) return;
+
+      const user = JSON.parse(storedUser);
+
+      const url = `${process.env.REACT_APP_API_URL}/tasks2/${user.userId}`;
+
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error ${response.status}`);
+      }
+
+      const data = await response.json();
+      setUserTasks(data);
+
     } catch (error) {
       console.error("Error fetching tasks:", error);
     }
