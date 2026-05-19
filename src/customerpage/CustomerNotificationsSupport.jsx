@@ -126,7 +126,7 @@ const NotificationsSupport = ({ user }) => {
                 <Mail size={20} />
                 <div>
                   <strong>Email Support</strong>
-                  <span>support@yourdomain.com</span>
+                  <span>info@yonkopamicrocredit.com</span>
                 </div>
               </a>
 
@@ -134,7 +134,8 @@ const NotificationsSupport = ({ user }) => {
                 <Phone size={20} />
                 <div>
                   <strong>Phone Support</strong>
-                  <span>+1 (234) 567-890</span>
+                  <span>+233 24 193 3741
+                  </span>
                 </div>
               </a>
             </div>
