@@ -95,7 +95,7 @@ html, body, #root {
   border-radius: 6px;
   cursor: pointer;
   background-color: transparent;
-  color: rgba(255, 255, 255, 0.8);
+  color: white !important;            /* MAIN MENU → WHITE */
   margin-bottom: 2px;
   text-align: left;
   transition: all 0.2s ease;
@@ -104,25 +104,33 @@ html, body, #root {
   position: relative;
 }
 
+
+
 /* Submenu items – first level indentation (tight) */
 .submenu-item {
   padding-left: 0.75rem !important;
   padding-right: 8px !important;
+  color: #60a5fa !important;          /* LIGHT BLUE - highly visible on dark bg */
+}
+
+/* Optional: make submenu icons the same light blue */
+.submenu-item .submenu-icon {
+  color: #60a5fa !important;
 }
 
 /* Nested items (sub-submenu) – slight indent */
 .nested-item {
   padding-left: 1.25rem !important;
   padding-right: 8px !important;
+  color: #f97316 !important;          /* NESTED → ORANGE */
 }
 
 /* Report items – slightly more indent */
 .report-item {
   padding-left: 1.75rem !important;
   padding-right: 8px !important;
+  color: #f97316 !important;          /* REPORT (also nested) → ORANGE */
 }
-
-
 
 /* Hover & active states */
 .menu-item:hover,
@@ -130,7 +138,7 @@ html, body, #root {
 .report-item:hover,
 .nested-item:hover {
   background-color: rgba(255, 255, 255, 0.1);
-  color: #fff;
+  color: #fff !important;
 }
 
 .menu-item.active,
@@ -138,7 +146,7 @@ html, body, #root {
 .report-item.active,
 .nested-item.active {
   background: linear-gradient(135deg, #0d6efd, #0b5ed7);
-  color: #fff;
+  color: #fff !important;
 }
 
 /* Active indicator line at the very left edge */
@@ -228,6 +236,7 @@ html, body, #root {
 .sidebar-title {
   font-size: 1rem;
   transition: opacity 0.2s ease;
+  color: white;
 }
 
 /* ================== MAIN CONTENT AREA ================== */
