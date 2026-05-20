@@ -19,7 +19,7 @@ const Toast = ({ message, type, onClose }) => {
     <div className={`toast-notification toast-${type}`}>
       <div className="toast-content">
         <span className="toast-icon">
-          {type === 'success' ? '✅' : type === 'error' ? '❌' : '⚠️'}
+          {type === 'success' ? '✅' : type === 'error' ? '❌' : ''}
         </span>
         <span className="toast-message">{message}</span>
         <button className="toast-close" onClick={onClose}>×</button>
@@ -211,7 +211,7 @@ const CustomerLoanForm = ({ user, handleReset }) => {
   }, [user]);
 
   const steps = [
-    { number: 1, title: "Applicant Details" },
+    { number: 1, title: "" },
     { number: 2, title: "Loan Details" },
     { number: 3, title: "Guarantor Info" },
     { number: 4, title: "Momo Details" },
@@ -604,7 +604,7 @@ const CustomerLoanForm = ({ user, handleReset }) => {
         {hasErrors && (
           <div className="error-summary-bottom">
             <div className="error-summary-header">
-              <span className="error-icon">⚠️</span>
+              <span className="error-icon"></span>
               <h4>Please fix the following errors to continue:</h4>
             </div>
             

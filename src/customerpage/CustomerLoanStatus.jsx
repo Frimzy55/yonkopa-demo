@@ -77,11 +77,10 @@ const normalizeStatus = (status) => {
   return "No Loan";
 };
 
-const CustomerLoanStatus = ({ user, onStatusChange, showDetails = true , onApplyLoan}) => {
+const CustomerLoanStatus = ({ user, onStatusChange, showDetails = true, onApplyLoan }) => {
   const [currentStatus, setCurrentStatus] = useState("No Loan");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  
 
   useEffect(() => {
     if (!user) {
@@ -103,19 +102,15 @@ const CustomerLoanStatus = ({ user, onStatusChange, showDetails = true , onApply
       setError(null);
 
       try {
-        const apiUrl =
-          process.env.REACT_APP_API_URL || "http://localhost:5000";
+        const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
-        const response = await fetch(
-          `${apiUrl}/api/loan-status/${userId}`
-        );
+        const response = await fetch(`${apiUrl}/api/loan-status/${userId}`);
 
         if (!response.ok) {
           throw new Error(`HTTP error! ${response.status}`);
         }
 
         const data = await response.json();
-
         console.log("API Response:", data);
 
         const newStatus = normalizeStatus(data.status);
@@ -171,22 +166,15 @@ const CustomerLoanStatus = ({ user, onStatusChange, showDetails = true , onApply
       <Card className="shadow-sm border-0 text-center p-4">
         <ClockFill size={40} className="text-secondary mb-3" />
         <h4>No Loan Application</h4>
-        <p className="text-muted">
-          You have not applied for a loan yet.
-        </p>
+        <p className="text-muted">You have not applied for a loan yet.</p>
         <Button variant="info" onClick={onApplyLoan}>Apply for Loan</Button>
       </Card>
     );
   }
 
   // Active Loan UI
-  const currentIndex = STEPS.findIndex(
-    (step) => step.name === currentStatus
-  );
-
-  const progress =
-    (currentIndex / (STEPS.length - 1)) * 100;
-
+  const currentIndex = STEPS.findIndex((step) => step.name === currentStatus);
+  const progress = (currentIndex / (STEPS.length - 1)) * 100;
   const currentStep = STEPS[currentIndex];
   const CurrentIcon = currentStep.icon;
 
@@ -219,25 +207,12 @@ const CustomerLoanStatus = ({ user, onStatusChange, showDetails = true , onApply
             const isActive = realIndex === currentIndex;
             const isDone = realIndex < currentIndex;
             const Icon = step.icon;
-
             return (
               <Nav.Item key={step.name} className="text-center flex-fill">
-                <div
-                  className={
-                    isDone
-                      ? "text-info"
-                      : isActive
-                      ? "text-info"
-                      : "text-muted"
-                  }
-                >
+                <div className={isDone ? "text-info" : isActive ? "text-info" : "text-muted"}>
                   <div
                     className={`rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center ${
-                      isDone
-                        ? "bg-info"
-                        : isActive
-                        ? "bg-info"
-                        : "bg-light"
+                      isDone ? "bg-info" : isActive ? "bg-info" : "bg-light"
                     }`}
                     style={{ width: 40, height: 40 }}
                   >
@@ -259,6 +234,18 @@ const CustomerLoanStatus = ({ user, onStatusChange, showDetails = true , onApply
           <Alert variant={getVariant()} className="mt-3">
             <strong>{currentStatus}</strong> — {currentStep.details}
           </Alert>
+        )}
+
+        {/* "Apply Again" button for Rejected status */}
+        {currentStatus === "Rejected" && (
+          <div className="text-center mt-4">
+            <Button variant="danger" onClick={onApplyLoan}>
+              Apply Again
+            </Button>
+            <p className="text-muted small mt-2">
+              Your previous application was not approved. You can submit a new one.
+            </p>
+          </div>
         )}
       </Card.Body>
     </Card>

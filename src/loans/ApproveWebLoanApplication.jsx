@@ -40,6 +40,8 @@ const ApproveWebLoanApplication = () => {
   // ✅ Ref to scroll to highlighted row
   const tableRef = useRef(null);
 
+  const [evaluationStep, setEvaluationStep] = useState(1);
+
   // ✅ Fetch all loans
   useEffect(() => {
     const fetchLoanData = async () => {
@@ -99,6 +101,7 @@ const ApproveWebLoanApplication = () => {
     if (action === "evaluate") {
       setHighlightedRowId(loan.loan_id);
       setEvaluatingLoan(loan);
+       setEvaluationStep(1);
     }
 
     // ✅ APPROVE
@@ -154,10 +157,18 @@ const ApproveWebLoanApplication = () => {
     }
 
     // ⚠️ SKIP
-    if (action === "skip") {
+   /* if (action === "skip") {
       setEvaluatingLoan(null);
       setHighlightedRowId(null);
-    }
+    }*/
+
+    if (action === "skip") {
+  setHighlightedRowId(loan.loan_id);
+  setEvaluatingLoan(loan);
+  setEvaluationStep(4); // jump to final step
+}
+
+
   };
 
   // ✅ VIEW KYC
@@ -235,6 +246,7 @@ const ApproveWebLoanApplication = () => {
     return (
       <LoanEvaluation
         loan={evaluatingLoan}
+         initialStep={evaluationStep}
         onApprove={(loan) => handleAction("approve", loan)}
         onReject={(loan) => handleAction("reject", loan)}
         onBack={() => {

@@ -1,83 +1,60 @@
-// hooks/useScrollPersistence.js
-import { useRef, useCallback, useEffect } from 'react';
+import { useRef, useCallback, useEffect } from "react";
 
 export const useScrollPersistence = (navigation) => {
   const contentAreaRef = useRef(null);
-  const scrollPositions = useRef({
-    Dashboard: 0,
-    Customer: {},
-    Account: {},
-    Teller: {},
-    Loans: {},
-    'Internal Accounts': {},
-    Admin: {},
-    'My Approvals': {},
-    Reports: {},
-    'Batch Upload': {},
-    'System Settings': {}
-  });
+  const scrollPositions = useRef({});
+
+  const getScrollKey = useCallback(() => {
+    const { activeMenu, activeSubMenu, activeNestedMenu, activeReportName } = navigation;
+
+    if (activeReportName) return `Reports-${activeReportName}`;
+    if (activeNestedMenu) return `${activeMenu}-${activeSubMenu}-${activeNestedMenu}`;
+    if (activeSubMenu) return `${activeMenu}-${activeSubMenu}`;
+    return activeMenu;
+  }, [navigation]);
 
   const saveCurrentScrollPosition = useCallback(() => {
     if (!contentAreaRef.current) return;
-    
-    const currentScrollTop = contentAreaRef.current.scrollTop;
-    const { activeMenu, activeSubMenu, activeNestedMenu, activeReportName } = navigation;
-    
-    let scrollKey = activeMenu;
-    if (activeSubMenu) scrollKey = `${activeMenu}-${activeSubMenu}`;
-    if (activeNestedMenu) scrollKey = `${activeMenu}-${activeSubMenu}-${activeNestedMenu}`;
-    if (activeReportName) scrollKey = `Reports-${activeReportName}`;
-    
-    scrollPositions.current[scrollKey] = currentScrollTop;
-    sessionStorage.setItem(`scroll_${scrollKey}`, currentScrollTop);
-  }, [navigation]);
+
+    const key = getScrollKey();
+    const value = contentAreaRef.current.scrollTop || 0;
+
+    scrollPositions.current[key] = value;
+    sessionStorage.setItem(`scroll_${key}`, String(value));
+  }, [getScrollKey]);
 
   const restoreScrollPosition = useCallback(() => {
     if (!contentAreaRef.current) return;
-    
-    const { activeMenu, activeSubMenu, activeNestedMenu, activeReportName } = navigation;
-    
-    let scrollKey = activeMenu;
-    if (activeSubMenu) scrollKey = `${activeMenu}-${activeSubMenu}`;
-    if (activeNestedMenu) scrollKey = `${activeMenu}-${activeSubMenu}-${activeNestedMenu}`;
-    if (activeReportName) scrollKey = `Reports-${activeReportName}`;
-    
-    let savedPosition = scrollPositions.current[scrollKey];
-    if (savedPosition === undefined) {
-      savedPosition = sessionStorage.getItem(`scroll_${scrollKey}`);
-      if (savedPosition) {
-        savedPosition = parseInt(savedPosition);
-        scrollPositions.current[scrollKey] = savedPosition;
+
+    const key = getScrollKey();
+
+    let saved =
+      scrollPositions.current[key] ??
+      parseInt(sessionStorage.getItem(`scroll_${key}`) || "0", 10);
+
+    if (isNaN(saved)) saved = 0;
+
+    requestAnimationFrame(() => {
+      if (contentAreaRef.current) {
+        contentAreaRef.current.scrollTop = saved;
       }
-    }
-    
-    if (savedPosition && !isNaN(savedPosition)) {
-      setTimeout(() => {
-        if (contentAreaRef.current) {
-          contentAreaRef.current.scrollTop = savedPosition;
-        }
-      }, 50);
-    } else {
-      setTimeout(() => {
-        if (contentAreaRef.current) {
-          contentAreaRef.current.scrollTop = 0;
-        }
-      }, 50);
-    }
-  }, [navigation]);
+    });
+  }, [getScrollKey]);
 
   useEffect(() => {
-    const scrollContainer = contentAreaRef.current;
-    if (scrollContainer) {
-      const handleScroll = () => saveCurrentScrollPosition();
-      scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
-      return () => scrollContainer.removeEventListener('scroll', handleScroll);
-    }
+    const el = contentAreaRef.current;
+    if (!el) return;
+
+    const onScroll = () => saveCurrentScrollPosition();
+
+    el.addEventListener("scroll", onScroll, { passive: true });
+
+    return () => el.removeEventListener("scroll", onScroll);
   }, [saveCurrentScrollPosition]);
 
   useEffect(() => {
     restoreScrollPosition();
-  }, [navigation.activeMenu, navigation.activeSubMenu, navigation.activeNestedMenu, navigation.activeReportName, restoreScrollPosition]);
+  }, [restoreScrollPosition]);
 
   return { contentAreaRef, saveCurrentScrollPosition };
 };

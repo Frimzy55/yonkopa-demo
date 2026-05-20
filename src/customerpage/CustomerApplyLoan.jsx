@@ -18,7 +18,9 @@ const CustomerApplyLoan = ({ user }) => {
     }
   }, [user]);
 
-  useEffect(() => {
+  
+
+  /*useEffect(() => {
     const checkLoan = async () => {
       if (!user?.userId) return;
 
@@ -29,7 +31,9 @@ const CustomerApplyLoan = ({ user }) => {
         );
         const data = await res.json();
 
-        if (data.exists) setAlreadyApplied(true);
+
+       if (data.exists) setAlreadyApplied(true);
+
       } catch (err) {
         console.error(err);
       } finally {
@@ -38,7 +42,57 @@ const CustomerApplyLoan = ({ user }) => {
     };
 
     checkLoan();
-  }, [user]);
+  }, [user]);*/
+
+
+
+
+
+  useEffect(() => {
+  const checkLoan = async () => {
+    if (!user?.userId) return;
+
+    try {
+      setChecking(true);
+
+      // 1. Active loan check
+      const res1 = await fetch(
+        `${process.env.REACT_APP_API_URL}/loan-check/${user.userId}`
+      );
+      const active = await res1.json();
+
+      // 2. Rejected check
+      const res2 = await fetch(
+        `${process.env.REACT_APP_API_URL}/loan-rejected-check/${user.userId}`
+      );
+      const rejected = await res2.json();
+
+      // FINAL LOGIC
+      const isRejectedOnly = rejected.rejected;
+
+      if (isRejectedOnly) {
+        // allow reapply ALWAYS
+        setAlreadyApplied(false);
+      } else if (active.exists) {
+        // pending or approved → block
+        setAlreadyApplied(true);
+      } else {
+        // no loan → allow
+        setAlreadyApplied(false);
+      }
+
+    } catch (err) {
+      console.error(err);
+      setAlreadyApplied(false);
+    } finally {
+      setChecking(false);
+    }
+  };
+
+  checkLoan();
+}, [user?.userId]);
+
+
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -104,9 +158,9 @@ const CustomerApplyLoan = ({ user }) => {
     return (
       <div className="container my-5">
         <div className="card shadow-sm border-0 p-5 text-center">
-          <h3 className="text-danger mb-2">Application Restricted</h3>
+          <h3 className="text-danger mb-2">You cannot apply at this time Loan under review</h3>
           <p className="text-muted">
-            You already have an active loan application.
+            You already have Pending loan application.
           </p>
           <button className="btn btn-outline-secondary mt-3" onClick={handleReset}>
             Refresh

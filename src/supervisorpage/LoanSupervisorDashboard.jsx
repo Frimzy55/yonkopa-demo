@@ -1208,7 +1208,7 @@ useEffect(() => {
         )}
 
         {/* Main Content Area */}
-        <div className="d-flex flex-column flex-grow-1 bg-light" style={{ position: 'relative', height: '100vh', overflow: 'hidden' }}>
+        <div className="d-flex flex-column flex-grow-1 bg-light" style={{ height: 'calc(100vh - 70px)', overflow: 'hidden' }}>
           <div ref={contentAreaRef} className="dashboard-content-area">
             <div className="p-3 p-md-4">
               <div className="card border-0 shadow-sm mb-3 mb-md-4">
