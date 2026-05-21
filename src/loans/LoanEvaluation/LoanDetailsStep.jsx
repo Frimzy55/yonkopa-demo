@@ -42,7 +42,7 @@ const LoanDetailsStep = ({ loan, onNext }) => {
 
             <Col md={6}>
               <div className="mb-3">
-                <small className="text-muted text-uppercase d-block mb-1">Customer ID</small>
+                <small className="text-muted text-uppercase d-block mb-1">Kyc code</small>
                 <strong className="fs-5">{loan.kyc_code || 'N/A'}</strong>
               </div>
             </Col>

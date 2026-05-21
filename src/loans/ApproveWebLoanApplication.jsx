@@ -311,7 +311,7 @@ const ApproveWebLoanApplication = () => {
         <thead>
           <tr>
             <th>Loan ID</th>
-            <th>Customer ID</th>
+            <th>Kyc code</th>
             <th>Full Name</th>
             <th>Phone</th>
             <th>Amount</th>

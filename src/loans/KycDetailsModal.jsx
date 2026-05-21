@@ -106,7 +106,7 @@ const KycDetailsModal = ({ show, onClose, kyc }) => {
             <Table bordered responsive>
               <tbody>
                 <tr>
-                  <td width="35%"><b>Customer  ID</b></td>
+                  <td width="35%"><b>Kyc code</b></td>
                   <td>{kyc.kyc_code || kyc.kycCode || "—"}</td>
                 </tr>
                 <tr>

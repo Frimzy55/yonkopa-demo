@@ -714,50 +714,42 @@ const Roles = () => {
         </div>
       </div>
 
-      {/* Professional Search Bar */}
-      <div className="row mb-4">
-        <div className="col-md-6 mx-auto">
-          <div className="card border-0 shadow-sm">
-            <div className="card-body p-3">
-              <div className="input-group">
-                <span className="input-group-text bg-white border-end-0">
-                  <i className="bi bi-search"></i>
-                </span>
-                <input
-                  type="text"
-                  className="form-control border-start-0"
-                  placeholder="Search by name, username, user ID, email, phone, role, status..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-                {searchTerm && (
-                  <button
-                    className="btn btn-outline-secondary"
-                    type="button"
-                    onClick={handleClearSearch}
-                    title="Clear search"
-                  >
-                    <i className="bi bi-x-lg"></i>
-                  </button>
-                )}
-              </div>
-              <div className="mt-2 text-muted small">
-                <i className="bi bi-info-circle me-1"></i>
-                Showing {filteredStaffMembers.length} of {staffMembers.length} staff members
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Staff Table */}
+      {/* Main Staff Table with integrated search bar */}
       <div className="card">
-        <div className="card-header bg-white">
+        <div className="card-header bg-white d-flex flex-wrap justify-content-between align-items-center gap-3">
           <h5 className="mb-0">
             <i className="bi bi-table me-2"></i>
             All Staff Members
             {searchTerm && <span className="badge bg-secondary ms-2">Filtered</span>}
           </h5>
+          <div className="d-flex flex-column flex-sm-row gap-2 align-items-sm-center">
+            <div className="input-group input-group-sm" style={{ maxWidth: '300px' }}>
+              <span className="input-group-text bg-white border-end-0">
+                <i className="bi bi-search"></i>
+              </span>
+              <input
+                type="text"
+                className="form-control border-start-0"
+                placeholder="Search by name, ID, role..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              {searchTerm && (
+                <button
+                  className="btn btn-outline-secondary"
+                  type="button"
+                  onClick={handleClearSearch}
+                  title="Clear search"
+                >
+                  <i className="bi bi-x-lg"></i>
+                </button>
+              )}
+            </div>
+          </div>
+          <div className="text-muted small w-100 mt-1">
+            <i className="bi bi-info-circle me-1"></i>
+            Showing {filteredStaffMembers.length} of {staffMembers.length} staff members
+          </div>
         </div>
         <div className="card-body">
           {loading && !staffMembers.length ? (
@@ -930,7 +922,7 @@ const Roles = () => {
                 <div className="modal-footer">
                   <button type="button" className="btn btn-secondary" onClick={resetForm}>Cancel</button>
                   <button type="submit" className="btn btn-primary" disabled={loading}>
-                    {loading ? <><span className="spinner-border spinner-border-sm me-2"></span>{editingStaff ? 'Updating Permissions...' : 'Saving...'}</> : (editingRole ? (editingStaff ? 'Update Staff Permissions' : 'Update Role') : 'Create Role')}
+                    {loading ? <><span className="spinner-border spinner-border-sm me-2"></span>{editingStaff ? 'Updating Permissions...' : 'Saving...'}</> : (editingRole ? (editingStaff ? 'Update Staff Permissions' : 'Update Role') : 'Update Role')}
                   </button>
                 </div>
               </form>

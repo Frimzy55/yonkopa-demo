@@ -92,7 +92,7 @@ const LoanDetailsModal = ({
             <Table bordered size="sm">
               <tbody>
                 <tr>
-                  <td><b>Customer ID</b></td>
+                  <td><b>Kyc Code</b></td>
                   <td>{loan.kyc_code}</td>
                 </tr>
                 <tr>
