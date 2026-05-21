@@ -9,12 +9,11 @@ import {
   HourglassSplit,
   CheckLg,
   XCircleFill,
-  
   FileText,
-  ArrowRepeat       // ← fixed: replaced RefreshCw with ArrowRepeat
+  ArrowRepeat
 } from "react-bootstrap-icons";
 
-// STEPS, extractUserId, normalizeStatus remain exactly the same as before
+// STEPS, extractUserId, normalizeStatus remain unchanged
 const STEPS = [
   {
     name: "No Loan",
@@ -67,10 +66,10 @@ const normalizeStatus = (status) => {
   return "No Loan";
 };
 
-// Professional styles (same as before, fixed the borderLeftColor usage)
+// Professional styles (updated for single status view)
 const styles = {
   container: {
-    maxWidth: '900px',
+    maxWidth: '600px',
     margin: '0 auto',
     padding: '1.5rem',
     fontFamily: "'Inter', system-ui, -apple-system, sans-serif"
@@ -79,8 +78,7 @@ const styles = {
     background: '#ffffff',
     borderRadius: '24px',
     boxShadow: '0 20px 35px -12px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.02)',
-    overflow: 'hidden',
-    transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+    overflow: 'hidden'
   },
   header: {
     padding: '1.5rem 2rem',
@@ -113,100 +111,50 @@ const styles = {
     border: '1px solid',
     borderColor: variant === 'warning' ? '#fde68a' : variant === 'info' ? '#bae6fd' : variant === 'danger' ? '#fecaca' : '#e5e7eb'
   }),
-  progressWrapper: {
-    padding: '1.5rem 2rem 0.5rem 2rem',
-    background: '#ffffff'
-  },
-  progressLabel: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    fontSize: '0.75rem',
-    fontWeight: '500',
-    marginBottom: '0.5rem',
-    color: '#4b5563'
-  },
-  progressBar: {
-    height: '8px',
-    background: '#e5e7eb',
-    borderRadius: '10px',
-    overflow: 'hidden'
-  },
-  progressFill: (progress, variant) => ({
-    width: `${progress}%`,
-    height: '100%',
-    background: variant === 'warning' ? '#f59e0b' : variant === 'info' ? '#0ea5e9' : variant === 'danger' ? '#ef4444' : '#6b7280',
-    borderRadius: '10px',
-    transition: 'width 0.4s ease'
-  }),
-  timeline: {
-    padding: '1rem 2rem 2rem 2rem',
-    display: 'flex',
-    justifyContent: 'space-between',
-    position: 'relative'
-  },
-  step: {
-    flex: 1,
+  statusCard: {
+    margin: '2rem',
+    padding: '2rem',
+    borderRadius: '20px',
     textAlign: 'center',
-    position: 'relative',
-    zIndex: 2
+    background: '#ffffff',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+    border: '1px solid #f0f2f5'
   },
-  stepIconWrapper: (isActive, isDone, color) => ({
-    width: '48px',
-    height: '48px',
-    margin: '0 auto 0.75rem auto',
+  iconWrapper: (variant) => ({
+    width: '80px',
+    height: '80px',
+    margin: '0 auto 1.5rem auto',
     borderRadius: '50%',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    background: isDone ? (color === 'warning' ? '#f59e0b' : color === 'info' ? '#0ea5e9' : color === 'danger' ? '#ef4444' : '#9ca3af') : (isActive ? (color === 'warning' ? '#fef3c7' : color === 'info' ? '#e0f2fe' : color === 'danger' ? '#fee2e2' : '#f3f4f6') : '#f9fafb'),
-    border: isActive && !isDone ? `2px solid ${color === 'warning' ? '#f59e0b' : color === 'info' ? '#0ea5e9' : color === 'danger' ? '#ef4444' : '#9ca3af'}` : 'none',
-    transition: 'all 0.2s ease'
+    background: variant === 'warning' ? '#fef3c7' : variant === 'info' ? '#e0f2fe' : variant === 'danger' ? '#fee2e2' : '#f3f4f6',
+    color: variant === 'warning' ? '#f59e0b' : variant === 'info' ? '#0ea5e9' : variant === 'danger' ? '#ef4444' : '#6b7280'
   }),
-  stepIcon: (isDone, color) => ({
-    fontSize: '1.4rem',
-    color: isDone ? '#ffffff' : (color === 'warning' ? '#f59e0b' : color === 'info' ? '#0ea5e9' : color === 'danger' ? '#ef4444' : '#6b7280')
-  }),
-  stepName: {
-    fontSize: '0.85rem',
-    fontWeight: '500',
+  statusName: {
+    fontSize: '1.75rem',
+    fontWeight: '700',
+    marginBottom: '0.5rem',
     color: '#1f2937'
   },
-  stepStatus: {
-    fontSize: '0.7rem',
+  statusDescription: {
+    fontSize: '1rem',
+    color: '#4b5563',
+    marginBottom: '1rem'
+  },
+  detailsText: {
+    fontSize: '0.9rem',
     color: '#6b7280',
-    marginTop: '0.25rem'
-  },
-  connector: {
-    position: 'absolute',
-    top: '24px',
-    left: '0',
-    right: '0',
-    height: '2px',
-    background: '#e5e7eb',
-    zIndex: 1
-  },
-  connectorFill: (progress, color) => ({
-    position: 'absolute',
-    top: '24px',
-    left: '0',
-    width: `${progress}%`,
-    height: '2px',
-    background: color === 'warning' ? '#f59e0b' : color === 'info' ? '#0ea5e9' : color === 'danger' ? '#ef4444' : '#9ca3af',
-    transition: 'width 0.4s ease',
-    zIndex: 2
-  }),
-  detailsCard: (variant) => ({
-    margin: '0 2rem 2rem 2rem',
-    padding: '1.25rem 1.5rem',
-    borderRadius: '16px',
+    padding: '1rem',
     background: '#f8fafc',
-    borderLeft: `4px solid ${variant === 'warning' ? '#f59e0b' : variant === 'info' ? '#0ea5e9' : variant === 'danger' ? '#ef4444' : '#9ca3af'}`
-  }),
+    borderRadius: '12px',
+    marginTop: '1rem'
+  },
   actionButton: (variant) => ({
     background: variant === 'warning' ? '#f59e0b' : variant === 'info' ? '#0ea5e9' : variant === 'danger' ? '#ef4444' : '#3b82f6',
     color: 'white',
     border: 'none',
-    padding: '0.6rem 1.5rem',
+    padding: '0.7rem 1.8rem',
     borderRadius: '40px',
     fontWeight: '500',
     fontSize: '0.9rem',
@@ -215,7 +163,8 @@ const styles = {
     gap: '0.5rem',
     cursor: 'pointer',
     transition: 'transform 0.1s ease, background 0.2s',
-    boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+    boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+    marginTop: '1rem'
   }),
   emptyState: {
     textAlign: 'center',
@@ -317,9 +266,8 @@ const CustomerLoanStatus = ({ user, onStatusChange, showDetails = true, onApplyL
     );
   }
 
-  const currentIndex = STEPS.findIndex((step) => step.name === currentStatus);
-  const progress = (currentIndex / (STEPS.length - 1)) * 100;
-  const currentStep = STEPS[currentIndex];
+  // Find the current step data
+  const currentStep = STEPS.find(step => step.name === currentStatus);
   const getVariant = () => {
     if (currentStatus === "Pending") return "warning";
     if (currentStatus === "Approved") return "info";
@@ -327,75 +275,40 @@ const CustomerLoanStatus = ({ user, onStatusChange, showDetails = true, onApplyL
     return "secondary";
   };
   const variant = getVariant();
+  const Icon = currentStep.icon;
 
   return (
     <div style={styles.container}>
       <div style={styles.card}>
         <div style={styles.header}>
           <div style={styles.title}>
-            <FileText size={22} /> Loan Progress
+            <FileText size={22} /> Loan Status
           </div>
           <div style={styles.badge(variant)}>
-            {React.createElement(currentStep.icon, { size: 14 })}
+            {React.createElement(Icon, { size: 14 })}
             {currentStatus}
           </div>
         </div>
 
-        <div style={styles.progressWrapper}>
-          <div style={styles.progressLabel}>
-            <span>Application</span>
-            <span>Review</span>
-            <span>Decision</span>
+        <div style={styles.statusCard}>
+          <div style={styles.iconWrapper(variant)}>
+            {React.createElement(Icon, { size: 40 })}
           </div>
-          <div style={styles.progressBar}>
-            <div style={styles.progressFill(progress, variant)}></div>
-          </div>
-        </div>
+          <div style={styles.statusName}>{currentStatus}</div>
+          <div style={styles.statusDescription}>{currentStep.description}</div>
+          
+          {showDetails && (
+            <div style={styles.detailsText}>
+              {currentStep.details}
+            </div>
+          )}
 
-        <div style={{ position: 'relative', padding: '0 2rem' }}>
-          <div style={styles.connector}></div>
-          <div style={styles.connectorFill(progress, variant)}></div>
-          <div style={styles.timeline}>
-            {STEPS.slice(1).map((step, idx) => {
-              const realIndex = idx + 1;
-              const isActive = realIndex === currentIndex;
-              const isDone = realIndex < currentIndex;
-              const Icon = step.icon;
-              return (
-                <div key={step.name} style={styles.step}>
-                  <div style={styles.stepIconWrapper(isActive, isDone, variant)}>
-                    {isDone ? (
-                      <CheckCircleFill style={{ color: '#fff', fontSize: '1.4rem' }} />
-                    ) : (
-                      <Icon style={styles.stepIcon(isDone, variant)} />
-                    )}
-                  </div>
-                  <div style={styles.stepName}>{step.name}</div>
-                  <div style={styles.stepStatus}>
-                    {isDone ? 'Completed' : isActive ? 'Current' : 'Pending'}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {showDetails && (
-          <div style={styles.detailsCard(variant)}>
-            <strong>{currentStatus}</strong> — {currentStep.details}
-          </div>
-        )}
-
-        {currentStatus === "Rejected" && (
-          <div style={{ padding: '0 2rem 2rem 2rem', textAlign: 'center' }}>
+          {currentStatus === "Rejected" && (
             <button style={styles.actionButton(variant)} onClick={onApplyLoan}>
               <ArrowRepeat size={16} /> Apply Again
             </button>
-            <p style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.75rem' }}>
-              Your previous application was not approved. You can submit a new one.
-            </p>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
