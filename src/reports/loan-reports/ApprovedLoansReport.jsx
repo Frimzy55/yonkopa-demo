@@ -1,4 +1,4 @@
-// ApprovedLoans.jsx - All Cards Same Color
+// ApprovedLoans.jsx - Added Customer ID column
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { format } from 'date-fns';
@@ -76,19 +76,16 @@ const ApprovedLoansReport = () => {
 
   // Helper function to safely extract loan amount
   const getLoanAmount = (loan) => {
-    // Try multiple possible field names
     const amount = loan.kyc_loan_amount || 
                    loan.loan_amount || 
                    loan.amount || 
                    loan.approved_amount ||
                    0;
-    
-    // Convert to number and ensure it's valid
     const numAmount = parseFloat(amount);
     return isNaN(numAmount) ? 0 : numAmount;
   };
 
-  // Calculate Statistics
+  // Calculate Statistics (unchanged)
   const calculateStatistics = (loans) => {
     if (!loans || loans.length === 0) {
       return {
@@ -200,9 +197,7 @@ const ApprovedLoansReport = () => {
   const allStats = calculateStatistics(approvedLoans);
 
   const formatCurrency = (amount) => {
-    // Ensure amount is a valid number
     const numAmount = typeof amount === 'number' && !isNaN(amount) ? amount : 0;
-    
     return new Intl.NumberFormat("en-GH", {
       style: "currency",
       currency: "GHS",
@@ -227,7 +222,7 @@ const ApprovedLoansReport = () => {
     );
   };
 
-  // Statistics Cards Component
+  // Statistics Cards Component (unchanged)
   const StatisticsCards = ({ stats, title }) => (
     <div className="stats-section mb-4">
       <div className="d-flex justify-content-between align-items-center mb-3">
@@ -238,7 +233,6 @@ const ApprovedLoansReport = () => {
         </small>
       </div>
       
-      {/* Main Stats Cards - All using same primary color */}
       <div className="row g-3 mb-4">
         <div className="col-md-4">
           <div className="stats-card bg-primary bg-gradient text-white">
@@ -282,11 +276,10 @@ const ApprovedLoansReport = () => {
         </div>
       </div>
 
-      {/* Detailed Statistics */}
       {stats.totalCount > 0 && (
         <div className="detailed-stats">
+          {/* ... rest of detailed stats (unchanged) ... */}
           <div className="row g-3">
-            {/* Amount Ranges */}
             <div className="col-md-6">
               <div className="card h-100 border-0 shadow-sm">
                 <div className="card-body">
@@ -314,7 +307,6 @@ const ApprovedLoansReport = () => {
               </div>
             </div>
 
-            {/* Weekly Breakdown */}
             <div className="col-md-6">
               <div className="card h-100 border-0 shadow-sm">
                 <div className="card-body">
@@ -348,7 +340,6 @@ const ApprovedLoansReport = () => {
               </div>
             </div>
 
-            {/* Top Customers */}
             <div className="col-md-12">
               <div className="card border-0 shadow-sm">
                 <div className="card-body">
@@ -390,7 +381,6 @@ const ApprovedLoansReport = () => {
               </div>
             </div>
 
-            {/* Monthly Breakdown */}
             {stats.monthlyBreakdown.length > 0 && (
               <div className="col-md-12">
                 <div className="card border-0 shadow-sm">
@@ -572,7 +562,7 @@ const ApprovedLoansReport = () => {
         </div>
       )}
 
-      {/* Table Section */}
+      {/* Table Section - UPDATED with Customer ID column */}
       <div className="card shadow-sm border-0">
         <div className="card-body p-0">
           <div className="table-responsive">
@@ -580,32 +570,18 @@ const ApprovedLoansReport = () => {
               <thead>
                 <tr>
                   <th>#</th>
-                  <th>
-                    <i className="bi bi-person me-2"></i>
-                    Customer Name
-                  </th>
-                  <th>
-                    <i className="bi bi-telephone me-2"></i>
-                    Contact Number
-                  </th>
-                  <th>
-                    <i className="bi bi-cash-stack me-2"></i>
-                    Amount Approved
-                  </th>
-                  <th>
-                    <i className="bi bi-calendar-check me-2"></i>
-                    Approval Date
-                  </th>
-                  <th>
-                    <i className="bi bi-check-circle me-2"></i>
-                    Status
-                  </th>
+                  <th><i className="bi bi-upc-scan me-2"></i>Customer ID</th>   {/* NEW COLUMN */}
+                  <th><i className="bi bi-person me-2"></i>Customer Name</th>
+                  <th><i className="bi bi-telephone me-2"></i>Contact Number</th>
+                  <th><i className="bi bi-cash-stack me-2"></i>Amount Approved</th>
+                  <th><i className="bi bi-calendar-check me-2"></i>Approval Date</th>
+                  <th><i className="bi bi-check-circle me-2"></i>Status</th>
                 </tr>
               </thead>
               <tbody>
                 {!hasFilter ? (
                   <tr>
-                    <td colSpan="6" className="text-center py-5">
+                    <td colSpan="7" className="text-center py-5">   {/* colSpan increased to 7 */}
                       <div className="empty-state">
                         <i className="bi bi-funnel fs-1 text-muted"></i>
                         <p className="text-muted mt-3 mb-0">
@@ -623,7 +599,7 @@ const ApprovedLoansReport = () => {
                   </tr>
                 ) : currentItems.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="text-center py-5">
+                    <td colSpan="7" className="text-center py-5">   {/* colSpan increased to 7 */}
                       <div className="empty-state">
                         <i className="bi bi-inbox fs-1 text-muted"></i>
                         <p className="text-muted mt-3 mb-0">
@@ -644,6 +620,9 @@ const ApprovedLoansReport = () => {
                     <tr key={index}>
                       <td className="fw-semibold">
                         {indexOfFirstItem + index + 1}
+                      </td>
+                      <td className="text-muted">
+                        {loan.customer_id || "N/A"}   {/* NEW COLUMN DATA */}
                       </td>
                       <td className="fw-semibold">
                         {loan.applicant_fullName || "N/A"}
@@ -671,6 +650,7 @@ const ApprovedLoansReport = () => {
                 </div>
                 <nav>
                   <ul className="pagination mb-0">
+                    {/* ... pagination logic unchanged ... */}
                     <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
                       <button
                         className="page-link"

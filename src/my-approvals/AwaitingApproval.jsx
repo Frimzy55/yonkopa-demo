@@ -218,7 +218,7 @@ const handleAction = async (action, loan) => {
           <thead>
             <tr>
               <th>Loan ID</th>
-              <th>Kyc code</th>
+            
               <th>Full Name</th>
               <th>Phone</th>
               <th>Amount</th>
@@ -235,7 +235,7 @@ const handleAction = async (action, loan) => {
                 className={highlightedRowId === loan.loan_id ? "highlight-row" : ""}
               >
                 <td>{loan.loan_id}</td>
-                <td>{loan.kyc_code}</td>
+              
                 <td>{loan.applicant_fullName}</td>
                 <td>{loan.mobileNumber}</td>
                 <td>₵{parseFloat(loan.kyc_loan_amount).toLocaleString()}</td>
