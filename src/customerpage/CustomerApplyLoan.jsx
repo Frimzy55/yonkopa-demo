@@ -17,38 +17,62 @@ const CustomerApplyLoan = ({ user }) => {
     }
   }, [user]);
 
+
+
   useEffect(() => {
-    const checkLoan = async () => {
-      if (!user?.userId) return;
-      try {
-        setChecking(true);
-        const res1 = await fetch(
-          `${process.env.REACT_APP_API_URL}/loan-check/${user.userId}`
-        );
-        const active = await res1.json();
+  const checkLoan = async () => {
+    if (!user?.userId) return;
 
-        const res2 = await fetch(
-          `${process.env.REACT_APP_API_URL}/loan-rejected-check/${user.userId}`
-        );
-        const rejected = await res2.json();
+    try {
+      setChecking(true);
 
-        const isRejectedOnly = rejected.rejected;
-        if (isRejectedOnly) {
-          setAlreadyApplied(false);
-        } else if (active.exists) {
-          setAlreadyApplied(true);
-        } else {
-          setAlreadyApplied(false);
-        }
-      } catch (err) {
-        console.error(err);
+      // ACTIVE/PENDING CHECK
+      const res1 = await fetch(
+        `${process.env.REACT_APP_API_URL}/loan-check/${user.userId}`
+      );
+      const active = await res1.json();
+
+      // REJECTED CHECK
+      const res2 = await fetch(
+        `${process.env.REACT_APP_API_URL}/loan-rejected-check/${user.userId}`
+      );
+      const rejected = await res2.json();
+
+      // APPROVED CHECK
+      const res3 = await fetch(
+        `${process.env.REACT_APP_API_URL}/loan-approved-check/${user.userId}`
+      );
+      const approved = await res3.json();
+
+      /*
+        ALLOW:
+        - rejected
+        - approved
+
+        BLOCK:
+        - pending
+        - under review
+      */
+
+      if (rejected.rejected || approved.approved) {
         setAlreadyApplied(false);
-      } finally {
-        setChecking(false);
+      } else if (active.exists) {
+        setAlreadyApplied(true);
+      } else {
+        setAlreadyApplied(false);
       }
-    };
-    checkLoan();
-  }, [user?.userId]);
+
+    } catch (err) {
+      console.error(err);
+      setAlreadyApplied(false);
+    } finally {
+      setChecking(false);
+    }
+  };
+
+  checkLoan();
+}, [user?.userId]);
+
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;

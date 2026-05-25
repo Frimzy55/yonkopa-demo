@@ -527,12 +527,12 @@ const ApprovedLoansReport = () => {
 
       {/* Overall Statistics (All Time) */}
       {!hasFilter && statsView === 'detailed' && (
-        <StatisticsCards stats={allStats} title="📊 Overall Statistics (All Time)" />
+        <StatisticsCards stats={allStats} title="Overall Statistics (All Time)" />
       )}
 
       {/* Filtered Statistics */}
       {hasFilter && statsView === 'detailed' && (
-        <StatisticsCards stats={stats} title="📊 Filtered Results Statistics" />
+        <StatisticsCards stats={stats} title=" Filtered Results Statistics" />
       )}
 
       {/* Simple Stats Summary */}
