@@ -28,7 +28,7 @@ export const TopNavbar = memo(({
   const [confirmPassword, setConfirmPassword] = useState('');
 
   const [passwordError, setPasswordError] = useState('');
-  const [passwordSuccess, setPasswordSuccess] = useState('');   // ← NEW: success message
+  const [passwordSuccess, setPasswordSuccess] = useState('');
   const [loading, setLoading] = useState(false);
 
   // Toggle password visibility
@@ -76,12 +76,10 @@ export const TopNavbar = memo(({
   const handleSubmitPasswordChange = async (e) => {
     e.preventDefault();
 
-    // Clear previous messages
     setPasswordError('');
     setPasswordSuccess('');
     if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
 
-    // Validation
     if (!currentPassword || !newPassword || !confirmPassword) {
       setPasswordError('All fields are required');
       return;
@@ -109,17 +107,14 @@ export const TopNavbar = memo(({
         newPassword
       });
 
-      // Success message
       const successMsg = response.data.message || 'Password changed successfully!';
       setPasswordSuccess(successMsg);
       toast.success(successMsg);
 
-      // Clear form fields
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
 
-      // Auto close modal after 2 seconds
       closeTimerRef.current = setTimeout(() => {
         setShowPasswordModal(false);
         setPasswordSuccess('');
@@ -135,7 +130,6 @@ export const TopNavbar = memo(({
     }
   };
 
-  // Reset modal state when opened fresh
   const openPasswordModal = () => {
     setPasswordError('');
     setPasswordSuccess('');
@@ -190,15 +184,20 @@ export const TopNavbar = memo(({
   return (
     <>
       {/* =========================
-          NAVBAR
+          NAVBAR WITH GRADIENT
       ========================== */}
-      <nav className="navbar navbar-expand-lg navbar-light bg-white shadow-sm px-3 px-md-4 py-2 full-width-navbar">
+      <nav
+        className="navbar navbar-expand-lg navbar-dark shadow-sm px-3 px-md-4 py-2 full-width-navbar"
+        style={{
+          background: 'linear-gradient(120deg, #3572a7 0%, #00f2fe 100%)'
+        }}
+      >
         <div className="container-fluid">
           {/* LEFT */}
           <div className="d-flex align-items-center">
             {/* Mobile Toggle */}
             <button
-              className="btn btn-outline-secondary me-2 mobile-menu-toggle"
+              className="btn btn-outline-light me-2 mobile-menu-toggle"
               onClick={toggleSidebar}
               style={{ display: isMobile ? 'block' : 'none' }}
             >
@@ -206,14 +205,14 @@ export const TopNavbar = memo(({
             </button>
             {/* Desktop Toggle */}
             <button
-              className="btn btn-outline-secondary d-none d-md-block me-2"
+              className="btn btn-outline-light d-none d-md-block me-2"
               onClick={toggleSidebar}
               style={{ display: isMobile ? 'none' : 'block' }}
             >
               <i className={`bi ${sidebarCollapsed ? 'bi-list' : 'bi-chevron-left'}`}></i>
             </button>
             {/* Title */}
-            <span className="navbar-brand mb-0 h5 fw-semibold text-dark">
+            <span className="navbar-brand mb-0 h5 fw-semibold text-white">
               {getDisplayTitle()}
             </span>
           </div>
@@ -304,7 +303,7 @@ export const TopNavbar = memo(({
       />
 
       {/* =========================
-          CHANGE PASSWORD MODAL (with SUCCESS MESSAGE)
+          CHANGE PASSWORD MODAL
       ========================== */}
       {showPasswordModal && (
         <div
@@ -314,7 +313,6 @@ export const TopNavbar = memo(({
         >
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content">
-              {/* Header */}
               <div className="modal-header bg-primary text-white">
                 <h5 className="modal-title">
                   <i className="bi bi-key me-2"></i>Change Password
@@ -326,23 +324,18 @@ export const TopNavbar = memo(({
                 ></button>
               </div>
 
-              {/* Form */}
               <form onSubmit={handleSubmitPasswordChange}>
                 <div className="modal-body">
-                  {/* ✅ Success message (green) */}
                   {passwordSuccess && (
                     <div className="alert alert-success d-flex align-items-center">
                       <i className="bi bi-check-circle-fill me-2 fs-5"></i>
                       <span>{passwordSuccess}</span>
                     </div>
                   )}
-
-                  {/* Error message */}
                   {passwordError && !passwordSuccess && (
                     <div className="alert alert-danger py-2">{passwordError}</div>
                   )}
 
-                  {/* Current Password */}
                   <div className="mb-3">
                     <label className="form-label">Current Password</label>
                     <div className="input-group">
@@ -364,7 +357,6 @@ export const TopNavbar = memo(({
                     </div>
                   </div>
 
-                  {/* New Password */}
                   <div className="mb-3">
                     <label className="form-label">New Password</label>
                     <div className="input-group">
@@ -387,7 +379,6 @@ export const TopNavbar = memo(({
                     <small className="text-muted">Minimum 6 characters</small>
                   </div>
 
-                  {/* Confirm Password */}
                   <div className="mb-3">
                     <label className="form-label">Confirm New Password</label>
                     <div className="input-group">
@@ -410,7 +401,6 @@ export const TopNavbar = memo(({
                   </div>
                 </div>
 
-                {/* Footer */}
                 <div className="modal-footer">
                   <button
                     type="button"

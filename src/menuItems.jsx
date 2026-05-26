@@ -233,7 +233,7 @@ export const menuItems = [
           { name: 'Active Customers Report', icon: 'bi-person-check' },
           { name: 'Dormant Customers Report', icon: 'bi-person-x' },
           { name: 'Customer by Branch Report', icon: 'bi-building' },
-          { name: 'Customer by Relationship Officer Report', icon: 'bi-person-badge' }
+          { name: 'Customer Relationship Report', icon: 'bi-person-badge' }
         ]
       },
       { name: 'KYC & Compliance Reports', icon: 'bi-shield-check', reportType: 'KYC & Compliance Reports',

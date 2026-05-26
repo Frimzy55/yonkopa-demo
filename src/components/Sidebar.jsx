@@ -28,12 +28,18 @@ export const Sidebar = memo(
   }) => {
     const SidebarContent = () => (
       <>
-        {/* HEADER */}
+        {/* HEADER with LOGO */}
         <div className="d-flex align-items-center justify-content-between p-3 border-bottom border-secondary flex-shrink-0">
           {(!sidebarCollapsed || isMobile) && (
-            <h5 className="mb-0 text-white fw-bold">
-              General Portal
-            </h5>
+            <div className="d-flex align-items-center">
+              {/* 👇 Replace '/logo.png' with your actual logo path */}
+              <img
+                src="/yonko.png"
+                alt="Logo"
+                style={{ height: "30px", marginRight: "10px" }}
+              />
+              <h5 className="mb-0 text-white fw-bold">General Portal</h5>
+            </div>
           )}
 
           {!isMobile && (
@@ -43,9 +49,7 @@ export const Sidebar = memo(
             >
               <i
                 className={`bi ${
-                  sidebarCollapsed
-                    ? "bi-list"
-                    : "bi-chevron-left"
+                  sidebarCollapsed ? "bi-list" : "bi-chevron-left"
                 }`}
               ></i>
             </button>
@@ -54,16 +58,14 @@ export const Sidebar = memo(
           {isMobile && (
             <button
               className="btn btn-sm btn-outline-light rounded-circle"
-              onClick={() =>
-                setMobileMenuOpen(false)
-              }
+              onClick={() => setMobileMenuOpen(false)}
             >
               <i className="bi bi-x-lg"></i>
             </button>
           )}
         </div>
 
-        {/* MENU */}
+        {/* MENU - unchanged */}
         <div
           className="flex-grow-1 overflow-auto sidebar-menu-container"
           style={{
@@ -73,430 +75,199 @@ export const Sidebar = memo(
         >
           <ul className="nav nav-pills flex-column mb-auto mt-3 px-2">
             {menuItems.map((item) => {
-              const mainItemId =
-                getMenuItemId(
-                  item,
-                  "main"
-                );
-
-              const isMainActive =
-                isMainMenuActive(item);
-
-              const isMainHovered =
-                hoveredItem ===
-                mainItemId;
+              const mainItemId = getMenuItemId(item, "main");
+              const isMainActive = isMainMenuActive(item);
+              const isMainHovered = hoveredItem === mainItemId;
 
               return (
-                <li
-                  key={item.name}
-                  className="nav-item mb-1"
-                >
+                <li key={item.name} className="nav-item mb-1">
                   {/* MAIN MENU */}
                   <button
                     id={mainItemId}
                     onClick={(e) => {
                       e.preventDefault();
-
-                      // TOGGLE MENU
-                      if (
-                        item.subMenus
-                          ?.length > 0
-                      ) {
-                        toggleSubMenu(
-                          item.name,
-                          e
-                        );
+                      if (item.subMenus?.length > 0) {
+                        toggleSubMenu(item.name, e);
                       }
-
-                      // SET ACTIVE MENU
-                      handleMenuClick(
-                        item,
-                        e
-                      );
+                      handleMenuClick(item, e);
                     }}
-                    onMouseEnter={() =>
-                      handleMouseEnter(
-                        mainItemId
-                      )
-                    }
-                    onMouseLeave={
-                      handleMouseLeave
-                    }
+                    onMouseEnter={() => handleMouseEnter(mainItemId)}
+                    onMouseLeave={handleMouseLeave}
                     className={`menu-item nav-link w-100 text-start d-flex align-items-center ${
-                      isMainActive
-                        ? "active"
-                        : ""
-                    } ${
-                      isMainHovered &&
-                      !isMainActive
-                        ? "hovered"
-                        : ""
-                    }`}
-                    style={{
-                      justifyContent:
-                        "space-between",
-                      gap: "8px",
-                    }}
+                      isMainActive ? "active" : ""
+                    } ${isMainHovered && !isMainActive ? "hovered" : ""}`}
+                    style={{ justifyContent: "space-between", gap: "8px" }}
                   >
                     <div
                       className="d-flex align-items-center"
-                      style={{
-                        gap: "8px",
-                        flex: 1,
-                      }}
+                      style={{ gap: "8px", flex: 1 }}
                     >
-                      <i
-                        className={`bi ${item.icon} menu-icon`}
-                      ></i>
-
-                      {(!sidebarCollapsed ||
-                        isMobile) && (
-                        <span className="menu-text">
-                          {item.name}
-                        </span>
+                      <i className={`bi ${item.icon} menu-icon`}></i>
+                      {(!sidebarCollapsed || isMobile) && (
+                        <span className="menu-text">{item.name}</span>
                       )}
                     </div>
-
-                    {item.subMenus
-                      ?.length > 0 && (
+                    {item.subMenus?.length > 0 && (
                       <i
                         className={`bi ${
-                          expandedMenus[
-                            item.name
-                          ]
+                          expandedMenus[item.name]
                             ? "bi-chevron-down"
                             : "bi-chevron-right"
-                        } menu-arrow ${
-                          sidebarCollapsed &&
-                          !isMobile
-                            ? "d-none"
-                            : ""
-                        }`}
+                        } menu-arrow ${sidebarCollapsed && !isMobile ? "d-none" : ""}`}
                       ></i>
                     )}
                   </button>
 
                   {/* SUB MENUS */}
-                  {item.subMenus
-                    ?.length > 0 &&
-                    expandedMenus[
-                      item.name
-                    ] && (
-                      <ul className="nav flex-column mt-1 submenu-container">
-                        {item.subMenus.map(
-                          (subItem) => {
-                            const subItemId =
-                              getMenuItemId(
-                                subItem,
-                                "sub",
-                                item.name
-                              );
+                  {item.subMenus?.length > 0 && expandedMenus[item.name] && (
+                    <ul className="nav flex-column mt-1 submenu-container">
+                      {item.subMenus.map((subItem) => {
+                        const subItemId = getMenuItemId(subItem, "sub", item.name);
+                        const isSubActive = isSubMenuActive(subItem);
+                        const isSubHovered = hoveredItem === subItemId;
 
-                            const isSubActive =
-                              isSubMenuActive(
-                                subItem
-                              );
-
-                            const isSubHovered =
-                              hoveredItem ===
-                              subItemId;
-
-                            return (
-                              <li
-                                key={
-                                  subItem.name
+                        return (
+                          <li key={subItem.name} className="nav-item">
+                            <button
+                              id={subItemId}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                if (
+                                  subItem.reports?.length > 0 ||
+                                  subItem.nestedMenus?.length > 0
+                                ) {
+                                  toggleNestedMenu(item.name, subItem.name, e);
                                 }
-                                className="nav-item"
+                                handleSubMenuClick(item.name, subItem.name, e);
+                              }}
+                              onMouseEnter={() => handleMouseEnter(subItemId)}
+                              onMouseLeave={handleMouseLeave}
+                              className={`submenu-item nav-link w-100 text-start d-flex align-items-center ${
+                                isSubActive ? "active" : ""
+                              } ${isSubHovered && !isSubActive ? "hovered" : ""}`}
+                              style={{ justifyContent: "space-between", gap: "8px" }}
+                            >
+                              <div
+                                className="d-flex align-items-center"
+                                style={{ gap: "8px", flex: 1 }}
                               >
-                                {/* SUB MENU */}
-                                <button
-                                  id={
-                                    subItemId
-                                  }
-                                  onClick={(
-                                    e
-                                  ) => {
-                                    e.preventDefault();
+                                <i className={`bi ${subItem.icon} submenu-icon`}></i>
+                                <span className="submenu-text">{subItem.name}</span>
+                              </div>
+                              {(subItem.reports?.length > 0 ||
+                                subItem.nestedMenus?.length > 0) && (
+                                <i
+                                  className={`bi ${
+                                    expandedSubMenus[`${item.name}-${subItem.name}`]
+                                      ? "bi-chevron-down"
+                                      : "bi-chevron-right"
+                                  } submenu-arrow`}
+                                ></i>
+                              )}
+                            </button>
 
-                                    // TOGGLE NESTED
-                                    if (
-                                      subItem
-                                        .reports
-                                        ?.length >
-                                        0 ||
-                                      subItem
-                                        .nestedMenus
-                                        ?.length >
-                                        0
-                                    ) {
-                                      toggleNestedMenu(
-                                        item.name,
-                                        subItem.name,
-                                        e
-                                      );
-                                    }
-
-                                    // SET ACTIVE SUBMENU
-                                    handleSubMenuClick(
-                                      item.name,
-                                      subItem.name,
-                                      e
+                            {/* REPORTS */}
+                            {subItem.reports?.length > 0 &&
+                              expandedSubMenus[`${item.name}-${subItem.name}`] && (
+                                <ul className="nav flex-column mt-1 report-container">
+                                  {subItem.reports.map((report) => {
+                                    const reportId = getMenuItemId(
+                                      report,
+                                      "report",
+                                      subItem.name
                                     );
-                                  }}
-                                  onMouseEnter={() =>
-                                    handleMouseEnter(
-                                      subItemId
-                                    )
-                                  }
-                                  onMouseLeave={
-                                    handleMouseLeave
-                                  }
-                                  className={`submenu-item nav-link w-100 text-start d-flex align-items-center ${
-                                    isSubActive
-                                      ? "active"
-                                      : ""
-                                  } ${
-                                    isSubHovered &&
-                                    !isSubActive
-                                      ? "hovered"
-                                      : ""
-                                  }`}
-                                  style={{
-                                    justifyContent:
-                                      "space-between",
-                                    gap: "8px",
-                                  }}
-                                >
-                                  <div
-                                    className="d-flex align-items-center"
-                                    style={{
-                                      gap: "8px",
-                                      flex: 1,
-                                    }}
-                                  >
-                                    <i
-                                      className={`bi ${subItem.icon} submenu-icon`}
-                                    ></i>
+                                    const isReportActiveFlag = isReportActive(report.name);
+                                    const isReportHovered = hoveredItem === reportId;
 
-                                    <span className="submenu-text">
-                                      {
-                                        subItem.name
-                                      }
-                                    </span>
-                                  </div>
+                                    return (
+                                      <li key={report.name} className="nav-item">
+                                        <button
+                                          id={reportId}
+                                          onClick={(e) =>
+                                            handleReportClick(
+                                              subItem.reportType,
+                                              report.name,
+                                              e
+                                            )
+                                          }
+                                          onMouseEnter={() => handleMouseEnter(reportId)}
+                                          onMouseLeave={handleMouseLeave}
+                                          className={`report-item nav-link w-100 text-start d-flex align-items-center ${
+                                            isReportActiveFlag ? "active" : ""
+                                          } ${
+                                            isReportHovered && !isReportActiveFlag
+                                              ? "hovered"
+                                              : ""
+                                          }`}
+                                          style={{ gap: "8px" }}
+                                        >
+                                          <i className={`bi ${report.icon} report-icon`}></i>
+                                          <span className="report-text">{report.name}</span>
+                                        </button>
+                                      </li>
+                                    );
+                                  })}
+                                </ul>
+                              )}
 
-                                  {(subItem
-                                    .reports
-                                    ?.length >
-                                    0 ||
-                                    subItem
-                                      .nestedMenus
-                                      ?.length >
-                                      0) && (
-                                    <i
-                                      className={`bi ${
-                                        expandedSubMenus[
-                                          `${item.name}-${subItem.name}`
-                                        ]
-                                          ? "bi-chevron-down"
-                                          : "bi-chevron-right"
-                                      } submenu-arrow`}
-                                    ></i>
-                                  )}
-                                </button>
+                            {/* NESTED MENUS */}
+                            {subItem.nestedMenus?.length > 0 &&
+                              expandedSubMenus[`${item.name}-${subItem.name}`] && (
+                                <ul className="nav flex-column mt-1 nested-container">
+                                  {subItem.nestedMenus.map((nestedItem) => {
+                                    const nestedId = getMenuItemId(
+                                      nestedItem,
+                                      "nested",
+                                      subItem.name
+                                    );
+                                    const isNestedActiveFlag = isNestedActive(nestedItem.name);
+                                    const isNestedHovered = hoveredItem === nestedId;
 
-                                {/* REPORTS */}
-                                {subItem
-                                  .reports
-                                  ?.length >
-                                  0 &&
-                                  expandedSubMenus[
-                                    `${item.name}-${subItem.name}`
-                                  ] && (
-                                    <ul className="nav flex-column mt-1 report-container">
-                                      {subItem.reports.map(
-                                        (
-                                          report
-                                        ) => {
-                                          const reportId =
-                                            getMenuItemId(
-                                              report,
-                                              "report",
-                                              subItem.name
-                                            );
-
-                                          const isReportActiveFlag =
-                                            isReportActive(
-                                              report.name
-                                            );
-
-                                          const isReportHovered =
-                                            hoveredItem ===
-                                            reportId;
-
-                                          return (
-                                            <li
-                                              key={
-                                                report.name
-                                              }
-                                              className="nav-item"
-                                            >
-                                              <button
-                                                id={
-                                                  reportId
-                                                }
-                                                onClick={(
-                                                  e
-                                                ) =>
-                                                  handleReportClick(
-                                                    subItem.reportType,
-                                                    report.name,
-                                                    e
-                                                  )
-                                                }
-                                                onMouseEnter={() =>
-                                                  handleMouseEnter(
-                                                    reportId
-                                                  )
-                                                }
-                                                onMouseLeave={
-                                                  handleMouseLeave
-                                                }
-                                                className={`report-item nav-link w-100 text-start d-flex align-items-center ${
-                                                  isReportActiveFlag
-                                                    ? "active"
-                                                    : ""
-                                                } ${
-                                                  isReportHovered &&
-                                                  !isReportActiveFlag
-                                                    ? "hovered"
-                                                    : ""
-                                                }`}
-                                                style={{
-                                                  gap: "8px",
-                                                }}
-                                              >
-                                                <i
-                                                  className={`bi ${report.icon} report-icon`}
-                                                ></i>
-
-                                                <span className="report-text">
-                                                  {
-                                                    report.name
-                                                  }
-                                                </span>
-                                              </button>
-                                            </li>
-                                          );
-                                        }
-                                      )}
-                                    </ul>
-                                  )}
-
-                                {/* NESTED MENUS */}
-                                {subItem
-                                  .nestedMenus
-                                  ?.length >
-                                  0 &&
-                                  expandedSubMenus[
-                                    `${item.name}-${subItem.name}`
-                                  ] && (
-                                    <ul className="nav flex-column mt-1 nested-container">
-                                      {subItem.nestedMenus.map(
-                                        (
-                                          nestedItem
-                                        ) => {
-                                          const nestedId =
-                                            getMenuItemId(
-                                              nestedItem,
-                                              "nested",
-                                              subItem.name
-                                            );
-
-                                          const isNestedActiveFlag =
-                                            isNestedActive(
-                                              nestedItem.name
-                                            );
-
-                                          const isNestedHovered =
-                                            hoveredItem ===
-                                            nestedId;
-
-                                          return (
-                                            <li
-                                              key={
-                                                nestedItem.name
-                                              }
-                                              className="nav-item"
-                                            >
-                                              <button
-                                                id={
-                                                  nestedId
-                                                }
-                                                onClick={(
-                                                  e
-                                                ) =>
-                                                  handleNestedMenuClick(
-                                                    item.name,
-                                                    subItem.name,
-                                                    nestedItem.name,
-                                                    e
-                                                  )
-                                                }
-                                                onMouseEnter={() =>
-                                                  handleMouseEnter(
-                                                    nestedId
-                                                  )
-                                                }
-                                                onMouseLeave={
-                                                  handleMouseLeave
-                                                }
-                                                className={`nested-item nav-link w-100 text-start d-flex align-items-center ${
-                                                  isNestedActiveFlag
-                                                    ? "active"
-                                                    : ""
-                                                } ${
-                                                  isNestedHovered &&
-                                                  !isNestedActiveFlag
-                                                    ? "hovered"
-                                                    : ""
-                                                }`}
-                                                style={{
-                                                  gap: "8px",
-                                                }}
-                                              >
-                                                <i
-                                                  className={`bi ${nestedItem.icon} nested-icon`}
-                                                ></i>
-
-                                                <span className="nested-text">
-                                                  {
-                                                    nestedItem.name
-                                                  }
-                                                </span>
-                                              </button>
-                                            </li>
-                                          );
-                                        }
-                                      )}
-                                    </ul>
-                                  )}
-                              </li>
-                            );
-                          }
-                        )}
-                      </ul>
-                    )}
+                                    return (
+                                      <li key={nestedItem.name} className="nav-item">
+                                        <button
+                                          id={nestedId}
+                                          onClick={(e) =>
+                                            handleNestedMenuClick(
+                                              item.name,
+                                              subItem.name,
+                                              nestedItem.name,
+                                              e
+                                            )
+                                          }
+                                          onMouseEnter={() => handleMouseEnter(nestedId)}
+                                          onMouseLeave={handleMouseLeave}
+                                          className={`nested-item nav-link w-100 text-start d-flex align-items-center ${
+                                            isNestedActiveFlag ? "active" : ""
+                                          } ${
+                                            isNestedHovered && !isNestedActiveFlag
+                                              ? "hovered"
+                                              : ""
+                                          }`}
+                                          style={{ gap: "8px" }}
+                                        >
+                                          <i className={`bi ${nestedItem.icon} nested-icon`}></i>
+                                          <span className="nested-text">{nestedItem.name}</span>
+                                        </button>
+                                      </li>
+                                    );
+                                  })}
+                                </ul>
+                              )}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
                 </li>
               );
             })}
           </ul>
         </div>
 
-        {/* FOOTER */}
+        {/* FOOTER - unchanged */}
         <div className="border-top border-secondary p-3 flex-shrink-0">
-          {!sidebarCollapsed ||
-          isMobile ? (
+          {!sidebarCollapsed || isMobile ? (
             <div className="small text-white-50">
               <i className="bi bi-building me-1"></i>
               v2.0.0

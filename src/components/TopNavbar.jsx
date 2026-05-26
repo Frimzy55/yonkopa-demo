@@ -16,8 +16,8 @@ export const TopNavbar = memo(({
   userDropdownRef,
   handleProfile,
   handleSettings,
-  handleChangePassword,   // async function (currentPassword, newPassword)
-  handleUploadPhoto,      // async function (file)
+  handleChangePassword,
+  handleUploadPhoto,
   handleLogout
 }) => {
   // ===================== STATE FOR MODAL =====================
@@ -29,12 +29,10 @@ export const TopNavbar = memo(({
   const [passwordSuccess, setPasswordSuccess] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Toggle password visibility
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // File input ref for uploading photo
   const fileInputRef = useRef(null);
   const closeTimerRef = useRef(null);
 
@@ -95,7 +93,6 @@ export const TopNavbar = memo(({
       setNewPassword('');
       setConfirmPassword('');
 
-      // Auto close after 2 seconds
       closeTimerRef.current = setTimeout(() => {
         handleClosePasswordModal();
       }, 2000);
@@ -108,7 +105,6 @@ export const TopNavbar = memo(({
     }
   };
 
-  // Photo upload – trigger file input
   const triggerFileUpload = () => {
     fileInputRef.current?.click();
   };
@@ -138,24 +134,33 @@ export const TopNavbar = memo(({
 
   return (
     <>
-      <nav className="navbar navbar-expand-lg navbar-light bg-white shadow-sm px-3 px-md-4 py-2 full-width-navbar">
+      {/* Top Navigation Bar with Gradient */}
+      <nav
+        className="navbar navbar-expand-lg navbar-dark shadow-sm px-3 px-md-4 py-2 full-width-navbar"
+        style={{
+          background: 'linear-gradient(120deg, #2b4eec 0%, #e041ee 100%)'
+        }}
+      >
         <div className="container-fluid">
           <div className="d-flex align-items-center">
+            {/* Mobile menu toggle */}
             <button
-              className="btn btn-outline-secondary me-2 mobile-menu-toggle"
+              className="btn btn-outline-light me-2 mobile-menu-toggle"
               onClick={toggleSidebar}
               style={{ display: isMobile ? 'block' : 'none' }}
             >
               <i className="bi bi-list"></i>
             </button>
+            {/* Desktop sidebar toggle */}
             <button
-              className="btn btn-outline-secondary d-none d-md-block me-2"
+              className="btn btn-outline-light d-none d-md-block me-2"
               onClick={toggleSidebar}
               style={{ display: isMobile ? 'none' : 'block' }}
             >
               <i className={`bi ${sidebarCollapsed ? 'bi-list' : 'bi-chevron-left'}`}></i>
             </button>
-            <span className="navbar-brand mb-0 h5 fw-semibold text-dark">
+            {/* Brand / Title - now white for contrast */}
+            <span className="navbar-brand mb-0 h5 fw-semibold text-white">
               {getDisplayTitle()}
             </span>
           </div>
@@ -186,6 +191,7 @@ export const TopNavbar = memo(({
               )}
             </div>
 
+            {/* Notification Bell */}
             <button className="btn btn-light position-relative rounded-circle p-2">
               <i className="bi bi-bell fs-5"></i>
               <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">3</span>
@@ -228,7 +234,7 @@ export const TopNavbar = memo(({
         onChange={handleFileSelect}
       />
 
-      {/* Change Password Modal */}
+      {/* Change Password Modal (unchanged) */}
       {showPasswordModal && (
         <div
           className="modal show d-block"
@@ -260,7 +266,6 @@ export const TopNavbar = memo(({
                     <div className="alert alert-danger py-2">{passwordError}</div>
                   )}
 
-                  {/* Current Password */}
                   <div className="mb-3">
                     <label className="form-label">Current Password</label>
                     <div className="input-group">
@@ -282,7 +287,6 @@ export const TopNavbar = memo(({
                     </div>
                   </div>
 
-                  {/* New Password */}
                   <div className="mb-3">
                     <label className="form-label">New Password</label>
                     <div className="input-group">
@@ -305,7 +309,6 @@ export const TopNavbar = memo(({
                     <small className="text-muted">Minimum 6 characters</small>
                   </div>
 
-                  {/* Confirm Password */}
                   <div className="mb-3">
                     <label className="form-label">Confirm New Password</label>
                     <div className="input-group">
