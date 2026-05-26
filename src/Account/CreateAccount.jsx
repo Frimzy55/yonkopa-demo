@@ -1,5 +1,3 @@
-
-
 import React, { useState } from "react";
 
 const CreateAccount = () => {
@@ -29,15 +27,15 @@ const CreateAccount = () => {
   const [modalAccountNumber, setModalAccountNumber] = useState("");
   const [errorModalMessage, setErrorModalMessage] = useState("");
 
-  // ✅ Only "Head Office" is available
+  // Only "Head Office" is available
   const branches = ["Head Office"];
 
   const handleChange = (e) => {
-  const { name, value } = e.target;
-  // Allow account_type to be changed even if locked
-  if (locked && name !== 'account_type') return;
-  setFormData((prev) => ({ ...prev, [name]: value }));
-};
+    const { name, value } = e.target;
+    // Allow account_type to be changed even if locked
+    if (locked && name !== "account_type") return;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   const handleImageChange = (e) => {
     if (locked) return;
@@ -295,7 +293,7 @@ const CreateAccount = () => {
                   onChange={handleChange}
                 >
                   <option value="Loan">Loan</option>
-                   <option value="Lien">Lien</option>
+                  <option value="Lien">Lien</option>
                   <option value="Fixed Deposit">Fixed Deposit</option>
                 </select>
               </div>
@@ -381,7 +379,3 @@ const CreateAccount = () => {
 };
 
 export default CreateAccount;
-
-
-
-
