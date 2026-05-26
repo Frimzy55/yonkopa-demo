@@ -347,12 +347,19 @@ const CustomerView = () => {
         </div>
       )}
 
-      <header className="top-bar">
+      {/* GRADIENT TOP BAR */}
+      <header 
+        className="top-bar" 
+        style={{ 
+          background: 'linear-gradient(120deg, #3ba4fa 0%, #4539f1 100%)',
+          color: '#fff'
+        }}
+      >
         <div className="top-bar-left">
           <button className="mobile-menu-toggle" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
             {mobileMenuOpen ? <FaTimes /> : <FaBars />}
           </button>
-          <h1 className="dashboard-title">
+          <h1 className="dashboard-title" style={{ color: '#fff' }}>
             <FaHome className="home-icon" />
             <span className="user-name">{firstName}</span>
           </h1>
@@ -369,7 +376,7 @@ const CustomerView = () => {
           <div className="user-avatar">
             <div 
               onClick={handleAvatarClick} 
-              style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer" }}
+              style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", color: "#fff" }}
             >
               {avatar ? (
                 <img 
@@ -380,7 +387,7 @@ const CustomerView = () => {
               ) : (
                 <div className="avatar-placeholder">{firstName?.charAt(0)}</div>
               )}
-              <span className="avatar-chevron">▼</span>
+              <span className="avatar-chevron" style={{ color: "#fff" }}>▼</span>
             </div>
             {showDropdown && (
               <AvatarDropdown
@@ -392,8 +399,18 @@ const CustomerView = () => {
             )}
           </div>
 
-         
-          <button className="logout-btn" onClick={handleLogout}><FaSignOutAlt /> Logout</button>
+          {/* Logout button - styled for gradient background */}
+          <button 
+            className="logout-btn" 
+            onClick={handleLogout}
+            style={{
+              backgroundColor: "rgba(255,255,255,0.2)",
+              border: "none",
+              color: "#fff"
+            }}
+          >
+            <FaSignOutAlt /> Logout
+          </button>
         </div>
       </header>
 

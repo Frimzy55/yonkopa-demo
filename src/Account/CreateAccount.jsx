@@ -1,3 +1,5 @@
+
+
 import React, { useState } from "react";
 
 const CreateAccount = () => {
@@ -8,10 +10,10 @@ const CreateAccount = () => {
     otherName: "",
     dateofbirth: "",
     gender: "",
-    branch: "",
+    branch: "Head Office",
     image: null,
     account_name: "",
-    account_type: "Savings",
+    account_type: "Loan",
   });
 
   const [preview, setPreview] = useState(null);
@@ -27,19 +29,15 @@ const CreateAccount = () => {
   const [modalAccountNumber, setModalAccountNumber] = useState("");
   const [errorModalMessage, setErrorModalMessage] = useState("");
 
-  const branches = [
-    "Head Office",
-    "Downtown Branch",
-    "Uptown Branch",
-    "Eastside Branch",
-    "Westside Branch",
-  ];
+  // ✅ Only "Head Office" is available
+  const branches = ["Head Office"];
 
   const handleChange = (e) => {
-    if (locked) return;
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+  const { name, value } = e.target;
+  // Allow account_type to be changed even if locked
+  if (locked && name !== 'account_type') return;
+  setFormData((prev) => ({ ...prev, [name]: value }));
+};
 
   const handleImageChange = (e) => {
     if (locked) return;
@@ -125,7 +123,6 @@ const CreateAccount = () => {
       const data = await res.json();
 
       if (!data.success) {
-        // If error message indicates customer already exists, show error modal
         if (data.message && data.message.toLowerCase().includes("already")) {
           setErrorModalMessage(data.message);
           setShowErrorModal(true);
@@ -135,12 +132,10 @@ const CreateAccount = () => {
         return;
       }
 
-      // Success → show success modal with account number
       setModalAccountNumber(data.account_number);
       setShowSuccessModal(true);
       resetAll();
     } catch (err) {
-      // For network errors or unexpected failures, also show modal optionally
       setErrorModalMessage(err.message || "Something went wrong");
       setShowErrorModal(true);
     } finally {
@@ -156,7 +151,7 @@ const CreateAccount = () => {
       otherName: "",
       dateofbirth: "",
       gender: "",
-      branch: "",
+      branch: "Head Office",
       image: null,
       account_name: "",
       account_type: "Savings",
@@ -266,7 +261,6 @@ const CreateAccount = () => {
                       onChange={handleChange}
                       disabled={locked}
                     >
-                      <option value="">Select Branch</option>
                       {branches.map((b) => (
                         <option key={b}>{b}</option>
                       ))}
@@ -300,10 +294,9 @@ const CreateAccount = () => {
                   value={formData.account_type}
                   onChange={handleChange}
                 >
-                  <option value="Savings">Savings</option>
-                  <option value="Current">Current</option>
-                  <option value="Fixed Deposit">Fixed Deposit</option>
                   <option value="Loan">Loan</option>
+                   <option value="Lien">Lien</option>
+                  <option value="Fixed Deposit">Fixed Deposit</option>
                 </select>
               </div>
             </div>
@@ -353,7 +346,7 @@ const CreateAccount = () => {
         </div>
       )}
 
-      {/* ERROR MODAL (e.g., Customer already exists) */}
+      {/* ERROR MODAL */}
       {showErrorModal && (
         <div
           className="modal show d-block"
@@ -388,3 +381,7 @@ const CreateAccount = () => {
 };
 
 export default CreateAccount;
+
+
+
+
