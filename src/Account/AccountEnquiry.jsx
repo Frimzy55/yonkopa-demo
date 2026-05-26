@@ -61,7 +61,7 @@ const AccountEnquiry = () => {
 
   return (
     <div className="account-enquiry-container">
-      <h4 className="mb-4">Account Enquiry</h4>
+      <h4 className="mb-4">Customer Enquiry</h4>
 
       {/* Search Section */}
       <div className="card mb-4">

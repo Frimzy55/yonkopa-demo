@@ -312,9 +312,9 @@ const CreateAccount = () => {
                   required
                 >
                   <option value="">-- Select Account Type --</option>
-                  <option value="Loan">🏦 Loan Account</option>
-                  <option value="Lien">🔒 Lien Account</option>
-                  <option value="Fixed Deposit">📈 Fixed Deposit Account</option>
+                  <option value="Loan"> Loan Account</option>
+                  <option value="Lien"> Lien Account</option>
+                  <option value="Fixed Deposit"> Fixed Deposit Account</option>
                 </select>
               </div>
             </div>
