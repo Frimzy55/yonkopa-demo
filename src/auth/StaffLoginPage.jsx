@@ -12,6 +12,7 @@ const LoginPage = ({ onClose }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Login form state
   const [formData, setFormData] = useState({ identifier: '', password: '' });
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
@@ -19,6 +20,14 @@ const LoginPage = ({ onClose }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showChristmasTree, setShowChristmasTree] = useState(false);
+
+  // Forgot password state
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotIdentifier, setForgotIdentifier] = useState('');
+  const [forgotError, setForgotError] = useState('');
+  const [forgotSuccess, setForgotSuccess] = useState('');
+  const [isForgotSubmitting, setIsForgotSubmitting] = useState(false);
+  const [forgotTouched, setForgotTouched] = useState(false);
 
   // logout message from AutoLogout
   const logoutMessage = location.state?.message || '';
@@ -31,12 +40,28 @@ const LoginPage = ({ onClose }) => {
     }
   }, []);
 
-  // Validation (unchanged)
+  // Helper: validate email/phone
+  const validateIdentifier = (value) => {
+    const trimmed = value.trim();
+    if (!trimmed) return 'Email or phone number is required';
+
+    const digits = trimmed.replace(/\D/g, '');
+    const isValidPhone = digits.length === 10 || (digits.length === 12 && digits.startsWith('233'));
+    const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
+
+    if (!isValidEmail && !isValidPhone) {
+      return 'Enter a valid email or 10-digit phone number';
+    }
+    return '';
+  };
+
+  // Login validation
   const validateField = (name, value) => {
     const newErrors = { ...errors };
 
     if (name === 'identifier') {
-      if (!value.trim()) newErrors.identifier = 'Email or phone is required';
+      const error = validateIdentifier(value);
+      if (error) newErrors.identifier = error;
       else delete newErrors.identifier;
     }
 
@@ -118,18 +143,74 @@ const LoginPage = ({ onClose }) => {
     formData.password &&
     !isSubmitting;
 
+  // Forgot password handlers
+  const handleForgotIdentifierChange = (e) => {
+    setForgotIdentifier(e.target.value);
+    if (forgotError) setForgotError('');
+    if (forgotSuccess) setForgotSuccess('');
+    if (forgotTouched) setForgotTouched(false);
+  };
+
+  const handleForgotBlur = () => {
+    setForgotTouched(true);
+    if (forgotIdentifier.trim()) {
+      const error = validateIdentifier(forgotIdentifier);
+      setForgotError(error);
+    } else {
+      setForgotError('Email or phone number is required');
+    }
+  };
+
+  const handleForgotSubmit = async (e) => {
+    e.preventDefault();
+    setForgotError('');
+    setForgotSuccess('');
+
+    const error = validateIdentifier(forgotIdentifier);
+    if (error) {
+      setForgotError(error);
+      setForgotTouched(true);
+      return;
+    }
+
+    setIsForgotSubmitting(true);
+    try {
+      await axios.post(`${process.env.REACT_APP_API_URL}/forgot-password`, {
+        identifier: forgotIdentifier.trim()
+      });
+      setForgotSuccess('Password reset link sent! Check your email or SMS.');
+      setForgotIdentifier('');
+      setForgotTouched(false);
+    } catch (err) {
+      const message = err.response?.data?.message || 'Failed to send reset link. Please try again.';
+      setForgotError(message);
+    } finally {
+      setIsForgotSubmitting(false);
+    }
+  };
+
+  const handleBackToLogin = () => {
+    setShowForgotPassword(false);
+    setForgotIdentifier('');
+    setForgotError('');
+    setForgotSuccess('');
+    setForgotTouched(false);
+  };
+
   return (
     <div className="login-page">
-
-      {/* LEFT IMAGE */}
+      {/* LEFT IMAGE WITH TEXT OVERLAY */}
       <div className="login-image">
         <img src={myImage} alt="Background" />
+        <div className="image-overlay-text">
+          <h1>Yonkopa</h1>
+          <p>Micro Credit</p>
+        </div>
       </div>
 
       {/* RIGHT FORM */}
       <div className="login-form-container">
         <div className="login-form-card">
-
           {/* Logo container with Christmas tree on top */}
           <div className="logo-container">
             <img src={logo} alt="Logo" className="logo" />
@@ -138,7 +219,7 @@ const LoginPage = ({ onClose }) => {
             )}
           </div>
 
-          {/* 🎄 Professional "Merry Christmas" greeting (only during holiday period) */}
+          {/* Christmas greeting (only during holiday period) */}
           {showChristmasTree && (
             <div className="christmas-greeting">
               <span className="greeting-icon">🎄</span>
@@ -147,83 +228,150 @@ const LoginPage = ({ onClose }) => {
             </div>
           )}
 
-          <h2 className="login-title">Login</h2>
+          {!showForgotPassword ? (
+            // LOGIN FORM
+            <>
+              <h2 className="login-title">Login</h2>
 
-          {/* Auto logout message */}
-          {logoutMessage && (
-            <div
-              className="server-error"
-              style={{
-                background: '#fff3cd',
-                color: '#856404',
-                border: '1px solid #ffeeba'
-              }}
-            >
-              {logoutMessage}
-            </div>
-          )}
-
-          {serverError && (
-            <div className="server-error">{serverError}</div>
-          )}
-
-          <form onSubmit={handleSubmit} noValidate>
-
-            {/* Identifier */}
-            <div className="form-group">
-              <label>Email or Phone</label>
-              <input
-                type="text"
-                name="identifier"
-                value={formData.identifier}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                className={touched.identifier && errors.identifier ? 'input-error' : ''}
-                placeholder="Enter email or phone"
-                disabled={isSubmitting}
-              />
-              {touched.identifier && errors.identifier && (
-                <span className="error-message">{errors.identifier}</span>
-              )}
-            </div>
-
-            {/* Password */}
-            <div className="form-group">
-              <label>Password</label>
-              <div className="password-input">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  className={touched.password && errors.password ? 'input-error' : ''}
-                  placeholder="Enter your password"
-                  disabled={isSubmitting}
-                />
-                <span
-                  className="toggle-password"
-                  onClick={() => setShowPassword(!showPassword)}
+              {/* Auto logout message */}
+              {logoutMessage && (
+                <div
+                  className="server-error"
+                  style={{
+                    background: '#fff3cd',
+                    color: '#856404',
+                    border: '1px solid #ffeeba'
+                  }}
                 >
-                  {showPassword ? <FaEyeSlash /> : <FaEye />}
-                </span>
-              </div>
-
-              {touched.password && errors.password && (
-                <span className="error-message">{errors.password}</span>
+                  {logoutMessage}
+                </div>
               )}
-            </div>
 
-            {/* Submit */}
-            <button
-              type="submit"
-              disabled={!canSubmit}
-              className={`btn-login ${isSubmitting ? 'loading' : ''}`}
-            >
-              {isSubmitting ? 'Logging in...' : 'Login'}
-            </button>
+              {serverError && (
+                <div className="server-error">{serverError}</div>
+              )}
 
-          </form>
+              <form onSubmit={handleSubmit} noValidate>
+                {/* Identifier */}
+                <div className="form-group">
+                  <label>Email or Phone</label>
+                  <input
+                    type="text"
+                    name="identifier"
+                    value={formData.identifier}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    className={touched.identifier && errors.identifier ? 'input-error' : ''}
+                    placeholder="Enter email or phone"
+                    disabled={isSubmitting}
+                  />
+                  {touched.identifier && errors.identifier && (
+                    <span className="error-message">{errors.identifier}</span>
+                  )}
+                </div>
+
+                {/* Password */}
+                <div className="form-group">
+                  <label>Password</label>
+                  <div className="password-input">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      name="password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      className={touched.password && errors.password ? 'input-error' : ''}
+                      placeholder="Enter your password"
+                      disabled={isSubmitting}
+                    />
+                    <span
+                      className="toggle-password"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? <FaEyeSlash /> : <FaEye />}
+                    </span>
+                  </div>
+                  {touched.password && errors.password && (
+                    <span className="error-message">{errors.password}</span>
+                  )}
+                </div>
+
+                {/* Forgot password link */}
+                <div className="forgot-password-link">
+                  <button
+                    type="button"
+                    className="link-button"
+                    onClick={() => setShowForgotPassword(true)}
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+
+                {/* Submit */}
+                <button
+                  type="submit"
+                  disabled={!canSubmit}
+                  className={`btn-login ${isSubmitting ? 'loading' : ''}`}
+                >
+                  {isSubmitting ? 'Logging in...' : 'Login'}
+                </button>
+              </form>
+            </>
+          ) : (
+            // FORGOT PASSWORD FORM
+            <>
+              <h2 className="login-title">Reset Password</h2>
+              <p className="reset-instruction">
+                Enter your email or phone number and we'll send you a link to reset your password.
+              </p>
+
+              {forgotError && (
+                <div className="server-error" style={{ background: '#f8d7da', color: '#721c24' }}>
+                  {forgotError}
+                </div>
+              )}
+              {forgotSuccess && (
+                <div className="server-error" style={{ background: '#d4edda', color: '#155724' }}>
+                  {forgotSuccess}
+                </div>
+              )}
+
+              <form onSubmit={handleForgotSubmit} noValidate>
+                <div className="form-group">
+                  <label>Email or Phone Number</label>
+                  <input
+                    type="text"
+                    className={forgotTouched && forgotError ? 'input-error' : ''}
+                    placeholder="Enter your email or phone number"
+                    value={forgotIdentifier}
+                    onChange={handleForgotIdentifierChange}
+                    onBlur={handleForgotBlur}
+                    disabled={isForgotSubmitting}
+                  />
+                  {forgotTouched && forgotError && (
+                    <span className="error-message">{forgotError}</span>
+                  )}
+                </div>
+
+                <button
+                  type="submit"
+                  className={`btn-login ${isForgotSubmitting ? 'loading' : ''}`}
+                  disabled={isForgotSubmitting || !forgotIdentifier.trim()}
+                >
+                  {isForgotSubmitting ? 'Sending...' : 'Send Reset Link'}
+                </button>
+
+                <button
+                  type="button"
+                  className="btn-back-to-login"
+                  onClick={handleBackToLogin}
+                  disabled={isForgotSubmitting}
+                >
+                  Back to Login
+                </button>
+              </form>
+            </>
+          )}
         </div>
       </div>
     </div>

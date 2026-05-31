@@ -480,3 +480,109 @@ html {
     margin: 0 0.3rem;
   }
 }
+
+
+
+
+
+
+
+
+
+.forgot-password-link {
+  text-align: right;
+  margin-bottom: 1.5rem;
+}
+.link-button {
+  background: none;
+  border: none;
+  color: #007bff;
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 0;
+}
+.link-button:hover {
+  text-decoration: underline;
+}
+.btn-back-to-login {
+  width: 100%;
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: #f8f9fa;
+  border: 1px solid #ccc;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-weight: 500;
+}
+.btn-back-to-login:hover {
+  background: #e9ecef;
+}
+.reset-instruction {
+  margin-bottom: 1.5rem;
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+
+
+
+
+
+/* Ensure the left image container has relative positioning */
+.login-image {
+  position: relative;
+  flex: 1;  /* adjust based on your layout, often 1 to take half width */
+  overflow: hidden;
+}
+
+.login-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Overlay text at the bottom of the image */
+/* Overlay text at the bottom of the image - ENLARGED */
+.image-overlay-text {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.062);
+  color: rgb(6, 22, 158);
+  text-align: center;
+  padding: 1.5rem 1rem;
+  backdrop-filter: blur(5px);
+  z-index: 2;
+  font-family: inherit;
+}
+
+.image-overlay-text h1 {
+  margin: 0;
+  font-size: 2.8rem;      /* enlarged from 1.8rem */
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.image-overlay-text p {
+  margin: 0.5rem 0 0;
+  font-size: 1.5rem;      /* enlarged from 1rem */
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+/* Make sure the parent container uses flex and gives equal width */
+.login-page {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+}
+
+.login-form-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

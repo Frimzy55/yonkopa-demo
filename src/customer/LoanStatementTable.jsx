@@ -28,23 +28,23 @@ const LoanStatementTable = ({ loans = [], onAction }) => {
     else console.log(`${action} for loan:`, loan);
   };
 
-  // Updated positioning: centers horizontally, and vertically flips above if not enough space below
-  const handleButtonClick = (e, loanId, buttonElement) => {
+  // Dynamic positioning: uses loan status to estimate dropdown height
+  const handleButtonClick = (e, loan, buttonElement) => {
     e.stopPropagation();
-    if (openDropdownId === loanId) {
+    if (openDropdownId === loan.id) {
       setOpenDropdownId(null);
       return;
     }
     const rect = buttonElement.getBoundingClientRect();
     const viewportHeight = window.innerHeight;
-    const dropdownHeightEstimate = 280; // approximate height of the dropdown (active loan menu)
+    // Estimate dropdown height based on loan status
+    const dropdownHeightEstimate = loan.status === "Active" ? 280 : 100;
     const spaceBelow = viewportHeight - rect.bottom;
     const spaceAbove = rect.top;
 
     let topPos;
     if (spaceBelow < dropdownHeightEstimate && spaceAbove > spaceBelow) {
-      // Not enough space below → show above the button
-      // Position the dropdown so its bottom aligns with button's top, then shift up by half its height
+      // Not enough space below → show above the button, centered
       topPos = rect.top - dropdownHeightEstimate / 2;
     } else {
       // Enough space below → center vertically on the button
@@ -56,7 +56,7 @@ const LoanStatementTable = ({ loans = [], onAction }) => {
       left: rect.left + rect.width / 2,
     });
     activeButtonRef.current = buttonElement;
-    setOpenDropdownId(loanId);
+    setOpenDropdownId(loan.id);
   };
 
   const getStatusBadgeClass = (status) => {
@@ -293,11 +293,11 @@ const LoanStatementTable = ({ loans = [], onAction }) => {
   };
 
   // ---------------------------------------------
-  // Active Loans Table (unchanged except removed redundant ref logic)
+  // Active Loans Table (gap reduced: mb-5 → mb-3)
   // ---------------------------------------------
   const renderActiveLoans = () => {
     return (
-      <div className="mb-5">
+      <div className="mb-3">
         <h6 className="fw-semibold mb-3">📌 Active Loans</h6>
         <div
           className="border rounded shadow-sm"
@@ -392,7 +392,7 @@ const LoanStatementTable = ({ loans = [], onAction }) => {
                       <button
                         className="btn btn-sm btn-outline-secondary dropdown-toggle"
                         type="button"
-                        onClick={(e) => handleButtonClick(e, loan.id, e.currentTarget)}
+                        onClick={(e) => handleButtonClick(e, loan, e.currentTarget)}
                       >
                         Select
                       </button>
@@ -444,7 +444,7 @@ const LoanStatementTable = ({ loans = [], onAction }) => {
   };
 
   // ---------------------------------------------
-  // Completed Loans Table (unchanged)
+  // Completed Loans Table
   // ---------------------------------------------
   const renderCompletedLoans = () => {
     return (
@@ -522,7 +522,7 @@ const LoanStatementTable = ({ loans = [], onAction }) => {
                       <button
                         className="btn btn-sm btn-outline-secondary dropdown-toggle"
                         type="button"
-                        onClick={(e) => handleButtonClick(e, loan.id, e.currentTarget)}
+                        onClick={(e) => handleButtonClick(e, loan, e.currentTarget)}
                       >
                         Select
                       </button>
