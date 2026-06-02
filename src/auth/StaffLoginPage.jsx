@@ -350,104 +350,108 @@ const StaffLoginPage = ({ onClose }) => {
       </div>
 
       {/* MODAL FOR INACTIVITY LOGOUT MESSAGE - NO BACKGROUND, NO BLUR */}
-      {showLogoutModal && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            backgroundColor: 'transparent', // completely transparent
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 10000,
-            animation: 'fadeIn 0.3s ease-out',
-          }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div
-            style={{
-              backgroundColor: '#fff',
-              borderRadius: '20px',
-              maxWidth: '420px',
-              width: '90%',
-              padding: '32px 24px',
-              textAlign: 'center',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-              border: '1px solid rgba(255,255,255,0.2)',
-              background: 'linear-gradient(135deg, #ffffff 0%, #f8faff 100%)',
-              transform: 'scale(1)',
-              transition: 'transform 0.2s ease',
-            }}
-          >
-            <div
-              style={{
-                width: '70px',
-                height: '70px',
-                background: 'linear-gradient(135deg, #ff6b6b, #feca57)',
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '0 auto 20px auto',
-                boxShadow: '0 8px 20px rgba(0,0,0,0.1)',
-              }}
-            >
-              <FaClock size={36} color="#fff" />
-            </div>
-            <h3
-              style={{
-                fontSize: '1.8rem',
-                fontWeight: 600,
-                margin: '0 0 12px 0',
-                background: 'linear-gradient(135deg, #2c3e50, #3498db)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}
-            >
-              Session Expired
-            </h3>
-            <p
-              style={{
-                fontSize: '1rem',
-                color: '#4a5568',
-                marginBottom: '28px',
-                lineHeight: 1.5,
-              }}
-            >
-              {logoutModalMessage || 'Logged out due to inactivity'}
-            </p>
-            <button
-              onClick={() => setShowLogoutModal(false)}
-              style={{
-                backgroundColor: '#3498db',
-                color: 'white',
-                border: 'none',
-                padding: '12px 28px',
-                borderRadius: '40px',
-                cursor: 'pointer',
-                fontSize: '1rem',
-                fontWeight: 500,
-                transition: 'all 0.2s ease',
-                boxShadow: '0 4px 12px rgba(52,152,219,0.3)',
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.backgroundColor = '#2980b9';
-                e.target.style.transform = 'translateY(-2px)';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.backgroundColor = '#3498db';
-                e.target.style.transform = 'translateY(0)';
-              }}
-            >
-              Okay
-            </button>
-          </div>
-        </div>
-      )}
+    {/* MODAL FOR INACTIVITY LOGOUT MESSAGE - LIGHT & SUBTLE BLUR */}
+{showLogoutModal && (
+  <div
+    style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      width: '100%',
+      height: '100%',
+      backgroundColor: 'rgba(0, 0, 0, 0.15)',     // very light overlay
+      backdropFilter: 'blur(1px)',                // minimal blur
+      WebkitBackdropFilter: 'blur(1px)',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 10000,
+      animation: 'fadeIn 0.3s ease-out',
+    }}
+    onClick={(e) => e.stopPropagation()}
+  >
+    <div
+      style={{
+        backgroundColor: '#fff',
+        borderRadius: '20px',
+        maxWidth: '420px',
+        width: '90%',
+        padding: '32px 24px',
+        textAlign: 'center',
+        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+        border: '1px solid rgba(255,255,255,0.2)',
+        background: 'linear-gradient(135deg, #ffffff 0%, #f8faff 100%)',
+        transform: 'scale(1)',
+        transition: 'transform 0.2s ease',
+      }}
+    >
+      <div
+        style={{
+          width: '70px',
+          height: '70px',
+          background: 'linear-gradient(135deg, #ff6b6b, #feca57)',
+          borderRadius: '50%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          margin: '0 auto 20px auto',
+          boxShadow: '0 8px 20px rgba(0,0,0,0.1)',
+        }}
+      >
+        <FaClock size={36} color="#fff" />
+      </div>
+      <h3
+        style={{
+          fontSize: '1.8rem',
+          fontWeight: 600,
+          margin: '0 0 12px 0',
+          background: 'linear-gradient(135deg, #2c3e50, #3498db)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text',
+        }}
+      >
+        Session Expired
+      </h3>
+      <p
+        style={{
+          fontSize: '1rem',
+          color: '#4a5568',
+          marginBottom: '28px',
+          lineHeight: 1.5,
+        }}
+      >
+        {logoutModalMessage || 'Logged out due to inactivity'}
+      </p>
+      <button
+        onClick={() => setShowLogoutModal(false)}
+        style={{
+          backgroundColor: '#3498db',
+          color: 'white',
+          border: 'none',
+          padding: '12px 28px',
+          borderRadius: '40px',
+          cursor: 'pointer',
+          fontSize: '1rem',
+          fontWeight: 500,
+          transition: 'all 0.2s ease',
+          boxShadow: '0 4px 12px rgba(52,152,219,0.3)',
+        }}
+        onMouseEnter={(e) => {
+          e.target.style.backgroundColor = '#2980b9';
+          e.target.style.transform = 'translateY(-2px)';
+        }}
+        onMouseLeave={(e) => {
+          e.target.style.backgroundColor = '#3498db';
+          e.target.style.transform = 'translateY(0)';
+        }}
+      >
+        Okay
+      </button>
+    </div>
+  </div>
+)}
+
 
       {/* Simple fade-in animation (only opacity) */}
       <style>{`

@@ -4,6 +4,7 @@ import LoanStatementTable from "./LoanStatementTable";
 
 const ViewEnquiryModal = ({ show, enquiry, onClose, getStatusBadge }) => {
   const [activeTab, setActiveTab] = useState("accounts");
+  const IMAGE_BASE_URL = process.env.REACT_APP_API_URL || "";
 
   if (!show || !enquiry) return null;
 
@@ -86,27 +87,34 @@ const ViewEnquiryModal = ({ show, enquiry, onClose, getStatusBadge }) => {
                 </span>
                 <div>
                   {enquiry.avatar ? (
-                    <img
-                      src={enquiry.avatar}
-                      alt="Customer"
-                      className="rounded-circle border border-2 border-white shadow-sm"
-                      style={{ width: "100px", height: "100px", objectFit: "cover" }}
-                    />
-                  ) : (
-                    <div
-                      className="rounded-circle bg-light d-flex align-items-center justify-content-center shadow-sm"
-                      style={{
-                        width: "100px",
-                        height: "100px",
-                        fontSize: "2.5rem",
-                        fontWeight: 500,
-                        color: "#1e3c72",
-                        backgroundColor: "#eef2ff",
-                      }}
-                    >
-                      {getInitials(enquiry.customerName)}
-                    </div>
-                  )}
+  <img
+    src={
+      enquiry.avatar.startsWith("http")
+        ? enquiry.avatar
+        : `${IMAGE_BASE_URL}/${enquiry.avatar.replace(/^\/+/, "")}`
+    }
+    alt="Customer"
+    className="rounded-circle border border-2 border-white shadow-sm"
+    style={{ width: "100px", height: "100px", objectFit: "cover" }}
+    onError={(e) => {
+      e.target.style.display = "none";
+    }}
+  />
+) : (
+  <div
+    className="rounded-circle bg-light d-flex align-items-center justify-content-center shadow-sm"
+    style={{
+      width: "100px",
+      height: "100px",
+      fontSize: "2.5rem",
+      fontWeight: 500,
+      color: "#1e3c72",
+      backgroundColor: "#eef2ff",
+    }}
+  >
+    {getInitials(enquiry.customerName)}
+  </div>
+)}
                 </div>
               </div>
 
