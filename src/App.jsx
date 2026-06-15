@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { HashRouter as Router, Routes, Route } from "react-router-dom";
+import { HashRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 
 import CustomerLanding from "./auth/CustomerLanding";
 import LoginPage from "./auth/StaffLoginPage";
@@ -65,15 +65,16 @@ function App() {
   return (
     <Router>
       <AutoLogout />
+
       <div className="App">
         <Routes>
 
+          {/* 🔥 DEFAULT ROUTE FIX */}
+          <Route path="/" element={<Navigate to="/demo" replace />} />
+
           {/* PUBLIC ROUTES */}
           <Route path="/apply" element={<CustomerLanding />} />
-
           <Route path="/demo" element={<LoginPage />} />
-          
-
           <Route path="/signup" element={<DefaultSuper />} />
 
           {/* CUSTOMER */}
