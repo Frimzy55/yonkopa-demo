@@ -37,10 +37,8 @@ function App() {
         color: #1f1f1f;
       }
 
-      h1 { font-weight: 600; }
-      h2 { font-weight: 600; }
-      h3 { font-weight: 500; }
-      h4, h5, h6 { font-weight: 500; }
+      h1, h2 { font-weight: 600; }
+      h3, h4, h5, h6 { font-weight: 500; }
 
       p, span, div { font-weight: 300; }
 
@@ -69,7 +67,7 @@ function App() {
       <div className="App">
         <Routes>
 
-          {/* 🔥 DEFAULT ROUTE FIX */}
+          {/* 🔥 FIX: Default route */}
           <Route path="/" element={<Navigate to="/demo" replace />} />
 
           {/* PUBLIC ROUTES */}
@@ -126,6 +124,9 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          {/* 🔥 CATCH ALL (VERY IMPORTANT) */}
+          <Route path="*" element={<Navigate to="/demo" replace />} />
 
         </Routes>
       </div>
