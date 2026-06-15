@@ -58,14 +58,17 @@ function App() {
     };
   }, []);
 
+  // ✅ FIX: works for BOTH localhost and GitHub Pages
+  const isProd = process.env.NODE_ENV === "production";
+
   return (
-    <Router basename="/yonkopa-demo">
+    <Router basename={isProd ? "/yonkopa-demo" : "/"}>
       <AutoLogout />
 
       <div className="App">
         <Routes>
 
-          {/* ✅ DEFAULT ROUTE */}
+          {/* DEFAULT ROUTE */}
           <Route path="/" element={<Navigate to="/demo" replace />} />
 
           {/* PUBLIC ROUTES */}
@@ -123,7 +126,7 @@ function App() {
             }
           />
 
-          {/* ✅ CATCH ALL ROUTE */}
+          {/* CATCH ALL */}
           <Route path="*" element={<Navigate to="/demo" replace />} />
 
         </Routes>
