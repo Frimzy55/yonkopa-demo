@@ -8,7 +8,8 @@ import christmasTree from '../image/cha.png';
 import { FaEye, FaEyeSlash, FaClock } from 'react-icons/fa';
 import './LoginPage.css';
 
-const StaffLoginPage = ({ onClose }) => {
+//const StaffLoginPage = ({ onClose }) => {
+  const StaffLoginPage = ({ onClose, apiUrl }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -33,58 +34,38 @@ const StaffLoginPage = ({ onClose }) => {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [logoutModalMessage, setLogoutModalMessage] = useState("");
 
-  // Show Christmas elements for Dec 24-31
- /* useEffect(() => {
+  // Show Christmas elements for Dec 24 - Jan 4
+  useEffect(() => {
     const today = new Date();
-    if (today.getMonth() === 11 && today.getDate() >= 24 && today.getDate() <= 31) {
+    const month = today.getMonth();
+    const date = today.getDate();
+    if ((month === 11 && date >= 24 && date <= 31) || (month === 0 && date >= 1 && date <= 4)) {
       setShowChristmasTree(true);
     }
-  }, []);*/
-
-
-  // Show Christmas elements for Dec 24 - Jan 4
-useEffect(() => {
-  const today = new Date();
-  const month = today.getMonth();
-  const date = today.getDate();
-  if ((month === 11 && date >= 24 && date <= 31) || (month === 0 && date >= 1 && date <= 4)) {
-    setShowChristmasTree(true);
-  }
-}, []);
+  }, []);
 
   // Watch for logout message from AutoLogout and show modal
   useEffect(() => {
     if (location.state?.message) {
       setLogoutModalMessage(location.state.message);
       setShowLogoutModal(true);
-      // Clear navigation state so modal doesn't reappear on refresh
       navigate(location.pathname, { replace: true, state: {} });
     }
   }, [location, navigate]);
 
-  // Helper: validate email/phone
-  const validateIdentifier = (value) => {
-    const trimmed = value.trim();
-    if (!trimmed) return 'Email or phone number is required';
+  // ------------------- VALIDATION (NO EMAIL/PHONE CHECK) -------------------
+  // Always returns no error for identifier
+ /// const validateIdentifier = () => {
+   /// return ''; // No validation – any input is accepted
+  //};
 
-    const digits = trimmed.replace(/\D/g, '');
-    const isValidPhone = digits.length === 10 || (digits.length === 12 && digits.startsWith('233'));
-    const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
-
-    if (!isValidEmail && !isValidPhone) {
-      return 'Enter a valid email or 10-digit phone number';
-    }
-    return '';
-  };
-
-  // Login validation
+  // Login validation – only password is checked
   const validateField = (name, value) => {
     const newErrors = { ...errors };
 
     if (name === 'identifier') {
-      const error = validateIdentifier(value);
-      if (error) newErrors.identifier = error;
-      else delete newErrors.identifier;
+      // No validation – always delete any existing error
+      delete newErrors.identifier;
     }
 
     if (name === 'password') {
@@ -134,17 +115,17 @@ useEffect(() => {
     }
 
     try {
-      const response = await axios.post(
+     const response = await axios.post(
         `${process.env.REACT_APP_API_URL}/login2`,
         formData
       );
+
 
       const { token, user } = response.data;
 
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
 
-      // Redirect based on role
       if (user.role === 'admin') navigate('/admin-dashboard');
       else if (user.role === 'loan_officer') navigate('/loan-officer-dashboard');
       else if (user.role === 'manager') navigate('/loan-manager');
@@ -166,7 +147,7 @@ useEffect(() => {
     formData.password &&
     !isSubmitting;
 
-  // Forgot password handlers
+  // Forgot password handlers – also no validation on identifier
   const handleForgotIdentifierChange = (e) => {
     setForgotIdentifier(e.target.value);
     if (forgotError) setForgotError('');
@@ -176,11 +157,11 @@ useEffect(() => {
 
   const handleForgotBlur = () => {
     setForgotTouched(true);
-    if (forgotIdentifier.trim()) {
-      const error = validateIdentifier(forgotIdentifier);
-      setForgotError(error);
-    } else {
+    if (!forgotIdentifier.trim()) {
       setForgotError('Email or phone number is required');
+    } else {
+      // No format validation – clear any existing error
+      setForgotError('');
     }
   };
 
@@ -189,9 +170,8 @@ useEffect(() => {
     setForgotError('');
     setForgotSuccess('');
 
-    const error = validateIdentifier(forgotIdentifier);
-    if (error) {
-      setForgotError(error);
+    if (!forgotIdentifier.trim()) {
+      setForgotError('Email or phone number is required');
       setForgotTouched(true);
       return;
     }
@@ -201,6 +181,7 @@ useEffect(() => {
       await axios.post(`${process.env.REACT_APP_API_URL}/forgot-password`, {
         identifier: forgotIdentifier.trim()
       });
+
       setForgotSuccess('Password reset link sent! Check your email or SMS.');
       setForgotIdentifier('');
       setForgotTouched(false);
@@ -257,7 +238,7 @@ useEffect(() => {
 
               <form onSubmit={handleSubmit} noValidate>
                 <div className="form-group">
-                  <label>Email or Phone</label>
+                  <label>Username</label>
                   <input
                     type="text"
                     name="identifier"
@@ -265,7 +246,7 @@ useEffect(() => {
                     onChange={handleChange}
                     onBlur={handleBlur}
                     className={touched.identifier && errors.identifier ? 'input-error' : ''}
-                    placeholder="Enter email or phone"
+                    placeholder="Enter Username"
                     disabled={isSubmitting}
                   />
                   {touched.identifier && errors.identifier && (
@@ -360,111 +341,108 @@ useEffect(() => {
         </div>
       </div>
 
-      {/* MODAL FOR INACTIVITY LOGOUT MESSAGE - NO BACKGROUND, NO BLUR */}
-    {/* MODAL FOR INACTIVITY LOGOUT MESSAGE - LIGHT & SUBTLE BLUR */}
-{showLogoutModal && (
-  <div
-    style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      width: '100%',
-      height: '100%',
-      backgroundColor: 'rgba(0, 0, 0, 0.15)',     // very light overlay
-      backdropFilter: 'blur(1px)',                // minimal blur
-      WebkitBackdropFilter: 'blur(1px)',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      zIndex: 10000,
-      animation: 'fadeIn 0.3s ease-out',
-    }}
-    onClick={(e) => e.stopPropagation()}
-  >
-    <div
-      style={{
-        backgroundColor: '#fff',
-        borderRadius: '20px',
-        maxWidth: '420px',
-        width: '90%',
-        padding: '32px 24px',
-        textAlign: 'center',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-        border: '1px solid rgba(255,255,255,0.2)',
-        background: 'linear-gradient(135deg, #ffffff 0%, #f8faff 100%)',
-        transform: 'scale(1)',
-        transition: 'transform 0.2s ease',
-      }}
-    >
-      <div
-        style={{
-          width: '70px',
-          height: '70px',
-          background: 'linear-gradient(135deg, #ff6b6b, #feca57)',
-          borderRadius: '50%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          margin: '0 auto 20px auto',
-          boxShadow: '0 8px 20px rgba(0,0,0,0.1)',
-        }}
-      >
-        <FaClock size={36} color="#fff" />
-      </div>
-      <h3
-        style={{
-          fontSize: '1.8rem',
-          fontWeight: 600,
-          margin: '0 0 12px 0',
-          background: 'linear-gradient(135deg, #2c3e50, #3498db)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text',
-        }}
-      >
-        Session Expired
-      </h3>
-      <p
-        style={{
-          fontSize: '1rem',
-          color: '#4a5568',
-          marginBottom: '28px',
-          lineHeight: 1.5,
-        }}
-      >
-        {logoutModalMessage || 'Logged out due to inactivity'}
-      </p>
-      <button
-        onClick={() => setShowLogoutModal(false)}
-        style={{
-          backgroundColor: '#3498db',
-          color: 'white',
-          border: 'none',
-          padding: '12px 28px',
-          borderRadius: '40px',
-          cursor: 'pointer',
-          fontSize: '1rem',
-          fontWeight: 500,
-          transition: 'all 0.2s ease',
-          boxShadow: '0 4px 12px rgba(52,152,219,0.3)',
-        }}
-        onMouseEnter={(e) => {
-          e.target.style.backgroundColor = '#2980b9';
-          e.target.style.transform = 'translateY(-2px)';
-        }}
-        onMouseLeave={(e) => {
-          e.target.style.backgroundColor = '#3498db';
-          e.target.style.transform = 'translateY(0)';
-        }}
-      >
-        Okay
-      </button>
-    </div>
-  </div>
-)}
+      {/* MODAL FOR INACTIVITY LOGOUT MESSAGE */}
+      {showLogoutModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            backgroundColor: 'rgba(0, 0, 0, 0.15)',
+            backdropFilter: 'blur(1px)',
+            WebkitBackdropFilter: 'blur(1px)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 10000,
+            animation: 'fadeIn 0.3s ease-out',
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div
+            style={{
+              backgroundColor: '#fff',
+              borderRadius: '20px',
+              maxWidth: '420px',
+              width: '90%',
+              padding: '32px 24px',
+              textAlign: 'center',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              border: '1px solid rgba(255,255,255,0.2)',
+              background: 'linear-gradient(135deg, #ffffff 0%, #f8faff 100%)',
+              transform: 'scale(1)',
+              transition: 'transform 0.2s ease',
+            }}
+          >
+            <div
+              style={{
+                width: '70px',
+                height: '70px',
+                background: 'linear-gradient(135deg, #ff6b6b, #feca57)',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 20px auto',
+                boxShadow: '0 8px 20px rgba(0,0,0,0.1)',
+              }}
+            >
+              <FaClock size={36} color="#fff" />
+            </div>
+            <h3
+              style={{
+                fontSize: '1.8rem',
+                fontWeight: 600,
+                margin: '0 0 12px 0',
+                background: 'linear-gradient(135deg, #2c3e50, #3498db)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}
+            >
+              Session Expired
+            </h3>
+            <p
+              style={{
+                fontSize: '1rem',
+                color: '#4a5568',
+                marginBottom: '28px',
+                lineHeight: 1.5,
+              }}
+            >
+              {logoutModalMessage || 'Logged out due to inactivity'}
+            </p>
+            <button
+              onClick={() => setShowLogoutModal(false)}
+              style={{
+                backgroundColor: '#3498db',
+                color: 'white',
+                border: 'none',
+                padding: '12px 28px',
+                borderRadius: '40px',
+                cursor: 'pointer',
+                fontSize: '1rem',
+                fontWeight: 500,
+                transition: 'all 0.2s ease',
+                boxShadow: '0 4px 12px rgba(52,152,219,0.3)',
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.backgroundColor = '#2980b9';
+                e.target.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.backgroundColor = '#3498db';
+                e.target.style.transform = 'translateY(0)';
+              }}
+            >
+              Okay
+            </button>
+          </div>
+        </div>
+      )}
 
-
-      {/* Simple fade-in animation (only opacity) */}
       <style>{`
         @keyframes fadeIn {
           from { opacity: 0; }

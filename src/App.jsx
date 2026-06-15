@@ -1,4 +1,3 @@
-// src/App.js
 import React, { useEffect } from "react";
 import { HashRouter as Router, Routes, Route } from "react-router-dom";
 
@@ -17,79 +16,67 @@ import ProtectedRoute from "./ProtectedRoute";
 import AutoLogout from "./components/AutoLogout";
 
 function App() {
-  // Inject global font styles
   useEffect(() => {
-  const style = document.createElement("style");
+    const style = document.createElement("style");
 
-  style.textContent = `
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600&display=swap');
+    style.textContent = `
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600&display=swap');
 
-    * {
-      font-family: 'Inter', sans-serif !important;
-    }
+      * {
+        font-family: 'Inter', sans-serif !important;
+      }
 
-    body {
-      margin: 0;
-      padding: 0;
-      font-size: 14px;
-      font-weight: 300;
-      line-height: 1.6;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      color: #1f1f1f;
-    }
+      body {
+        margin: 0;
+        padding: 0;
+        font-size: 14px;
+        font-weight: 300;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        color: #1f1f1f;
+      }
 
-    h1 {
-      font-weight: 600;
-      letter-spacing: -0.5px;
-    }
+      h1 { font-weight: 600; }
+      h2 { font-weight: 600; }
+      h3 { font-weight: 500; }
+      h4, h5, h6 { font-weight: 500; }
 
-    h2 {
-      font-weight: 600;
-      letter-spacing: -0.4px;
-    }
+      p, span, div { font-weight: 300; }
 
-    h3 {
-      font-weight: 500;
-    }
+      button {
+        font-weight: 500;
+        letter-spacing: 0.2px;
+      }
 
-    h4, h5, h6 {
-      font-weight: 500;
-    }
+      small {
+        font-size: 12px;
+        font-weight: 300;
+      }
+    `;
 
-    p, span, div {
-      font-weight: 300;
-    }
+    document.head.appendChild(style);
 
-    button {
-      font-weight: 500;
-      letter-spacing: 0.2px;
-    }
-
-    small {
-      font-size: 12px;
-      font-weight: 300;
-    }
-  `;
-
-  document.head.appendChild(style);
-
-  return () => {
-    document.head.removeChild(style);
-  };
-}, []);
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
 
   return (
     <Router>
       <AutoLogout />
       <div className="App">
         <Routes>
+
           {/* PUBLIC ROUTES */}
           <Route path="/apply" element={<CustomerLanding />} />
-          <Route path="/access" element={<LoginPage />} />
+
+          <Route path="/demo" element={<LoginPage />} />
+          
+
           <Route path="/signup" element={<DefaultSuper />} />
 
-          {/* CUSTOMER ROUTE */}
+          {/* CUSTOMER */}
           <Route
             path="/customer-page"
             element={
@@ -99,7 +86,7 @@ function App() {
             }
           />
 
-          {/* ADMIN ROUTE */}
+          {/* ADMIN */}
           <Route
             path="/admin-dashboard"
             element={
@@ -109,7 +96,7 @@ function App() {
             }
           />
 
-          {/* MANAGER ROUTE */}
+          {/* MANAGER */}
           <Route
             path="/loan-manager"
             element={
@@ -119,7 +106,7 @@ function App() {
             }
           />
 
-          {/* LOAN OFFICER ROUTE */}
+          {/* LOAN OFFICER */}
           <Route
             path="/loan-officer-dashboard"
             element={
@@ -129,7 +116,7 @@ function App() {
             }
           />
 
-          {/* SUPERVISOR ROUTE */}
+          {/* SUPERVISOR */}
           <Route
             path="/loan-supervisor"
             element={
@@ -138,6 +125,7 @@ function App() {
               </ProtectedRoute>
             }
           />
+
         </Routes>
       </div>
     </Router>
