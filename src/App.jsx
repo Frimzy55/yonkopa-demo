@@ -59,7 +59,7 @@ function App() {
   }, []);
 
   return (
-    <Router>
+    <Router>   {/* ✅ basename prop removed – no more "/yonkopa-demo" */}
       <AutoLogout />
 
       <div className="App">
