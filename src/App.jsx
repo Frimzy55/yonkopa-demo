@@ -58,11 +58,8 @@ function App() {
     };
   }, []);
 
-  // ✅ FIX: works for BOTH localhost and GitHub Pages
-  const isProd = process.env.NODE_ENV === "production";
-
   return (
-    <Router basename={isProd ? "/yonkopa-demo" : "/"}>
+    <Router>
       <AutoLogout />
 
       <div className="App">
