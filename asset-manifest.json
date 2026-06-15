@@ -1,7 +1,7 @@
 {
   "files": {
     "main.css": "/yonkopa-demo/static/css/main.ccda8781.css",
-    "main.js": "/yonkopa-demo/static/js/main.e66e5437.js",
+    "main.js": "/yonkopa-demo/static/js/main.2c96c21b.js",
     "static/js/453.64aababc.chunk.js": "/yonkopa-demo/static/js/453.64aababc.chunk.js",
     "static/media/new-notification.wav": "/yonkopa-demo/static/media/new-notification.d5d8ec2285a606e44f86.wav",
     "static/media/hat1.png": "/yonkopa-demo/static/media/hat1.cc6187f0f611f77bdbb7.png",
@@ -12,11 +12,11 @@
     "static/media/notifications.mp3": "/yonkopa-demo/static/media/notifications.79a156c4eed7a4d1ab9b.mp3",
     "index.html": "/yonkopa-demo/index.html",
     "main.ccda8781.css.map": "/yonkopa-demo/static/css/main.ccda8781.css.map",
-    "main.e66e5437.js.map": "/yonkopa-demo/static/js/main.e66e5437.js.map",
+    "main.2c96c21b.js.map": "/yonkopa-demo/static/js/main.2c96c21b.js.map",
     "453.64aababc.chunk.js.map": "/yonkopa-demo/static/js/453.64aababc.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.ccda8781.css",
-    "static/js/main.e66e5437.js"
+    "static/js/main.2c96c21b.js"
   ]
 }
