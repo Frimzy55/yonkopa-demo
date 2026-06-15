@@ -32,8 +32,6 @@ function App() {
         font-size: 14px;
         font-weight: 300;
         line-height: 1.6;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
         color: #1f1f1f;
       }
 
@@ -61,13 +59,13 @@ function App() {
   }, []);
 
   return (
-    <Router>
+    <Router basename="/yonkopa-demo">
       <AutoLogout />
 
       <div className="App">
         <Routes>
 
-          {/* 🔥 FIX: Default route */}
+          {/* ✅ DEFAULT ROUTE */}
           <Route path="/" element={<Navigate to="/demo" replace />} />
 
           {/* PUBLIC ROUTES */}
@@ -125,7 +123,7 @@ function App() {
             }
           />
 
-          {/* 🔥 CATCH ALL (VERY IMPORTANT) */}
+          {/* ✅ CATCH ALL ROUTE */}
           <Route path="*" element={<Navigate to="/demo" replace />} />
 
         </Routes>
