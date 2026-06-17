@@ -3,7 +3,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import TermsModal from "./TermsModal";
 
-import logo from "../image/yonko.png";
+import logo from "../image/yonko1.jpeg";
 
 const SignUpPage = ({ onClose, onSwitchToLogin }) => {
   const [formData, setFormData] = useState({

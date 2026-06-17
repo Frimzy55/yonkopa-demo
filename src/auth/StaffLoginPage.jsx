@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate, useLocation } from 'react-router-dom';
 import myImage from '../image/image1.jpg';
-import logo from '../image/yonko.png';
+import logo from '../image/yonko1.jpeg';
 import christmasTree from '../image/cha.png';
 import { FaEye, FaEyeSlash, FaClock } from 'react-icons/fa';
 import './LoginPage.css';

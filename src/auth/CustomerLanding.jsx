@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import SignUpPage from './SignUpPage';
 import LoginPage from './LoginPage';
 import { FaBolt, FaChartLine, FaShieldAlt, FaChevronDown } from 'react-icons/fa';
-import logo from '../image/yonko.png';
+import logo from '../image/yonko1.jpeg';
 import christmasTree from '../image/hat1.png';   // import Christmas tree image
 import './CustomerLanding.css';
 

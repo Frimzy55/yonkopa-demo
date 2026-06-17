@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import logo from '../image/yonko.png';
+import logo from '../image/yonko1.jpeg';
 import "bootstrap-icons/font/bootstrap-icons.css";
 
 const LoginPage = ({ onClose, onSwitchToSignUp }) => {
