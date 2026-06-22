@@ -98,7 +98,9 @@ export const menuItems = [
       { name: 'Internal Account Statement', icon: 'bi-receipt' },
       { name: 'Fund Transfer', icon: 'bi-send',
         nestedMenus: [
+            { name: 'Automated Fund Transfer', icon: 'bi-plus-circle' },
           { name: 'Create Fund Transfer', icon: 'bi-plus-circle' },
+       //     { name: 'Automated Fund Transfer', icon: 'bi-plus-circle' },
           { name: 'Create Backdated FT', icon: 'bi-calendar-minus' },
           { name: 'List of Fund Transfers', icon: 'bi-list-ul' }
         ]

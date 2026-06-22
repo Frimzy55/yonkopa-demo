@@ -71,6 +71,7 @@ import InvestmentEnquiries from './investment/InvestmentEnquiries';
 
 // Internal Accounts Components
 import GLAccounts from './internal-account/GLAccounts';
+import AutomatedFundTransfer from './internal-account/AutomatedFundTransfer';
 import InternalTransfers from './internal-account/InternalTransfers';
 import InternalAccountStatement from './internal-account/InternalAccountStatement';
 import CreateFundTransfer from './internal-account/CreateFundTransfer';
@@ -682,6 +683,7 @@ const AdminDashboard = () => {
     if (activeMenu === 'Internal Accounts') {
       if (activeSubMenu === 'Fund Transfer') {
         const fundTransferComponents = {
+            'Automated Fund Transfer': AutomatedFundTransfer,
           'Create Fund Transfer': CreateFundTransfer,
           'Create Backdated FT': CreateBackdatedFT,
           'List of Fund Transfers': ListFundTransfers,
