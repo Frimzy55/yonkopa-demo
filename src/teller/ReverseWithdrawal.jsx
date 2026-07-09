@@ -1,39 +1,49 @@
-// teller/ReverseWithdrawal.jsx
 import React, { useState } from 'react';
 import axios from 'axios';
+import TransactionDetails from './WithdrawalDetails';
+import DenominationDetails from './DenominationDetails'; // new import
 
 const ReverseWithdrawal = () => {
-  const [searchTerm, setSearchTerm] = useState('');
+  const [customerId, setCustomerId] = useState('');
+  const [accountNumber, setAccountNumber] = useState('');
   const [transaction, setTransaction] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [reason, setReason] = useState('');
+  const [step, setStep] = useState(0);
 
   const handleSearch = async (e) => {
     e.preventDefault();
-    if (!searchTerm.trim()) {
-      setError('Please enter a transaction ID or account number');
+
+    if (!customerId.trim() && !accountNumber.trim()) {
+      setError('Please enter at least a Customer ID or Account Number');
       return;
     }
 
     setLoading(true);
     setError('');
     setTransaction(null);
+    setStep(0);
 
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(`/api/teller/transactions/${searchTerm}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      if (response.data && response.data.type === 'withdrawal') {
-        setTransaction(response.data);
+      const params = new URLSearchParams();
+      if (customerId.trim()) params.append('customerId', customerId.trim());
+      if (accountNumber.trim()) params.append('accountNumber', accountNumber.trim());
+
+      const response = await axios.get(
+        `http://localhost:5002/api/teller/transactions?${params.toString()}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      const data = response.data;
+      if (Array.isArray(data) && data.length > 0) {
+        setTransaction(data[0]);
       } else {
-        setError('No withdrawal transaction found');
+        setError('No account found');
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Transaction not found');
+      setError(err.response?.data?.message || 'Account not found');
     } finally {
       setLoading(false);
     }
@@ -41,28 +51,25 @@ const ReverseWithdrawal = () => {
 
   const handleReverse = async (e) => {
     e.preventDefault();
-    if (!reason.trim()) {
-      setError('Please provide a reason for reversal');
-      return;
-    }
-
     setLoading(true);
     setError('');
     setSuccess('');
 
     try {
       const token = localStorage.getItem('token');
-      await axios.post(`/api/teller/transactions/${transaction.id}/reverse`, 
-        { reason, reversedBy: 'Admin User' },
+      await axios.post(
+        `/api/teller/transactions/${transaction.id}/reverse`,
+        { reason: 'Reversal requested', reversedBy: 'Admin User' },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      
+
       setSuccess('Withdrawal reversed successfully!');
-      setReason('');
+      setStep(0);
       setTimeout(() => {
         setSuccess('');
         setTransaction(null);
-        setSearchTerm('');
+        setCustomerId('');
+        setAccountNumber('');
       }, 3000);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to reverse withdrawal');
@@ -71,25 +78,39 @@ const ReverseWithdrawal = () => {
     }
   };
 
+  const handleNext = () => setStep(1);
+  const handleBack = () => setStep(0);
+
   return (
     <div className="reverse-withdrawal-container">
       <h4 className="mb-4">Reverse Withdrawal</h4>
 
       <div className="card">
         <div className="card-body">
-          <h6 className="card-title mb-3">Search Withdrawal Transaction</h6>
+          <h6 className="card-title mb-3">Search Customer Account</h6>
           <form onSubmit={handleSearch} className="row g-3">
-            <div className="col-md-8">
+            <div className="col-md-6">
+              <label className="form-label">Customer ID</label>
               <input
                 type="text"
                 className="form-control"
-                placeholder="Enter Transaction ID or Account Number"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Enter Customer ID"
+                value={customerId}
+                onChange={(e) => setCustomerId(e.target.value)}
               />
             </div>
-            <div className="col-md-4">
-              <button type="submit" className="btn btn-primary w-100" disabled={loading}>
+            <div className="col-md-6">
+              <label className="form-label">Account Number</label>
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Enter Account Number"
+                value={accountNumber}
+                onChange={(e) => setAccountNumber(e.target.value)}
+              />
+            </div>
+            <div className="col-12">
+              <button type="submit" className="btn btn-success w-100" disabled={loading}>
                 {loading ? 'Searching...' : 'Search'}
               </button>
             </div>
@@ -100,55 +121,17 @@ const ReverseWithdrawal = () => {
       {error && <div className="alert alert-danger mt-3">{error}</div>}
       {success && <div className="alert alert-success mt-3">{success}</div>}
 
-      {transaction && (
-        <div className="card mt-4">
-          <div className="card-body">
-            <h6 className="card-title mb-3">Transaction Details</h6>
-            <div className="row mb-3">
-              <div className="col-md-4">
-                <small className="text-muted">Transaction ID</small>
-                <p className="fw-bold">{transaction.id}</p>
-              </div>
-              <div className="col-md-4">
-                <small className="text-muted">Account Number</small>
-                <p className="fw-bold">{transaction.accountNumber}</p>
-              </div>
-              <div className="col-md-4">
-                <small className="text-muted">Amount</small>
-                <p className="fw-bold text-danger">GHS {transaction.amount?.toLocaleString()}</p>
-              </div>
-              <div className="col-md-4">
-                <small className="text-muted">Date</small>
-                <p>{new Date(transaction.date).toLocaleString()}</p>
-              </div>
-              <div className="col-md-4">
-                <small className="text-muted">Teller</small>
-                <p>{transaction.teller}</p>
-              </div>
-              <div className="col-md-4">
-                <small className="text-muted">Status</small>
-                <p><span className="badge bg-success">{transaction.status}</span></p>
-              </div>
-            </div>
+      {transaction && step === 0 && (
+        <TransactionDetails transaction={transaction} onNext={handleNext} loading={loading} />
+      )}
 
-            <form onSubmit={handleReverse}>
-              <div className="mb-3">
-                <label className="form-label">Reason for Reversal</label>
-                <textarea
-                  className="form-control"
-                  rows="3"
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                  placeholder="Please provide a detailed reason for reversing this withdrawal"
-                  required
-                />
-              </div>
-              <button type="submit" className="btn btn-danger" disabled={loading}>
-                {loading ? 'Processing...' : 'Reverse Withdrawal'}
-              </button>
-            </form>
-          </div>
-        </div>
+      {transaction && step === 1 && (
+        <DenominationDetails
+          transaction={transaction}
+          onConfirm={handleReverse}
+          onBack={handleBack}
+          loading={loading}
+        />
       )}
     </div>
   );
