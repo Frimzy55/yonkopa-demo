@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import Select from 'react-select'; // 👈 searchable dropdown with group support
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
-const GLAccountFormModal = ({ 
-  show, 
-  onClose, 
-  onSave, 
-  initialData, 
+const GLAccountFormModal = ({
+  show,
+  onClose,
+  onSave,
+  initialData,
   accounts,
-  accountNameOptions = []   // 👈 expects [{ type: 'Asset', names: ['Cash', ...] }, ...]
+  accountNameOptions = [] // [{ type: 'Asset', names: ['Cash', ...] }, ...]
 }) => {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -29,6 +30,17 @@ const GLAccountFormModal = ({
   const statuses = ['Active', 'Inactive', 'Suspended'];
   const assetCategories = ['Current Assets', 'Fixed Assets'];
   const liabilityCategories = ['Short Liability', 'Long Liability'];
+
+  // Transform accountNameOptions into react-select grouped options
+  const groupedOptions = accountNameOptions.map((group) => ({
+    label: group.type,
+    options: group.names.map((name) => ({ value: name, label: name }))
+  }));
+
+  // Find currently selected option for the Select
+  const selectedAccountNameOption = groupedOptions
+    .flatMap((g) => g.options)
+    .find((opt) => opt.value === formData.accountName);
 
   useEffect(() => {
     if (show) {
@@ -72,6 +84,14 @@ const GLAccountFormModal = ({
     setFormData(newFormData);
   };
 
+  // Handle react-select change for account name
+  const handleAccountNameChange = (selected) => {
+    setFormData((prev) => ({
+      ...prev,
+      accountName: selected ? selected.value : ''
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -104,6 +124,50 @@ const GLAccountFormModal = ({
 
   const hideCategory = ['Equity', 'Revenue', 'Expense'].includes(formData.accountType);
 
+  // Custom styles for react-select to match Bootstrap form-control look
+  const customSelectStyles = {
+    control: (provided) => ({
+      ...provided,
+      borderRadius: '0.375rem', // Bootstrap's default
+      borderColor: '#ced4da',
+      fontSize: '1rem',
+      minHeight: '38px',
+      boxShadow: 'none',
+      '&:hover': {
+        borderColor: '#86b7fe'
+      },
+      '&:focus-within': {
+        borderColor: '#86b7fe',
+        boxShadow: '0 0 0 0.25rem rgba(13, 110, 253, 0.25)'
+      }
+    }),
+    placeholder: (provided) => ({
+      ...provided,
+      color: '#6c757d'
+    }),
+    menu: (provided) => ({
+      ...provided,
+      borderRadius: '0.375rem',
+      marginTop: '4px',
+      boxShadow: '0 0.5rem 1rem rgba(0,0,0,0.15)'
+    }),
+    option: (provided, state) => ({
+      ...provided,
+      backgroundColor: state.isFocused ? '#e9ecef' : 'white',
+      color: '#212529',
+      '&:active': {
+        backgroundColor: '#dee2e6'
+      }
+    }),
+    groupHeading: (provided) => ({
+      ...provided,
+      fontSize: '0.8rem',
+      fontWeight: 600,
+      color: '#6c757d',
+      textTransform: 'uppercase'
+    })
+  };
+
   return (
     <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }} tabIndex="-1">
       <div className="modal-dialog modal-lg">
@@ -116,28 +180,19 @@ const GLAccountFormModal = ({
           </div>
           <form onSubmit={handleSubmit}>
             <div className="modal-body">
-              {/* Account Name - full width */}
+              {/* Account Name - full width with react-select */}
               <div className="row">
                 <div className="col-12 mb-3">
                   <label className="form-label">Account Name *</label>
-                  <select
-                    className="form-select"
-                    name="accountName"
-                    value={formData.accountName}
-                    onChange={handleInputChange}
-                    required
-                  >
-                    <option value="">Select an account name</option>
-                    {accountNameOptions.map((group) => (
-                      <optgroup key={group.type} label={group.type}>
-                        {group.names.map((name) => (
-                          <option key={name} value={name}>
-                            {name}
-                          </option>
-                        ))}
-                      </optgroup>
-                    ))}
-                  </select>
+                  <Select
+                    options={groupedOptions}
+                    value={selectedAccountNameOption}
+                    onChange={handleAccountNameChange}
+                    placeholder="Select an account name"
+                    isClearable
+                    styles={customSelectStyles}
+                    noOptionsMessage={() => 'No matching account names'}
+                  />
                 </div>
               </div>
 
