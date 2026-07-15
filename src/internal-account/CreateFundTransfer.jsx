@@ -49,7 +49,7 @@ const ACCOUNT_NAMES_BY_TYPE = [
 ];
 
 const CreateFundTransfer = () => {
-  const [loading, setLoading] = useState(false);
+const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     reference: '',
     transferDate: new Date().toISOString().split('T')[0],
