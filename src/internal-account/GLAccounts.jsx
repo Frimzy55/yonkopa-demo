@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -18,34 +18,32 @@ const ACCOUNT_NAMES_BY_TYPE = [
     ],
   },
   {
-   type: 'Liability',
+    type: 'Liability',
     names: [
-      'Suspense liability',          // ✅ new
-      'Loan repayments account',     // ✅ new
-      'Cash collateral',             // ✅ new
-      'Borrowings account',          // ✅ new
-      'Overage account',             // ✅ new
+      'Suspense liability',
+      'Loan repayments account',
+      'Cash collateral',
+      'Borrowings account',
+      'Overage account',
     ],
   },
-
   {
     type: 'Equity',
     names: [
-      'Stated capital',   // ✅ new
-      'Drawings',         // ✅ new
+      'Stated capital',
+      'Drawings',
     ],
   },
-
   {
-     type: 'Revenue',
+    type: 'Revenue',
     names: [
-      'Interest income on loans',    // ✅ new
-      'Penalty income',              // ✅ new
-      'Loan processing fee',         // ✅ new
-      'Insurance fee income',        // ✅ new
-      'SMS income',                  // ✅ new
-      'Other operating income',      // ✅ new
-      'Registration fee',            // ✅ new
+      'Interest income on loans',
+      'Penalty income',
+      'Loan processing fee',
+      'Insurance fee income',
+      'SMS income',
+      'Other operating income',
+      'Registration fee',
     ],
   },
   {
@@ -74,6 +72,11 @@ const GLAccounts = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingAccount, setEditingAccount] = useState(null);
 
+  // 🔍 Filter states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [typeFilter, setTypeFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+
   const accountTypes = ['Asset', 'Liability', 'Equity', 'Revenue', 'Expense'];
   const statuses = ['Active', 'Inactive', 'Suspended'];
 
@@ -96,6 +99,18 @@ const GLAccounts = () => {
       setLoading(false);
     }
   };
+
+  // 🔍 Compute filtered accounts
+  const filteredAccounts = useMemo(() => {
+    return glAccounts.filter(account => {
+      const matchesSearch =
+        account.accountCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        account.accountName.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesType = typeFilter === '' || account.accountType === typeFilter;
+      const matchesStatus = statusFilter === '' || account.status === statusFilter;
+      return matchesSearch && matchesType && matchesStatus;
+    });
+  }, [glAccounts, searchTerm, typeFilter, statusFilter]);
 
   const handleEdit = (account) => {
     setEditingAccount(account);
@@ -137,6 +152,16 @@ const GLAccounts = () => {
       'Suspended': 'bg-warning'
     };
     return badges[status] || 'bg-secondary';
+  };
+
+  // 🔍 Reset filters
+  const handleSearch = () => {
+    // Already filtering in real time – this button can also reset if you prefer
+    // For now, it does nothing extra, but you can add a "clear" action.
+    // Example: if you want to clear search on click:
+    // setSearchTerm('');
+    // setTypeFilter('');
+    // setStatusFilter('');
   };
 
   return (
@@ -272,7 +297,11 @@ const GLAccounts = () => {
           <div className="row g-3">
             <div className="col-md-3">
               <label className="form-label">Account Type</label>
-              <select className="form-select">
+              <select
+                className="form-select"
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value)}
+              >
                 <option value="">All Types</option>
                 {accountTypes.map(type => (
                   <option key={type} value={type}>{type}</option>
@@ -281,7 +310,11 @@ const GLAccounts = () => {
             </div>
             <div className="col-md-3">
               <label className="form-label">Status</label>
-              <select className="form-select">
+              <select
+                className="form-select"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
                 <option value="">All Status</option>
                 {statuses.map(status => (
                   <option key={status} value={status}>{status}</option>
@@ -290,10 +323,19 @@ const GLAccounts = () => {
             </div>
             <div className="col-md-3">
               <label className="form-label">Search</label>
-              <input type="text" className="form-control" placeholder="Account code or name..." />
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Account code or name..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
             </div>
             <div className="col-md-3 d-flex align-items-end">
-              <button className="btn btn-outline-secondary w-100">
+              <button
+                className="btn btn-outline-secondary w-100"
+                onClick={handleSearch}
+              >
                 <i className="bi bi-search me-2"></i>Search
               </button>
             </div>
@@ -311,10 +353,14 @@ const GLAccounts = () => {
               </div>
               <p className="mt-2 text-muted">Loading GL accounts...</p>
             </div>
-          ) : glAccounts.length === 0 ? (
+          ) : filteredAccounts.length === 0 ? (
             <div className="text-center p-5">
               <i className="bi bi-journal-bookmark fs-1 text-muted"></i>
-              <p className="mt-2 text-muted">No GL accounts found. Create your first GL account!</p>
+              <p className="mt-2 text-muted">
+                {glAccounts.length === 0
+                  ? 'No GL accounts found. Create your first GL account!'
+                  : 'No accounts match your filters.'}
+              </p>
             </div>
           ) : (
             <div className="table-responsive">
@@ -331,7 +377,7 @@ const GLAccounts = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {glAccounts.map((account) => (
+                  {filteredAccounts.map((account) => (
                     <tr key={account.id}>
                       <td className="fw-semibold">{account.accountCode}</td>
                       <td>{account.accountName}</td>
@@ -383,7 +429,7 @@ const GLAccounts = () => {
         onSave={fetchGLAccounts}
         initialData={editingAccount}
         accounts={glAccounts}
-        accountNameOptions={ACCOUNT_NAMES_BY_TYPE}   // 👈 grouped structure
+        accountNameOptions={ACCOUNT_NAMES_BY_TYPE}
       />
     </div>
   );
