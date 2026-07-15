@@ -5,14 +5,56 @@ import { toast } from 'react-toastify';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
+// 📌 Grouped account names by type (reused from GLAccounts)
+const ACCOUNT_NAMES_BY_TYPE = [
+  {
+    type: 'Asset',
+    names: [
+      'Cash',
+      'Bank',
+      'Petty Cash',
+      'Suspense asset',
+    ],
+  },
+  {
+    type: 'Liability',
+    names: [
+      'Suspense liability',
+      'Loan repayments account',
+      'Cash collateral',
+      'Borrowings account',
+      'Overage account',
+    ],
+  },
+  {
+    type: 'Equity',
+    names: [
+      'Stated capital',
+      'Drawings',
+    ],
+  },
+  {
+    type: 'Revenue',
+    names: [
+      'Interest income on loans',
+      'Penalty income',
+      'Loan processing fee',
+      'Insurance fee income',
+      'SMS income',
+      'Other operating income',
+      'Registration fee',
+    ],
+  },
+  
+];
+
 const CreateFundTransfer = () => {
-  const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     reference: '',
     transferDate: new Date().toISOString().split('T')[0],
-    fromAccountId: '',
-    toAccountId: '',
+    fromAccountName: '',
+    toAccountName: '',
     amount: '',
     currency: 'GHS',
     description: '',
@@ -20,25 +62,10 @@ const CreateFundTransfer = () => {
     createdBy: '',
   });
 
-  // Fetch accounts and set default reference / createdBy
+  // Set default reference and createdBy on mount
   useEffect(() => {
-    const fetchAccounts = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const response = await axios.get(`${API_BASE_URL}/api/accounts`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setAccounts(response.data);
-      } catch (error) {
-        console.error('Error fetching accounts:', error);
-        toast.error('Failed to load accounts');
-      }
-    };
-    fetchAccounts();
-
     // Generate reference number (e.g., FT-000001)
     const ref = `FT-${String(Math.floor(Math.random() * 1000000)).padStart(6, '0')}`;
-    // Get user from localStorage (if stored)
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     setForm((prev) => ({
       ...prev,
@@ -55,11 +82,11 @@ const CreateFundTransfer = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     // Validation
-    if (!form.fromAccountId || !form.toAccountId) {
+    if (!form.fromAccountName || !form.toAccountName) {
       toast.error('Please select both accounts');
       return;
     }
-    if (form.fromAccountId === form.toAccountId) {
+    if (form.fromAccountName === form.toAccountName) {
       toast.error('From and To accounts must be different');
       return;
     }
@@ -73,17 +100,11 @@ const CreateFundTransfer = () => {
     // Reset or navigate...
   };
 
-  // Get account details by ID
-  const getAccount = (id) => accounts.find((acc) => acc.id === parseInt(id));
-
   // Format currency (always GHS)
   const formatCurrency = (amount) => {
     return `₵ ${Number(amount).toFixed(2)}`;
   };
 
-  // Preview data
-  const fromAccount = getAccount(form.fromAccountId);
-  const toAccount = getAccount(form.toAccountId);
   const amountNum = parseFloat(form.amount) || 0;
 
   return (
@@ -157,20 +178,24 @@ const CreateFundTransfer = () => {
               />
             </div>
 
-            {/* Transfer Date */}
+            {/* Transfer Date - disabled */}
             <div>
               <label style={labelStyle}>Transfer Date</label>
               <input
                 type="date"
                 name="transferDate"
                 value={form.transferDate}
-                onChange={handleChange}
-                style={inputStyle}
+                disabled
+                style={{
+                  ...inputStyle,
+                  backgroundColor: '#f9fafb',
+                  cursor: 'not-allowed',
+                }}
               />
             </div>
           </div>
 
-          {/* From Account & To Account (side by side) */}
+          {/* From Account & To Account - now using grouped dropdowns */}
           <div
             style={{
               display: 'grid',
@@ -182,32 +207,40 @@ const CreateFundTransfer = () => {
             <div>
               <label style={labelStyle}>From Account (Source)</label>
               <select
-                name="fromAccountId"
-                value={form.fromAccountId}
+                name="fromAccountName"
+                value={form.fromAccountName}
                 onChange={handleChange}
                 style={inputStyle}
               >
-                <option value="">Select Internal Account</option>
-                {accounts.map((acc) => (
-                  <option key={acc.id} value={acc.id}>
-                    {acc.accountNumber} - {acc.accountName || 'Account'}
-                  </option>
+                <option value="">Select Account</option>
+                {ACCOUNT_NAMES_BY_TYPE.map((group) => (
+                  <optgroup key={group.type} label={group.type}>
+                    {group.names.map((name) => (
+                      <option key={name} value={name}>
+                        {name}
+                      </option>
+                    ))}
+                  </optgroup>
                 ))}
               </select>
             </div>
             <div>
               <label style={labelStyle}>To Account (Destination)</label>
               <select
-                name="toAccountId"
-                value={form.toAccountId}
+                name="toAccountName"
+                value={form.toAccountName}
                 onChange={handleChange}
                 style={inputStyle}
               >
-                <option value="">Select Internal Account</option>
-                {accounts.map((acc) => (
-                  <option key={acc.id} value={acc.id}>
-                    {acc.accountNumber} - {acc.accountName || 'Account'}
-                  </option>
+                <option value="">Select Account</option>
+                {ACCOUNT_NAMES_BY_TYPE.map((group) => (
+                  <optgroup key={group.type} label={group.type}>
+                    {group.names.map((name) => (
+                      <option key={name} value={name}>
+                        {name}
+                      </option>
+                    ))}
+                  </optgroup>
                 ))}
               </select>
             </div>
@@ -260,7 +293,6 @@ const CreateFundTransfer = () => {
                 style={inputStyle}
               >
                 <option value="GHS">GHS (₵)</option>
-                {/* Add other currencies if needed */}
               </select>
             </div>
           </div>
@@ -282,7 +314,7 @@ const CreateFundTransfer = () => {
             />
           </div>
 
-          {/* Accounting Preview */}
+          {/* Accounting Preview - updated to show names */}
           <div style={{ marginBottom: '32px' }}>
             <label style={{ ...labelStyle, fontWeight: 600, fontSize: '0.9rem' }}>
               Accounting Preview
@@ -311,7 +343,7 @@ const CreateFundTransfer = () => {
                   Debit
                 </div>
                 <div style={{ fontSize: '0.9rem', color: '#1f2937' }}>
-                  {toAccount ? `${toAccount.accountNumber} - ${toAccount.accountName || 'Account'}` : '—'}
+                  {form.toAccountName || '—'}
                 </div>
                 <div style={{ fontSize: '1.1rem', fontWeight: 600, color: '#111827' }}>
                   {amountNum > 0 ? formatCurrency(amountNum) : '₵ 0.00'}
@@ -331,7 +363,7 @@ const CreateFundTransfer = () => {
                   Credit
                 </div>
                 <div style={{ fontSize: '0.9rem', color: '#1f2937' }}>
-                  {fromAccount ? `${fromAccount.accountNumber} - ${fromAccount.accountName || 'Account'}` : '—'}
+                  {form.fromAccountName || '—'}
                 </div>
                 <div style={{ fontSize: '1.1rem', fontWeight: 600, color: '#111827' }}>
                   {amountNum > 0 ? formatCurrency(amountNum) : '₵ 0.00'}
@@ -359,7 +391,7 @@ const CreateFundTransfer = () => {
               >
                 <option value="Pending">Pending</option>
                 <option value="Completed">Completed</option>
-                <option value="Failed">Failed</option>
+             
               </select>
             </div>
             <div>

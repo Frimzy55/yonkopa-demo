@@ -718,7 +718,7 @@ const AdminDashboard = () => {
       }
       
       const internalComponents = {
-        'Subsidiary GL Accounts': GLAccounts,
+        'Chart of Accounts': GLAccounts,
         'Internal Transfers': InternalTransfers,
         'Internal Account Statement': InternalAccountStatement,
       };

@@ -93,7 +93,7 @@ export const menuItems = [
   { 
     name: 'Internal Accounts', icon: 'bi-diagram-3',
     subMenus: [
-      { name: 'Subsidiary GL Accounts', icon: 'bi-journal-bookmark-fill' },
+      { name: 'Chart of Accounts', icon: 'bi-journal-bookmark-fill' },
       { name: 'Internal Transfers', icon: 'bi-arrow-left-right' },
       { name: 'Internal Account Statement', icon: 'bi-receipt' },
       { name: 'Fund Transfer', icon: 'bi-send',

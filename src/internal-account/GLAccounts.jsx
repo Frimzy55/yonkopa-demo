@@ -117,25 +117,6 @@ const GLAccounts = () => {
     setShowModal(true);
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this GL Account?')) {
-      setLoading(true);
-      try {
-        const token = localStorage.getItem('token');
-        await axios.delete(`${API_BASE_URL}/api/gl-accounts/${id}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        toast.success('GL Account deleted successfully');
-        fetchGLAccounts();
-      } catch (error) {
-        console.error('Error deleting GL account:', error);
-        toast.error('Failed to delete GL account');
-      } finally {
-        setLoading(false);
-      }
-    }
-  };
-
   const closeModal = () => {
     setShowModal(false);
     setEditingAccount(null);
@@ -154,14 +135,9 @@ const GLAccounts = () => {
     return badges[status] || 'bg-secondary';
   };
 
-  // 🔍 Reset filters
+  // 🔍 Reset filters (optional)
   const handleSearch = () => {
-    // Already filtering in real time – this button can also reset if you prefer
-    // For now, it does nothing extra, but you can add a "clear" action.
-    // Example: if you want to clear search on click:
-    // setSearchTerm('');
-    // setTypeFilter('');
-    // setStatusFilter('');
+    // No action needed – filtering happens in real time
   };
 
   return (
@@ -171,7 +147,7 @@ const GLAccounts = () => {
       {/* Header */}
       <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
         <div>
-          <h4 className="mb-1">Subsidiary GL Accounts Section</h4>
+          <h4 className="mb-1">Chart of Accounts</h4>
           <p className="text-muted mb-0">Manage chart of accounts and GL master data</p>
         </div>
         <button className="btn btn-primary" onClick={() => setShowModal(true)}>
@@ -401,17 +377,12 @@ const GLAccounts = () => {
                       </td>
                       <td>
                         <button 
-                          className="btn btn-sm btn-outline-primary me-2"
+                          className="btn btn-sm btn-outline-primary"
                           onClick={() => handleEdit(account)}
                         >
                           <i className="bi bi-pencil"></i>
                         </button>
-                        <button 
-                          className="btn btn-sm btn-outline-danger"
-                          onClick={() => handleDelete(account.id)}
-                        >
-                          <i className="bi bi-trash"></i>
-                        </button>
+                        {/* Delete button removed */}
                       </td>
                     </tr>
                   ))}
