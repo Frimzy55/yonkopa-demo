@@ -1,171 +1,150 @@
-// TellerWithdraw.js
 import React, { useState } from 'react';
+import axios from 'axios';
+import TransactionDetails from './WithdrawalDetails';
+import DenominationDetails from './DenominationDetails';
 
-const TellerWithdraw = () => {
-  const [formData, setFormData] = useState({
-    customerId: '',
-    customerName: '',
-    availableBalance: '',
-    amount: '',
-    narration: '',
-  });
+const ReverseWithdrawal = () => {
+  const [customerId, setCustomerId] = useState('');
+  const [accountNumber, setAccountNumber] = useState('');
+  const [transaction, setTransaction] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [step, setStep] = useState(0);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleSubmit = (e) => {
+  const handleSearch = async (e) => {
     e.preventDefault();
-    console.log('Withdrawal data:', formData);
-    alert('Withdrawal submitted successfully!');
-    // Optionally reset form
-  };
 
-  const handleCustomerIdBlur = () => {
-    if (formData.customerId === '123') {
-      setFormData((prev) => ({
-        ...prev,
-        customerName: 'John Doe',
-        availableBalance: '5000.00',
-      }));
+    if (!customerId.trim() && !accountNumber.trim()) {
+      setError('Please enter at least a Customer ID or Account Number');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    setTransaction(null);
+    setStep(0);
+
+    try {
+      const token = localStorage.getItem('token');
+      const params = new URLSearchParams();
+      if (customerId.trim()) params.append('customerId', customerId.trim());
+      if (accountNumber.trim()) params.append('accountNumber', accountNumber.trim());
+
+      const response = await axios.get(
+        `http://localhost:5002/api/teller/transactions?${params.toString()}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      const data = response.data;
+      if (Array.isArray(data) && data.length > 0) {
+        setTransaction(data[0]);
+      } else {
+        setError('No account found');
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Account not found');
+    } finally {
+      setLoading(false);
     }
   };
 
+  const handleReverse = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(
+        `/api/teller/transactions/${transaction.id}/reverse`,
+        { reason: 'Reversal requested', reversedBy: 'Admin User' },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      setSuccess('Withdrawal reversed successfully!');
+      setStep(0);
+      setTimeout(() => {
+        setSuccess('');
+        setTransaction(null);
+        setCustomerId('');
+        setAccountNumber('');
+      }, 3000);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to reverse withdrawal');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleNext = () => setStep(1);
+  const handleBack = () => setStep(0);
+
   return (
-    <div style={styles.container}>
-      <h2 style={styles.title}>Withdrawal Form</h2>
-      <form onSubmit={handleSubmit} style={styles.form}>
-        <div style={styles.grid}>
-          <div style={styles.formGroup}>
-            <label>Customer ID:</label>
-            <input
-              type="text"
-              name="customerId"
-              value={formData.customerId}
-              onChange={handleChange}
-              onBlur={handleCustomerIdBlur}
-              required
-              style={styles.input}
-            />
-          </div>
+    <div className="reverse-withdrawal-container">
+      <h4 className="mb-4">Withdrawal</h4>
 
-          <div style={styles.formGroup}>
-            <label>Customer Name:</label>
-            <input
-              type="text"
-              name="customerName"
-              value={formData.customerName}
-              onChange={handleChange}
-              readOnly
-              style={styles.input}
-            />
-          </div>
-
-          <div style={styles.formGroup}>
-            <label>Available Balance:</label>
-            <input
-              type="text"
-              name="availableBalance"
-              value={formData.availableBalance}
-              onChange={handleChange}
-              readOnly
-              style={styles.input}
-            />
-          </div>
-
-          <div style={styles.formGroup}>
-            <label>Amount:</label>
-            <input
-              type="number"
-              name="amount"
-              value={formData.amount}
-              onChange={handleChange}
-              required
-              min="0.01"
-              step="0.01"
-              style={styles.input}
-            />
-          </div>
+      <div className="card">
+        <div className="card-body">
+          <h6 className="card-title mb-3">Search Customer Account</h6>
+          <form onSubmit={handleSearch}>
+            <div className="row g-3 align-items-end">
+              <div className="col-md-5">
+                <label className="form-label">Customer ID</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Enter Customer ID"
+                  value={customerId}
+                  onChange={(e) => setCustomerId(e.target.value)}
+                />
+              </div>
+              <div className="col-md-5">
+                <label className="form-label">Account Number</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Account Number"
+                  value={accountNumber}
+                  onChange={(e) => setAccountNumber(e.target.value)}
+                />
+              </div>
+              <div className="col-md-2">
+                <button
+                  type="submit"
+                  className="btn btn-success w-100"
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                  ) : (
+                    <i className="bi bi-search"></i>
+                  )}
+                </button>
+              </div>
+            </div>
+          </form>
         </div>
+      </div>
 
-        {/* Narration – full width */}
-        <div style={styles.formGroup}>
-          <label>Narration:</label>
-          <textarea
-            name="narration"
-            value={formData.narration}
-            onChange={handleChange}
-            rows="3"
-            style={styles.textarea}
-          />
-        </div>
+      {error && <div className="alert alert-danger mt-3">{error}</div>}
+      {success && <div className="alert alert-success mt-3">{success}</div>}
 
-        <button type="submit" style={styles.button}>
-          Submit Withdrawal
-        </button>
-      </form>
+      {transaction && step === 0 && (
+        <TransactionDetails transaction={transaction} onNext={handleNext} loading={loading} />
+      )}
+
+      {transaction && step === 1 && (
+        <DenominationDetails
+          transaction={transaction}
+          onConfirm={handleReverse}
+          onBack={handleBack}
+          loading={loading}
+        />
+      )}
     </div>
   );
 };
 
-const styles = {
-  container: {
-    maxWidth: '700px',
-    margin: '50px auto',
-    padding: '30px',
-    border: '1px solid #ccc',
-    borderRadius: '8px',
-    backgroundColor: '#f9f9f9',
-  },
-  title: {
-    textAlign: 'center',
-    marginBottom: '20px',
-  },
-  form: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '15px',
-  },
-  grid: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr', // two equal columns
-    gap: '20px',
-  },
-  formGroup: {
-    display: 'flex',
-    flexDirection: 'column',
-  },
-  input: {
-    padding: '8px',
-    fontSize: '16px',
-    borderRadius: '4px',
-    border: '1px solid #ccc',
-    marginTop: '4px',
-  },
-  textarea: {
-    padding: '8px',
-    fontSize: '16px',
-    borderRadius: '4px',
-    border: '1px solid #ccc',
-    marginTop: '4px',
-    resize: 'vertical',
-  },
-  button: {
-    padding: '10px 20px',
-    fontSize: '16px',
-    backgroundColor: '#007bff',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    marginTop: '10px',
-    alignSelf: 'center',
-    width: '50%',
-  },
-};
-
-export default TellerWithdraw;
+export default ReverseWithdrawal;

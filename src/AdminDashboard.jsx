@@ -71,7 +71,6 @@ import InvestmentEnquiries from './investment/InvestmentEnquiries';
 
 // Internal Accounts Components
 import GLAccounts from './internal-account/GLAccounts';
-import AutomatedFundTransfer from './internal-account/AutomatedFundTransfer';
 import InternalTransfers from './internal-account/InternalTransfers';
 import InternalAccountStatement from './internal-account/InternalAccountStatement';
 import CreateFundTransfer from './internal-account/CreateFundTransfer';
@@ -333,12 +332,23 @@ const AdminDashboard = () => {
     navigate('/admin/settings');
   }, [navigate]);
 
-  const handleLogout = useCallback((e) => {
+  /*const handleLogout = useCallback((e) => {
     if (e) e.preventDefault();
     setIsUserDropdownOpen(false);
     localStorage.removeItem('token');
-    navigate('/demo');
-  }, [navigate]);
+     navigate('/access');
+     navigate('/demo');
+  }, [navigate]);*/
+
+
+  const handleLogout = useCallback((e) => {
+  if (e) e.preventDefault();
+
+  setIsUserDropdownOpen(false);
+  localStorage.removeItem("token");
+
+  navigate("/access");
+}, [navigate]);   
 
   const handleSummarySelect = useCallback((summaryType, summaryName) => {
     setSelectedSummary(summaryType);
@@ -683,7 +693,6 @@ const AdminDashboard = () => {
     if (activeMenu === 'Internal Accounts') {
       if (activeSubMenu === 'Fund Transfer') {
         const fundTransferComponents = {
-            'Automated Fund Transfer': AutomatedFundTransfer,
           'Create Fund Transfer': CreateFundTransfer,
           'Create Backdated FT': CreateBackdatedFT,
           'List of Fund Transfers': ListFundTransfers,
@@ -709,7 +718,7 @@ const AdminDashboard = () => {
       }
       
       const internalComponents = {
-        'GL Accounts': GLAccounts,
+        'Subsidiary GL Accounts': GLAccounts,
         'Internal Transfers': InternalTransfers,
         'Internal Account Statement': InternalAccountStatement,
       };

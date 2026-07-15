@@ -93,14 +93,12 @@ export const menuItems = [
   { 
     name: 'Internal Accounts', icon: 'bi-diagram-3',
     subMenus: [
-      { name: 'GL Accounts', icon: 'bi-journal-bookmark-fill' },
+      { name: 'Subsidiary GL Accounts', icon: 'bi-journal-bookmark-fill' },
       { name: 'Internal Transfers', icon: 'bi-arrow-left-right' },
       { name: 'Internal Account Statement', icon: 'bi-receipt' },
       { name: 'Fund Transfer', icon: 'bi-send',
         nestedMenus: [
-            { name: 'Automated Fund Transfer', icon: 'bi-plus-circle' },
           { name: 'Create Fund Transfer', icon: 'bi-plus-circle' },
-       //     { name: 'Automated Fund Transfer', icon: 'bi-plus-circle' },
           { name: 'Create Backdated FT', icon: 'bi-calendar-minus' },
           { name: 'List of Fund Transfers', icon: 'bi-list-ul' }
         ]

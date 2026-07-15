@@ -2,10 +2,18 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
-const GLAccountFormModal = ({ show, onClose, onSave, initialData, accounts }) => {
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
+const GLAccountFormModal = ({ 
+  show, 
+  onClose, 
+  onSave, 
+  initialData, 
+  accounts,
+  accountNameOptions = []   // 👈 expects [{ type: 'Asset', names: ['Cash', ...] }, ...]
+}) => {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    accountCode: '',
     accountName: '',
     accountType: 'Asset',
     category: '',
@@ -19,13 +27,13 @@ const GLAccountFormModal = ({ show, onClose, onSave, initialData, accounts }) =>
   const accountTypes = ['Asset', 'Liability', 'Equity', 'Revenue', 'Expense'];
   const normalBalances = ['Debit', 'Credit'];
   const statuses = ['Active', 'Inactive', 'Suspended'];
+  const assetCategories = ['Current Assets', 'Fixed Assets'];
+  const liabilityCategories = ['Short Liability', 'Long Liability'];
 
-  // Reset form when modal opens or initialData changes
   useEffect(() => {
     if (show) {
       if (initialData) {
         setFormData({
-          accountCode: initialData.accountCode,
           accountName: initialData.accountName,
           accountType: initialData.accountType,
           category: initialData.category || '',
@@ -36,9 +44,7 @@ const GLAccountFormModal = ({ show, onClose, onSave, initialData, accounts }) =>
           isSubAccount: initialData.isSubAccount || false
         });
       } else {
-        // Reset to default for create mode
         setFormData({
-          accountCode: '',
           accountName: '',
           accountType: 'Asset',
           category: '',
@@ -54,10 +60,16 @@ const GLAccountFormModal = ({ show, onClose, onSave, initialData, accounts }) =>
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData({
+    const newFormData = {
       ...formData,
       [name]: type === 'checkbox' ? checked : value
-    });
+    };
+
+    if (name === 'accountType') {
+      newFormData.category = '';
+    }
+
+    setFormData(newFormData);
   };
 
   const handleSubmit = async (e) => {
@@ -71,17 +83,15 @@ const GLAccountFormModal = ({ show, onClose, onSave, initialData, accounts }) =>
       };
 
       if (initialData) {
-        // Update existing account
-        await axios.put(`http://localhost:5000/api/gl-accounts/${initialData.id}`, formData, config);
+        await axios.put(`${API_BASE_URL}/api/gl-accounts/${initialData.id}`, formData, config);
         toast.success('GL Account updated successfully');
       } else {
-        // Create new account
-        await axios.post('http://localhost:5000/api/gl-accounts', formData, config);
+        await axios.post(`${API_BASE_URL}/api/gl-accounts`, formData, config);
         toast.success('GL Account created successfully');
       }
 
-      onSave(); // notify parent to refresh list
-      onClose(); // close modal
+      onSave();
+      onClose();
     } catch (error) {
       console.error('Error saving GL account:', error);
       toast.error(error.response?.data?.message || 'Failed to save GL account');
@@ -91,6 +101,8 @@ const GLAccountFormModal = ({ show, onClose, onSave, initialData, accounts }) =>
   };
 
   if (!show) return null;
+
+  const hideCategory = ['Equity', 'Revenue', 'Expense'].includes(formData.accountType);
 
   return (
     <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }} tabIndex="-1">
@@ -104,35 +116,33 @@ const GLAccountFormModal = ({ show, onClose, onSave, initialData, accounts }) =>
           </div>
           <form onSubmit={handleSubmit}>
             <div className="modal-body">
+              {/* Account Name - full width */}
               <div className="row">
-                <div className="col-md-6 mb-3">
-                  <label className="form-label">Account Code *</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    name="accountCode"
-                    value={formData.accountCode}
-                    onChange={handleInputChange}
-                    required
-                    placeholder="e.g., 1010, 2020"
-                  />
-                </div>
-                <div className="col-md-6 mb-3">
+                <div className="col-12 mb-3">
                   <label className="form-label">Account Name *</label>
-                  <input
-                    type="text"
-                    className="form-control"
+                  <select
+                    className="form-select"
                     name="accountName"
                     value={formData.accountName}
                     onChange={handleInputChange}
                     required
-                    placeholder="e.g., Cash in Bank"
-                  />
+                  >
+                    <option value="">Select an account name</option>
+                    {accountNameOptions.map((group) => (
+                      <optgroup key={group.type} label={group.type}>
+                        {group.names.map((name) => (
+                          <option key={name} value={name}>
+                            {name}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
                 </div>
               </div>
 
               <div className="row">
-                <div className="col-md-6 mb-3">
+                <div className={hideCategory ? 'col-md-12' : 'col-md-6'}>
                   <label className="form-label">Account Type *</label>
                   <select
                     className="form-select"
@@ -146,17 +156,46 @@ const GLAccountFormModal = ({ show, onClose, onSave, initialData, accounts }) =>
                     ))}
                   </select>
                 </div>
-                <div className="col-md-6 mb-3">
-                  <label className="form-label">Category</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    name="category"
-                    value={formData.category}
-                    onChange={handleInputChange}
-                    placeholder="e.g., Current Assets, Fixed Assets"
-                  />
-                </div>
+
+                {!hideCategory && (
+                  <div className="col-md-6 mb-3">
+                    <label className="form-label">Category</label>
+                    {formData.accountType === 'Asset' ? (
+                      <select
+                        className="form-select"
+                        name="category"
+                        value={formData.category}
+                        onChange={handleInputChange}
+                      >
+                        <option value="">Select Category</option>
+                        {assetCategories.map(cat => (
+                          <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                      </select>
+                    ) : formData.accountType === 'Liability' ? (
+                      <select
+                        className="form-select"
+                        name="category"
+                        value={formData.category}
+                        onChange={handleInputChange}
+                      >
+                        <option value="">Select Category</option>
+                        {liabilityCategories.map(cat => (
+                          <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        type="text"
+                        className="form-control"
+                        name="category"
+                        value={formData.category}
+                        onChange={handleInputChange}
+                        placeholder="Enter category"
+                      />
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="row">
@@ -224,18 +263,6 @@ const GLAccountFormModal = ({ show, onClose, onSave, initialData, accounts }) =>
                     </label>
                   </div>
                 </div>
-              </div>
-
-              <div className="mb-3">
-                <label className="form-label">Description</label>
-                <textarea
-                  className="form-control"
-                  name="description"
-                  rows="3"
-                  value={formData.description}
-                  onChange={handleInputChange}
-                  placeholder="Enter account description..."
-                ></textarea>
               </div>
             </div>
             <div className="modal-footer">

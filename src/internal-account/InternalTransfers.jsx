@@ -12,7 +12,7 @@ const InternalTransfers = () => {
     fromAccountId: '',
     toAccountId: '',
     amount: '',
-    currency: 'USD',
+    currency: '₵',
     transferType: 'Internal',
     description: '',
     reference: '',
@@ -20,9 +20,8 @@ const InternalTransfers = () => {
   });
 
   const transferTypes = ['Internal', 'GL Transfer', 'Inter-Branch'];
-  const currencies = ['USD', 'EUR', 'GBP', 'KES', 'NGN', 'ZAR'];
+  const currencies = ['GHS'];
 
-  // Fetch transfers and accounts
   useEffect(() => {
     fetchTransfers();
     fetchAccounts();
@@ -70,41 +69,33 @@ const InternalTransfers = () => {
       toast.error('Cannot transfer to the same account');
       return false;
     }
-    
     if (parseFloat(formData.amount) <= 0) {
       toast.error('Amount must be greater than 0');
       return false;
     }
-
     const fromAccount = accounts.find(acc => acc.id === parseInt(formData.fromAccountId));
     if (fromAccount && fromAccount.balance < parseFloat(formData.amount)) {
       toast.error('Insufficient funds in source account');
       return false;
     }
-
     return true;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!validateTransfer()) {
-      return;
-    }
+    if (!validateTransfer()) return;
 
     setLoading(true);
-    
     try {
       const token = localStorage.getItem('token');
       const config = {
         headers: { Authorization: `Bearer ${token}` }
       };
-
       await axios.post('http://localhost:5000/api/internal-transfers', formData, config);
       toast.success('Transfer completed successfully');
       resetForm();
       fetchTransfers();
-      fetchAccounts(); // Refresh account balances
+      fetchAccounts();
     } catch (error) {
       console.error('Error processing transfer:', error);
       toast.error(error.response?.data?.message || 'Failed to process transfer');
@@ -152,25 +143,22 @@ const InternalTransfers = () => {
   return (
     <div className="internal-transfers-container">
       <ToastContainer position="top-right" autoClose={3000} />
-      
-      {/* Header Section */}
+
+      {/* Header */}
       <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
         <div>
           <h4 className="mb-1">Internal Transfers</h4>
           <p className="text-muted mb-0">Process and manage transfers between accounts</p>
         </div>
-        <button 
-          className="btn btn-primary"
-          onClick={() => setShowModal(true)}
-        >
+        <button className="btn btn-primary" onClick={() => setShowModal(true)}>
           <i className="bi bi-arrow-left-right me-2"></i>
           New Transfer
         </button>
       </div>
 
-      {/* Summary Cards */}
+      {/* Summary Cards – 3 cards (Pending removed) */}
       <div className="row mb-4">
-        <div className="col-md-3 mb-3">
+        <div className="col-md-4 mb-3">
           <div className="card bg-primary bg-opacity-10 border-0">
             <div className="card-body">
               <div className="d-flex justify-content-between align-items-center">
@@ -183,7 +171,7 @@ const InternalTransfers = () => {
             </div>
           </div>
         </div>
-        <div className="col-md-3 mb-3">
+        <div className="col-md-4 mb-3">
           <div className="card bg-success bg-opacity-10 border-0">
             <div className="card-body">
               <div className="d-flex justify-content-between align-items-center">
@@ -202,7 +190,7 @@ const InternalTransfers = () => {
             </div>
           </div>
         </div>
-        <div className="col-md-3 mb-3">
+        <div className="col-md-4 mb-3">
           <div className="card bg-info bg-opacity-10 border-0">
             <div className="card-body">
               <div className="d-flex justify-content-between align-items-center">
@@ -220,31 +208,16 @@ const InternalTransfers = () => {
             </div>
           </div>
         </div>
-        <div className="col-md-3 mb-3">
-          <div className="card bg-warning bg-opacity-10 border-0">
-            <div className="card-body">
-              <div className="d-flex justify-content-between align-items-center">
-                <div>
-                  <h6 className="text-muted mb-1">Pending</h6>
-                  <h3 className="mb-0">
-                    {transfers.filter(t => t.status === 'Pending').length}
-                  </h3>
-                </div>
-                <i className="bi bi-hourglass-split fs-1 text-warning"></i>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Quick Transfer Info */}
       <div className="alert alert-info mb-4">
         <i className="bi bi-info-circle-fill me-2"></i>
-        <strong>Transfer Information:</strong> Internal transfers are processed instantly. 
+        <strong>Transfer Information:</strong> Internal transfers are processed instantly.
         Transfers between accounts within the same branch are free. Inter-branch transfers may incur charges.
       </div>
 
-      {/* Transfers History Table */}
+      {/* Transfers Table */}
       <div className="card">
         <div className="card-header bg-white">
           <h6 className="mb-0">Transfer History</h6>
@@ -314,7 +287,7 @@ const InternalTransfers = () => {
         </div>
       </div>
 
-      {/* Modal for New Transfer */}
+      {/* Modal */}
       {showModal && (
         <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }} tabIndex="-1">
           <div className="modal-dialog modal-lg">
@@ -341,7 +314,7 @@ const InternalTransfers = () => {
                         <option value="">Select source account</option>
                         {accounts.map(account => (
                           <option key={account.id} value={account.id}>
-                            {account.accountNumber} - {account.accountName || 'Account'} 
+                            {account.accountNumber} - {account.accountName || 'Account'}
                             (Balance: {formatCurrency(account.balance)})
                           </option>
                         ))}
@@ -371,9 +344,9 @@ const InternalTransfers = () => {
                       <label className="form-label">Amount *</label>
                       <div className="input-group">
                         <span className="input-group-text">
-                          {formData.currency === 'USD' ? '$' : 
+                          {formData.currency === 'GHS' ? '₵' :
                            formData.currency === 'EUR' ? '€' :
-                           formData.currency === 'GBP' ? '£' : 
+                           formData.currency === 'GBP' ? '£' :
                            formData.currency}
                         </span>
                         <input
@@ -456,7 +429,6 @@ const InternalTransfers = () => {
                     ></textarea>
                   </div>
 
-                  {/* Transfer Summary */}
                   {formData.fromAccountId && formData.toAccountId && formData.amount && (
                     <div className="alert alert-secondary mt-3">
                       <h6 className="mb-2">Transfer Summary</h6>

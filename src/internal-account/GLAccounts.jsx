@@ -4,6 +4,70 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import GLAccountFormModal from './GLAccountFormModal';
 
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
+// 📌 Grouped account names by type (for the dropdown)
+const ACCOUNT_NAMES_BY_TYPE = [
+  {
+    type: 'Asset',
+    names: [
+      'Cash',
+      'Bank',
+      'Petty Cash',
+      'Suspense asset',
+    ],
+  },
+  {
+   type: 'Liability',
+    names: [
+      'Suspense liability',          // ✅ new
+      'Loan repayments account',     // ✅ new
+      'Cash collateral',             // ✅ new
+      'Borrowings account',          // ✅ new
+      'Overage account',             // ✅ new
+    ],
+  },
+
+  {
+    type: 'Equity',
+    names: [
+      'Stated capital',   // ✅ new
+      'Drawings',         // ✅ new
+    ],
+  },
+
+  {
+     type: 'Revenue',
+    names: [
+      'Interest income on loans',    // ✅ new
+      'Penalty income',              // ✅ new
+      'Loan processing fee',         // ✅ new
+      'Insurance fee income',        // ✅ new
+      'SMS income',                  // ✅ new
+      'Other operating income',      // ✅ new
+      'Registration fee',            // ✅ new
+    ],
+  },
+  {
+    type: 'Expense',
+    names: [
+      'Borrowing expense',
+      'Interest on Borrowing suspense',
+      'Interest on Borrowing expense',
+      'SSNIT contribution',
+      'Wages & Salaries',
+      'Staff allowance',
+      'Owners allowance',
+      'Staff lunch',
+      'Rent expenses',
+      'Utility: electricity',
+      'Utility: water',
+      'Occupancy cost: cleaning & sanitation',
+      'Bus. Licensing & subscription',
+    ],
+  },
+];
+
 const GLAccounts = () => {
   const [glAccounts, setGlAccounts] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -13,7 +77,6 @@ const GLAccounts = () => {
   const accountTypes = ['Asset', 'Liability', 'Equity', 'Revenue', 'Expense'];
   const statuses = ['Active', 'Inactive', 'Suspended'];
 
-  // Fetch GL Accounts
   useEffect(() => {
     fetchGLAccounts();
   }, []);
@@ -22,7 +85,7 @@ const GLAccounts = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:5000/api/gl-accounts', {
+      const response = await axios.get(`${API_BASE_URL}/api/gl-accounts`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setGlAccounts(response.data);
@@ -44,7 +107,7 @@ const GLAccounts = () => {
       setLoading(true);
       try {
         const token = localStorage.getItem('token');
-        await axios.delete(`http://localhost:5000/api/gl-accounts/${id}`, {
+        await axios.delete(`${API_BASE_URL}/api/gl-accounts/${id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         toast.success('GL Account deleted successfully');
@@ -80,22 +143,19 @@ const GLAccounts = () => {
     <div className="gl-accounts-container">
       <ToastContainer position="top-right" autoClose={3000} />
 
-      {/* Header Section */}
+      {/* Header */}
       <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
         <div>
-          <h4 className="mb-1">General Ledger Report</h4>
+          <h4 className="mb-1">Subsidiary GL Accounts Section</h4>
           <p className="text-muted mb-0">Manage chart of accounts and GL master data</p>
         </div>
-        <button 
-          className="btn btn-primary"
-          onClick={() => setShowModal(true)}
-        >
+        <button className="btn btn-primary" onClick={() => setShowModal(true)}>
           <i className="bi bi-plus-circle me-2"></i>
           Create GL Account
         </button>
       </div>
 
-      {/* Summary Cards */}
+      {/* Summary Cards - First Row */}
       <div className="row mb-4">
         <div className="col-md-3 mb-3">
           <div className="card bg-primary bg-opacity-10 border-0">
@@ -157,6 +217,55 @@ const GLAccounts = () => {
         </div>
       </div>
 
+      {/* Summary Cards - Second Row */}
+      <div className="row mb-4">
+        <div className="col-md-4 mb-3">
+          <div className="card bg-success bg-opacity-10 border-0">
+            <div className="card-body">
+              <div className="d-flex justify-content-between align-items-center">
+                <div>
+                  <h6 className="text-muted mb-1">Equity Accounts</h6>
+                  <h3 className="mb-0">
+                    {glAccounts.filter(acc => acc.accountType === 'Equity').length}
+                  </h3>
+                </div>
+                <i className="bi bi-pie-chart-fill fs-1 text-success"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="col-md-4 mb-3">
+          <div className="card bg-primary bg-opacity-10 border-0">
+            <div className="card-body">
+              <div className="d-flex justify-content-between align-items-center">
+                <div>
+                  <h6 className="text-muted mb-1">Income (Revenue) Accounts</h6>
+                  <h3 className="mb-0">
+                    {glAccounts.filter(acc => acc.accountType === 'Revenue').length}
+                  </h3>
+                </div>
+                <i className="bi bi-graph-up-arrow fs-1 text-primary"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="col-md-4 mb-3">
+          <div className="card bg-danger bg-opacity-10 border-0">
+            <div className="card-body">
+              <div className="d-flex justify-content-between align-items-center">
+                <div>
+                  <h6 className="text-muted mb-1">Expense Accounts</h6>
+                  <h3 className="mb-0">
+                    {glAccounts.filter(acc => acc.accountType === 'Expense').length}
+                  </h3>
+                </div>
+                <i className="bi bi-wallet2 fs-1 text-danger"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Filter Section */}
       <div className="card mb-4">
         <div className="card-body">
@@ -192,7 +301,7 @@ const GLAccounts = () => {
         </div>
       </div>
 
-      {/* GL Accounts Table */}
+      {/* Table */}
       <div className="card">
         <div className="card-body p-0">
           {loading && !glAccounts.length ? (
@@ -267,13 +376,14 @@ const GLAccounts = () => {
         </div>
       </div>
 
-      {/* Modal Component */}
+      {/* Modal with grouped account name options */}
       <GLAccountFormModal
         show={showModal}
         onClose={closeModal}
         onSave={fetchGLAccounts}
         initialData={editingAccount}
         accounts={glAccounts}
+        accountNameOptions={ACCOUNT_NAMES_BY_TYPE}   // 👈 grouped structure
       />
     </div>
   );
