@@ -130,6 +130,7 @@ import './LoginPage.css';
       else if (user.role === 'loan_officer') navigate('/loan-officer-dashboard');
       else if (user.role === 'manager') navigate('/loan-manager');
       else if (user.role === 'supervisor') navigate('/loan-supervisor');
+        else if (user.role === 'master_till') navigate('/master-till-dashboard');
       else navigate('/customer-page');
 
       if (onClose) onClose();

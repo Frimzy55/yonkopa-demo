@@ -13,7 +13,7 @@ const UserManagement = () => {
   const [editingUser, setEditingUser] = useState(null);
   const [showTable, setShowTable] = useState(false);
 
-  const roles = ['ceo', 'loan_officer', 'supervisor', 'manager', 'admin'];
+  const roles = ['ceo', 'loan_officer', 'supervisor', 'manager', 'admin','master_till'];
 
   // Fetch users
   useEffect(() => {

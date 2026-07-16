@@ -134,18 +134,41 @@ const InternalAccountStatement = () => {
       setOpeningBalance(accountInfo.openingBalance);
       setClosingBalance(accountInfo.closingBalance);
 
-      // Map transactions – only include description (narration removed)
+      // Map transactions
       const mappedTransactions = transactions.map((item) => ({
         transactionDate: item.transactionDate || item.date || '',
         transactionDateTime: item.transactionDateTime || item.transactionDate || '',
         valueDate: item.transactionDate || item.date || '',
-        description: item.description || item.narration || '', // fallback to narration if description empty
+        description: item.description || item.narration || '',
         debit: Number(item.debit || 0),
         credit: Number(item.credit || 0),
         balance: Number(item.balance || 0),
       }));
 
-      setStatementData(mappedTransactions);
+      // Build final data: opening row + transactions + closing row
+      const openingRow = {
+        transactionDate: '',
+        transactionDateTime: '',
+        valueDate: '',
+        description: 'Opening Balance',
+        debit: 0,
+        credit: 0,
+        balance: accountInfo.openingBalance,
+        isOpening: true,
+      };
+
+      const closingRow = {
+        transactionDate: '',
+        transactionDateTime: '',
+        valueDate: '',
+        description: 'Closing Balance',
+        debit: 0,
+        credit: 0,
+        balance: accountInfo.closingBalance,
+        isClosing: true,
+      };
+
+      setStatementData([openingRow, ...mappedTransactions, closingRow]);
       setShowResults(true);
       toast.success('Statement generated successfully.');
 
@@ -162,7 +185,7 @@ const InternalAccountStatement = () => {
     window.print();
   };
 
-  // --- Export to Excel (CSV) – no narration column ---
+  // --- Export to Excel (CSV) ---
   const handleExportExcel = () => {
     if (statementData.length === 0) {
       toast.warn('No data to export.');
@@ -172,8 +195,8 @@ const InternalAccountStatement = () => {
     const headers = ['S/N', 'Transaction Date', 'Value Date', 'Description', 'Debit', 'Credit', 'Balance'];
     const rows = statementData.map((t, idx) => [
       idx + 1,
-      formatDateTime(t.transactionDateTime || t.transactionDate),
-      formatDate(t.valueDate),
+      t.isOpening || t.isClosing ? '' : formatDateTime(t.transactionDateTime || t.transactionDate),
+      t.isOpening || t.isClosing ? '' : formatDate(t.valueDate),
       t.description,
       Number(t.debit).toFixed(2),
       Number(t.credit).toFixed(2),
@@ -234,6 +257,7 @@ const InternalAccountStatement = () => {
     }
   };
 
+  // Exclude opening/closing rows from totals (they have 0 debit/credit)
   const totalDebit = statementData.reduce((sum, t) => sum + Number(t.debit), 0);
   const totalCredit = statementData.reduce((sum, t) => sum + Number(t.credit), 0);
 
@@ -377,7 +401,7 @@ const InternalAccountStatement = () => {
               </div>
             </div>
 
-            {/* Account Details */}
+            {/* Account Details – now includes Opening & Closing */}
             <div style={{ backgroundColor: '#f8fafc', borderRadius: '16px', padding: '12px 24px', marginBottom: '24px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.95rem' }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
                 <span style={{ color: '#4a5a6e', fontWeight: 500, width: '160px', flexShrink: 0 }}>Account Name:</span>
@@ -403,13 +427,14 @@ const InternalAccountStatement = () => {
                 <span style={{ color: '#4a5a6e', fontWeight: 500, width: '160px', flexShrink: 0 }}>To:</span>
                 <strong>{formatDate(form.toDate)}</strong>
               </div>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
+              {/* Opening & Closing balance shown here too */}
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px', borderTop: '1px solid #e2e8f0', paddingTop: '8px', marginTop: '4px' }}>
                 <span style={{ color: '#4a5a6e', fontWeight: 500, width: '160px', flexShrink: 0 }}>Opening Balance:</span>
-                <strong>{formatCurrency(openingBalance)}</strong>
+                <strong style={{ color: '#1e4f8a' }}>{formatCurrency(openingBalance)}</strong>
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
                 <span style={{ color: '#4a5a6e', fontWeight: 500, width: '160px', flexShrink: 0 }}>Closing Balance:</span>
-                <strong>{formatCurrency(closingBalance)}</strong>
+                <strong style={{ color: '#0b7e3d' }}>{formatCurrency(closingBalance)}</strong>
               </div>
             </div>
 
@@ -437,48 +462,85 @@ const InternalAccountStatement = () => {
               </div>
             </div>
 
-            {/* Table – Narration removed, only Description */}
-            <div ref={tableRef} style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 2px', fontSize: '0.9rem' }}>
+            {/* ✅ Table with Opening & Closing Rows */}
+            <div ref={tableRef} style={{ overflowX: 'auto', borderRadius: '12px', border: '1px solid #e5e9f0' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem', fontFamily: "'Inter', sans-serif", tableLayout: 'fixed' }}>
                 <thead>
-                  <tr style={{ backgroundColor: '#f1f4f9' }}>
-                    <th style={{ ...thStyle, borderTopLeftRadius: '8px', textAlign: 'center' }}>S/N</th>
-                    <th style={thStyle}>Transaction Date</th>
-                    <th style={thStyle}>Value Date</th>
-                    <th style={thStyle}>Description</th>
-                    <th style={{ ...thStyle, textAlign: 'right' }}>Debit (₵)</th>
-                    <th style={{ ...thStyle, textAlign: 'right' }}>Credit (₵)</th>
-                    <th style={{ ...thStyle, textAlign: 'right', borderTopRightRadius: '8px' }}>Balance (₵)</th>
+                  <tr style={{ backgroundColor: '#1e4f8a' }}>
+                    <th style={{ ...thStyle, width: '6%', textAlign: 'center', padding: '14px 8px', color: '#fff' }}>#</th>
+                    <th style={{ ...thStyle, width: '16%', padding: '14px 8px', color: '#fff' }}>Transaction Date</th>
+                    <th style={{ ...thStyle, width: '14%', padding: '14px 8px', color: '#fff' }}>Value Date</th>
+                    <th style={{ ...thStyle, width: '28%', maxWidth: '200px', padding: '14px 8px', wordBreak: 'break-word', color: '#fff' }}>Description</th>
+                    <th style={{ ...thStyle, width: '12%', textAlign: 'right', padding: '14px 8px', color: '#fff' }}>Debit (₵)</th>
+                    <th style={{ ...thStyle, width: '12%', textAlign: 'right', padding: '14px 8px', color: '#fff' }}>Credit (₵)</th>
+                    <th style={{ ...thStyle, width: '12%', textAlign: 'right', padding: '14px 8px', color: '#fff' }}>Balance (₵)</th>
                   </tr>
                 </thead>
                 <tbody>
                   {statementData.length === 0 ? (
                     <tr>
-                      <td colSpan="7" style={{ ...tdStyle, textAlign: 'center', padding: '32px 14px' }}>
+                      <td colSpan="7" style={{ ...tdStyle, textAlign: 'center', padding: '40px 20px', color: '#6b7a8a', fontStyle: 'italic' }}>
                         No transactions found for the selected period.
                       </td>
                     </tr>
                   ) : (
                     <>
-                      {statementData.map((row, idx) => (
-                        <tr key={idx} style={{ backgroundColor: idx % 2 === 0 ? '#ffffff' : '#f9fbfd', transition: 'background-color 0.15s' }}
-                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#eef4ff'}
-                          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = idx % 2 === 0 ? '#ffffff' : '#f9fbfd'; }}
-                        >
-                          <td style={{ ...tdStyle, textAlign: 'center' }}>{idx + 1}</td>
-                          <td style={tdStyle}>{formatDateTime(row.transactionDateTime || row.transactionDate)}</td>
-                          <td style={tdStyle}>{formatDate(row.valueDate)}</td>
-                          <td style={tdStyle}>{row.description}</td>
-                          <td style={{ ...tdStyle, textAlign: 'right' }}>{Number(row.debit) > 0 ? formatCurrency(row.debit) : '—'}</td>
-                          <td style={{ ...tdStyle, textAlign: 'right' }}>{Number(row.credit) > 0 ? formatCurrency(row.credit) : '—'}</td>
-                          <td style={{ ...tdStyle, textAlign: 'right', fontWeight: 500, color: '#0b1a33' }}>{formatCurrency(row.balance)}</td>
-                        </tr>
-                      ))}
-                      <tr style={{ backgroundColor: '#e8edf5', fontWeight: 600 }}>
-                        <td colSpan="4" style={{ ...tdStyle, textAlign: 'right', borderBottomLeftRadius: '8px' }}>Totals</td>
-                        <td style={{ ...tdStyle, textAlign: 'right' }}>{formatCurrency(totalDebit)}</td>
-                        <td style={{ ...tdStyle, textAlign: 'right' }}>{formatCurrency(totalCredit)}</td>
-                        <td style={{ ...tdStyle, textAlign: 'right', borderBottomRightRadius: '8px' }}>{formatCurrency(closingBalance)}</td>
+                      {statementData.map((row, idx) => {
+                        const isOpening = row.isOpening;
+                        const isClosing = row.isClosing;
+                        const isSpecial = isOpening || isClosing;
+                        const isEven = idx % 2 === 0;
+                        let bgColor = '#ffffff';
+                        if (isOpening) bgColor = '#f0f4ff';
+                        else if (isClosing) bgColor = '#e6f7ed';
+                        else bgColor = isEven ? '#ffffff' : '#f9fbfd';
+
+                        return (
+                          <tr
+                            key={idx}
+                            style={{
+                              backgroundColor: bgColor,
+                              transition: 'background-color 0.15s',
+                            }}
+                            onMouseEnter={(e) => {
+                              if (!isSpecial) e.currentTarget.style.backgroundColor = '#eef4ff';
+                            }}
+                            onMouseLeave={(e) => {
+                              if (!isSpecial) {
+                                e.currentTarget.style.backgroundColor = isEven ? '#ffffff' : '#f9fbfd';
+                              }
+                            }}
+                          >
+                            <td style={{ ...tdStyle, textAlign: 'center', fontWeight: isSpecial ? 700 : 400, padding: '8px 6px' }}>
+                              {isSpecial ? '' : idx}
+                            </td>
+                            <td style={{ ...tdStyle, fontWeight: isSpecial ? 700 : 400, padding: '8px 6px' }}>
+                              {isSpecial ? '' : formatDateTime(row.transactionDateTime || row.transactionDate)}
+                            </td>
+                            <td style={{ ...tdStyle, fontWeight: isSpecial ? 700 : 400, padding: '8px 6px' }}>
+                              {isSpecial ? '' : formatDate(row.valueDate)}
+                            </td>
+                            <td style={{ ...tdStyle, fontWeight: isSpecial ? 700 : 400, fontStyle: isSpecial ? 'italic' : 'normal', padding: '8px 6px', wordBreak: 'break-word' }}>
+                              {row.description}
+                            </td>
+                            <td style={{ ...tdStyle, textAlign: 'right', fontWeight: isSpecial ? 700 : 400, padding: '8px 6px' }}>
+                              {row.debit > 0 ? formatCurrency(row.debit) : '—'}
+                            </td>
+                            <td style={{ ...tdStyle, textAlign: 'right', fontWeight: isSpecial ? 700 : 400, padding: '8px 6px' }}>
+                              {row.credit > 0 ? formatCurrency(row.credit) : '—'}
+                            </td>
+                            <td style={{ ...tdStyle, textAlign: 'right', fontWeight: isSpecial ? 700 : 500, color: isOpening ? '#1e4f8a' : (isClosing ? '#0b7e3d' : '#0b1a33'), padding: '8px 6px' }}>
+                              {formatCurrency(row.balance)}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                      {/* Totals row */}
+                      <tr style={{ backgroundColor: '#e8edf5', fontWeight: 700, borderTop: '2px solid #1e4f8a' }}>
+                        <td colSpan="4" style={{ ...tdStyle, textAlign: 'right', padding: '10px 8px', borderBottomLeftRadius: '12px' }}>Totals</td>
+                        <td style={{ ...tdStyle, textAlign: 'right', padding: '10px 8px' }}>{formatCurrency(totalDebit)}</td>
+                        <td style={{ ...tdStyle, textAlign: 'right', padding: '10px 8px' }}>{formatCurrency(totalCredit)}</td>
+                        <td style={{ ...tdStyle, textAlign: 'right', padding: '10px 8px', borderBottomRightRadius: '12px' }}>{formatCurrency(closingBalance)}</td>
                       </tr>
                     </>
                   )}
@@ -543,7 +605,6 @@ const thStyle = {
   padding: '12px 14px',
   textAlign: 'left',
   fontWeight: 600,
-  color: '#1e2f4a',
   fontSize: '0.85rem',
   letterSpacing: '0.3px',
   borderBottom: '1px solid #d1d9e6',
