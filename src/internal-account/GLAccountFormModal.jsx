@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import Select from 'react-select'; // 👈 searchable dropdown with group support
+import Select from 'react-select';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -37,7 +37,6 @@ const GLAccountFormModal = ({
     options: group.names.map((name) => ({ value: name, label: name }))
   }));
 
-  // Find currently selected option for the Select
   const selectedAccountNameOption = groupedOptions
     .flatMap((g) => g.options)
     .find((opt) => opt.value === formData.accountName);
@@ -84,7 +83,6 @@ const GLAccountFormModal = ({
     setFormData(newFormData);
   };
 
-  // Handle react-select change for account name
   const handleAccountNameChange = (selected) => {
     setFormData((prev) => ({
       ...prev,
@@ -124,11 +122,11 @@ const GLAccountFormModal = ({
 
   const hideCategory = ['Equity', 'Revenue', 'Expense'].includes(formData.accountType);
 
-  // Custom styles for react-select to match Bootstrap form-control look
+  // 🎨 Custom styles for react-select with DARK group headings
   const customSelectStyles = {
     control: (provided) => ({
       ...provided,
-      borderRadius: '0.375rem', // Bootstrap's default
+      borderRadius: '0.375rem',
       borderColor: '#ced4da',
       fontSize: '1rem',
       minHeight: '38px',
@@ -159,12 +157,16 @@ const GLAccountFormModal = ({
         backgroundColor: '#dee2e6'
       }
     }),
+    // 🔥 Dark, bold group headings
     groupHeading: (provided) => ({
       ...provided,
-      fontSize: '0.8rem',
-      fontWeight: 600,
-      color: '#6c757d',
-      textTransform: 'uppercase'
+      color: '#1e293b',        // dark slate
+      fontWeight: 700,
+      fontSize: '0.85rem',
+      padding: '8px 12px 4px 12px',
+      backgroundColor: '#f8fafc',
+      textTransform: 'uppercase',
+      letterSpacing: '0.3px'
     })
   };
 
