@@ -11,6 +11,7 @@ import ManagerDashboard from "./managerpage/ManagerDashboard";
 
 import LoanOfficerDashboard from "./loanofficerpage/LoanOfficerDashboard";
 import LoanSupervisorDashboard from "./supervisorpage/LoanSupervisorDashboard";
+import TellerDashboard from "./tellerpage/TellerDashboard";
 
 import ProtectedRoute from "./ProtectedRoute";
 import AutoLogout from "./components/AutoLogout";
@@ -122,6 +123,17 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+
+          {/* TELLER */}
+          <Route
+           path="/teller-dashboard"
+           element={
+          <ProtectedRoute allowedRoles={["teller"]}>
+           <TellerDashboard />
+           </ProtectedRoute>
+           }
+           />
 
           {/* CATCH ALL */}
           <Route path="*" element={<Navigate to="/demo" replace />} />
