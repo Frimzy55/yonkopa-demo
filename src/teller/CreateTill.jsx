@@ -5,14 +5,11 @@ import { useNavigate } from 'react-router-dom';
 const CreateTill = () => {
   const navigate = useNavigate();
 
-  // --- Form state (no tillNumber) ---
+  // --- Form state (removed tillName, openingBalance, maxBalance) ---
   const [formData, setFormData] = useState({
-    tillName: '',
     branch: '',
     currency: 'GHS',
     tillType: '',
-    openingBalance: '',
-    maxBalance: '',
     cashLimitPerTransaction: '',
     dailyCashLimit: '',
     overLimitAction: 'block',
@@ -27,12 +24,14 @@ const CreateTill = () => {
   const [success, setSuccess] = useState(false);
   const [createdTillNumber, setCreatedTillNumber] = useState('');
   const [isNavigating, setIsNavigating] = useState(false);
+  const [tellers, setTellers] = useState([]);
+const [loadingTellers, setLoadingTellers] = useState(false);
 
   // --- Mock dropdown data (replace with API later) ---
-  const branches = ['Accra Branch', 'Kumasi Branch', 'Takoradi Branch', 'Tema Branch'];
+  const branches = ['HEAD OFFICE'];
   const currencies = ['GHS', 'USD', 'EUR', 'GBP', 'NGN'];
   const tillTypes = ['Cash Till', 'Cheque Till', 'Hybrid Till', 'Mobile Till'];
-  const tellers = ['John Mensah', 'Ama Serwaa', 'Kwame Osei', 'Esi Addo'];
+  //const tellers = ['John Mensah', 'Ama Serwaa', 'Kwame Osei', 'Esi Addo'];
   const supervisors = ['Manager', 'Senior Teller', 'Supervisor A', 'Supervisor B'];
   const overLimitActions = [
     { value: 'block', label: 'Block Transaction' },
@@ -41,12 +40,16 @@ const CreateTill = () => {
   ];
 
   // --- Set default effective date ---
+  
   useEffect(() => {
-    setFormData((prev) => ({
-      ...prev,
-      effectiveDate: new Date().toISOString().split('T')[0],
-    }));
-  }, []);
+  setFormData((prev) => ({
+    ...prev,
+    effectiveDate: new Date().toISOString().split('T')[0],
+  }));
+
+  fetchTellers();
+
+}, []);
 
   // --- Handlers ---
   const handleChange = (e) => {
@@ -55,10 +58,9 @@ const CreateTill = () => {
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }));
   };
 
-  // --- Validation ---
+  // --- Validation (removed tillName, openingBalance, maxBalance) ---
   const validate = () => {
     const newErrors = {};
-    if (!formData.tillName.trim()) newErrors.tillName = 'Till Name is required';
     if (!formData.branch) newErrors.branch = 'Please select a Branch';
     if (!formData.currency) newErrors.currency = 'Please select a Currency';
     if (!formData.tillType) newErrors.tillType = 'Please select a Till Type';
@@ -66,24 +68,12 @@ const CreateTill = () => {
     if (!formData.supervisor) newErrors.supervisor = 'Please select a Supervisor';
     if (!formData.effectiveDate) newErrors.effectiveDate = 'Effective Date is required';
 
-    ['openingBalance', 'maxBalance', 'cashLimitPerTransaction', 'dailyCashLimit'].forEach((field) => {
+    // Validate numeric fields (only cashLimitPerTransaction and dailyCashLimit)
+    ['cashLimitPerTransaction', 'dailyCashLimit'].forEach((field) => {
       if (formData[field] && isNaN(formData[field])) {
         newErrors[field] = 'Must be a number';
       }
     });
-
-    if (formData.openingBalance && formData.maxBalance &&
-        parseFloat(formData.openingBalance) > parseFloat(formData.maxBalance)) {
-      newErrors.maxBalance = 'Maximum Balance cannot be less than Opening Balance';
-    }
-    if (formData.cashLimitPerTransaction && formData.maxBalance &&
-        parseFloat(formData.cashLimitPerTransaction) > parseFloat(formData.maxBalance)) {
-      newErrors.cashLimitPerTransaction = 'Transaction limit cannot exceed Maximum Balance';
-    }
-    if (formData.dailyCashLimit && formData.maxBalance &&
-        parseFloat(formData.dailyCashLimit) > parseFloat(formData.maxBalance)) {
-      newErrors.dailyCashLimit = 'Daily limit cannot exceed Maximum Balance';
-    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -99,7 +89,6 @@ const CreateTill = () => {
 
     if (!validate()) return;
 
-    // --- Check token before sending request ---
     const token = localStorage.getItem('token');
     if (!token) {
       setSubmitError('You are not logged in. Please log in again.');
@@ -111,8 +100,6 @@ const CreateTill = () => {
     try {
       const payload = {
         ...formData,
-        openingBalance: parseFloat(formData.openingBalance) || 0,
-        maxBalance: parseFloat(formData.maxBalance) || 0,
         cashLimitPerTransaction: parseFloat(formData.cashLimitPerTransaction) || 0,
         dailyCashLimit: parseFloat(formData.dailyCashLimit) || 0,
       };
@@ -155,14 +142,11 @@ const CreateTill = () => {
       setCreatedTillNumber(data.till.till_number);
       setSuccess(true);
 
-      // --- Reset form ---
+      // --- Reset form (without removed fields) ---
       setFormData({
-        tillName: '',
         branch: '',
         currency: 'GHS',
         tillType: '',
-        openingBalance: '',
-        maxBalance: '',
         cashLimitPerTransaction: '',
         dailyCashLimit: '',
         overLimitAction: 'block',
@@ -171,7 +155,6 @@ const CreateTill = () => {
         effectiveDate: new Date().toISOString().split('T')[0],
       });
 
-      // No navigation – stay on page
       setIsNavigating(false);
     } catch (error) {
       setSubmitError(error.message || 'An error occurred while creating the till.');
@@ -181,6 +164,43 @@ const CreateTill = () => {
   };
 
   const handleCancel = () => navigate(-1);
+
+
+
+
+
+
+  const fetchTellers = async () => {
+  setLoadingTellers(true);
+
+  try {
+    const token = localStorage.getItem("token");
+
+    const apiBaseUrl = process.env.REACT_APP_API_URL || "";
+
+    const response = await fetch(
+      `${apiBaseUrl}/api/tills/tellers`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to load tellers");
+    }
+
+    const data = await response.json();
+
+    setTellers(data);
+
+  } catch (error) {
+    console.error("Error loading tellers:", error);
+  } finally {
+    setLoadingTellers(false);
+  }
+};
 
   // --- Render ---
   return (
@@ -215,7 +235,7 @@ const CreateTill = () => {
           )}
 
           <Form onSubmit={handleSubmit} noValidate>
-            {/* ----- SECTION 1: TILL DETAILS ----- */}
+            {/* ----- SECTION 1: TILL DETAILS (removed tillName, openingBalance, maxBalance) ----- */}
             <div className="section-title d-flex align-items-center mb-3">
               <i className="bi bi-layout-three-columns me-2 fs-5 text-primary"></i>
               <h6 className="fw-bold mb-0 text-uppercase text-muted">Till Details</h6>
@@ -223,26 +243,6 @@ const CreateTill = () => {
             </div>
 
             <Row className="g-3">
-              <Col md={6} lg={4}>
-                <Form.Group controlId="tillName">
-                  <Form.Label className="fw-semibold">
-                    <i className="bi bi-tag me-1"></i> Till Name <span className="text-danger">*</span>
-                  </Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="tillName"
-                    placeholder="e.g., Main Counter"
-                    value={formData.tillName}
-                    onChange={handleChange}
-                    isInvalid={!!errors.tillName}
-                    disabled={isSubmitting || success}
-                  />
-                  <Form.Control.Feedback type="invalid">
-                    {errors.tillName}
-                  </Form.Control.Feedback>
-                </Form.Group>
-              </Col>
-
               <Col md={6} lg={4}>
                 <Form.Group controlId="branch">
                   <Form.Label className="fw-semibold">
@@ -284,7 +284,7 @@ const CreateTill = () => {
                   </Form.Select>
                   <Form.Control.Feedback type="invalid">
                     {errors.currency}
-                  </Form.Control.Feedback>  
+                  </Form.Control.Feedback>
                 </Form.Group>
               </Col>
 
@@ -310,55 +310,9 @@ const CreateTill = () => {
                   </Form.Control.Feedback>
                 </Form.Group>
               </Col>
-
-              <Col md={6} lg={4}>
-                <Form.Group controlId="openingBalance">
-                  <Form.Label className="fw-semibold">
-                    <i className="bi bi-cash-stack me-1"></i> Opening Balance
-                  </Form.Label>
-                  <Form.Control
-                    type="number"
-                    name="openingBalance"
-                    placeholder="0.00"
-                    step="0.01"
-                    min="0"
-                    value={formData.openingBalance}
-                    onChange={handleChange}
-                    isInvalid={!!errors.openingBalance}
-                    disabled={isSubmitting || success}
-                  />
-                  <Form.Control.Feedback type="invalid">
-                    {errors.openingBalance}
-                  </Form.Control.Feedback>
-                  <Form.Text className="text-muted">Leave blank or 0 for no opening balance.</Form.Text>
-                </Form.Group>
-              </Col>
-
-              <Col md={6} lg={4}>
-                <Form.Group controlId="maxBalance">
-                  <Form.Label className="fw-semibold">
-                    <i className="bi bi-arrow-up-circle me-1"></i> Maximum Balance
-                  </Form.Label>
-                  <Form.Control
-                    type="number"
-                    name="maxBalance"
-                    placeholder="0.00"
-                    step="0.01"
-                    min="0"
-                    value={formData.maxBalance}
-                    onChange={handleChange}
-                    isInvalid={!!errors.maxBalance}
-                    disabled={isSubmitting || success}
-                  />
-                  <Form.Control.Feedback type="invalid">
-                    {errors.maxBalance}
-                  </Form.Control.Feedback>
-                  <Form.Text className="text-muted">Optional ceiling for total cash in till.</Form.Text>
-                </Form.Group>
-              </Col>
             </Row>
 
-            {/* ----- SECTION 2: CASH LIMIT HANDLING ----- */}
+            {/* ----- SECTION 2: CASH LIMIT HANDLING (kept) ----- */}
             <div className="section-title d-flex align-items-center mt-4 mb-3">
               <i className="bi bi-exclamation-triangle me-2 fs-5 text-warning"></i>
               <h6 className="fw-bold mb-0 text-uppercase text-muted">Cash Limit Handling</h6>
@@ -436,7 +390,7 @@ const CreateTill = () => {
               </Col>
             </Row>
 
-            {/* ----- SECTION 3: TELLER ASSIGNMENT ----- */}
+            {/* ----- SECTION 3: TELLER ASSIGNMENT (unchanged) ----- */}
             <div className="section-title d-flex align-items-center mt-4 mb-3">
               <i className="bi bi-people me-2 fs-5 text-success"></i>
               <h6 className="fw-bold mb-0 text-uppercase text-muted">Teller Assignment</h6>
@@ -457,9 +411,20 @@ const CreateTill = () => {
                     disabled={isSubmitting || success}
                   >
                     <option value="">Select Teller</option>
-                    {tellers.map((t) => (
-                      <option key={t} value={t}>{t}</option>
-                    ))}
+                    {loadingTellers ? (
+  <option>Loading tellers...</option>
+) : tellers.length === 0 ? (
+  <option>No active tellers found</option>
+) : (
+  tellers.map((teller) => (
+    <option 
+      key={teller.full_name} 
+      value={teller.full_name}
+    >
+      {teller.full_name}
+    </option>
+  ))
+)}
                   </Form.Select>
                   <Form.Control.Feedback type="invalid">
                     {errors.assignedTeller}
@@ -510,7 +475,7 @@ const CreateTill = () => {
               </Col>
             </Row>
 
-            {/* ----- ACTION BUTTONS ----- */}
+            {/* ----- ACTION BUTTONS (unchanged) ----- */}
             <div className="d-flex justify-content-end gap-2 border-top pt-4 mt-4">
               <Button
                 variant="outline-secondary"
@@ -548,9 +513,8 @@ const CreateTill = () => {
       </Card>
 
       <style jsx>{`
-        /* Light blue header background */
         .bg-light-blue {
-          background: #e3f2fd !important; /* Material light blue 50 */
+          background: #e3f2fd !important;
         }
         .section-title hr {
           border: 0;

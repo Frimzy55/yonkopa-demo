@@ -232,7 +232,7 @@ const Roles = () => {
       'supervisor': 'Supervisor',
       'manager': 'Manager',
       'admin': 'Admin',
-      'master_till': 'Master Till'   // ✅ ADDED
+      'teller': 'Teller'   // ✅ ADDED
     };
     return names[roleName] || roleName;
   };
@@ -257,7 +257,7 @@ const Roles = () => {
       'manager': 'primary',
       'supervisor': 'primary',
       'loan_officer': 'primary',
-      'master_till': 'info'          // ✅ ADDED (or use 'primary' / 'secondary')
+      'teller': 'info'          // ✅ ADDED (or use 'primary' / 'secondary')
     };
     return colors[roleName] || 'secondary';
   };
@@ -287,7 +287,7 @@ const Roles = () => {
 
   // ======================== Staff list and filtering ========================
   const getStaffMembers = useCallback(() => {
-    const staffRoles = ['loan_officer', 'supervisor', 'manager', 'admin', 'master_till'];   // ✅ ADDED
+    const staffRoles = ['loan_officer', 'supervisor', 'manager', 'admin', 'teller'];   // ✅ ADDED
     return users.filter(user => staffRoles.includes(user.role));
   }, [users]);
 
@@ -856,8 +856,8 @@ const Roles = () => {
             <div className="card-body">
               <div className="d-flex justify-content-between align-items-center">
                 <div>
-                  <h6 className="text-muted mb-1">Master Till</h6>
-                  <h3 className="mb-0">{staffMembers.filter(u => u.role === 'master_till').length}</h3>
+                  <h6 className="text-muted mb-1">Teller</h6>
+                  <h3 className="mb-0">{staffMembers.filter(u => u.role === 'teller').length}</h3>
                 </div>
                 <i className="bi bi-cash-stack fs-1 text-info"></i>
               </div>

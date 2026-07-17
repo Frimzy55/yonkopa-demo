@@ -1,5 +1,15 @@
 import React, { useEffect, useState } from "react";
-import { Card, Table, Badge, Button, Row, Col, Alert, Spinner } from "react-bootstrap";
+import {
+  Card,
+  Table,
+  Badge,
+  Button,
+  Row,
+  Col,
+  Alert,
+  Spinner,
+  Dropdown,
+} from "react-bootstrap";
 
 const TillStatus = () => {
   const [tills, setTills] = useState([]);
@@ -64,6 +74,42 @@ const TillStatus = () => {
     );
   }
 
+  const handleView = (till) => {
+    console.log("View:", till);
+    // navigate(`/teller/till-management/view/${till.id}`);
+  };
+
+  const handleEdit = (till) => {
+    console.log("Edit:", till);
+    // navigate(`/teller/till-management/edit/${till.id}`);
+  };
+
+  const handleDisable = async (till) => {
+    if (!window.confirm(`Disable till ${till.till_number}?`)) return;
+
+    try {
+      await fetch(`${apiBase}/api/tills/${till.id}/disable`, {
+        method: "PUT",
+      });
+      fetchTills();
+    } catch (err) {
+      alert("Failed to disable till");
+    }
+  };
+
+  const handleEnable = async (till) => {
+    if (!window.confirm(`Enable till ${till.till_number}?`)) return;
+
+    try {
+      await fetch(`${apiBase}/api/tills/${till.id}/enable`, {
+        method: "PUT",
+      });
+      fetchTills();
+    } catch (err) {
+      alert("Failed to enable till");
+    }
+  };
+
   return (
     <div className="container-fluid py-4">
       {/* --- Header with Refresh only --- */}
@@ -118,7 +164,7 @@ const TillStatus = () => {
         </Col>
       </Row>
 
-      {/* --- Till Table (no actions) --- */}
+      {/* --- Till Table (no Till Name column) --- */}
       <Card className="shadow-sm">
         <Card.Header className="bg-light">
           <h6 className="mb-0 fw-bold">
@@ -130,13 +176,12 @@ const TillStatus = () => {
             <thead className="table-light">
               <tr>
                 <th>Till Number</th>
-                <th>Till Name</th>
                 <th>Branch</th>
                 <th>Teller</th>
                 <th>Currency</th>
                 <th className="text-end">Balance</th>
                 <th>Status</th>
-                {/* Action column removed */}
+                <th width="140">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -150,7 +195,6 @@ const TillStatus = () => {
                 tills.map((till) => (
                   <tr key={till.id}>
                     <td className="fw-semibold">{till.till_number}</td>
-                    <td>{till.till_name}</td>
                     <td>{till.branch}</td>
                     <td>{till.assigned_teller}</td>
                     <td>{till.currency}</td>
@@ -161,7 +205,49 @@ const TillStatus = () => {
                       })}
                     </td>
                     <td>{getStatusBadge(till.status)}</td>
-                    {/* Action cell removed */}
+                    <td className="text-center">
+                      <Dropdown>
+                        <Dropdown.Toggle
+                          variant="outline-secondary"
+                          size="sm"
+                          id={`dropdown-${till.id}`}
+                        >
+                          Actions
+                        </Dropdown.Toggle>
+
+                        <Dropdown.Menu>
+                          <Dropdown.Item onClick={() => handleView(till)}>
+                            <i className="bi bi-eye me-2"></i>
+                            View
+                          </Dropdown.Item>
+
+                          <Dropdown.Item onClick={() => handleEdit(till)}>
+                            <i className="bi bi-pencil-square me-2"></i>
+                            Edit
+                          </Dropdown.Item>
+
+                          <Dropdown.Divider />
+
+                          {till.status?.toLowerCase() === "inactive" ? (
+                            <Dropdown.Item
+                              className="text-success"
+                              onClick={() => handleEnable(till)}
+                            >
+                              <i className="bi bi-check-circle me-2"></i>
+                              Enable
+                            </Dropdown.Item>
+                          ) : (
+                            <Dropdown.Item
+                              className="text-danger"
+                              onClick={() => handleDisable(till)}
+                            >
+                              <i className="bi bi-slash-circle me-2"></i>
+                              Disable
+                            </Dropdown.Item>
+                          )}
+                        </Dropdown.Menu>
+                      </Dropdown>
+                    </td>
                   </tr>
                 ))
               )}
