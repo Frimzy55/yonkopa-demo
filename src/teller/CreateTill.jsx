@@ -171,8 +171,7 @@ const CreateTill = () => {
         effectiveDate: new Date().toISOString().split('T')[0],
       });
 
-      // --- Navigate to a page that does NOT force logout ---
-      // Option 1: Go to a public page (e.g., /teller) if it's not protected
+      // No navigation – stay on page
       setIsNavigating(false);
     } catch (error) {
       setSubmitError(error.message || 'An error occurred while creating the till.');
@@ -187,12 +186,13 @@ const CreateTill = () => {
   return (
     <div className="container-fluid py-4">
       <Card className="shadow-lg border-0">
-        <Card.Header className="bg-gradient-primary text-white d-flex align-items-center justify-content-between py-3">
+        {/* --- Header with light blue background --- */}
+        <Card.Header className="bg-light-blue d-flex align-items-center justify-content-between py-3">
           <div className="d-flex align-items-center">
-            <i className="bi bi-plus-circle fs-2 me-3"></i>
+            <i className="bi bi-plus-circle fs-2 me-3 text-primary"></i>
             <div>
-              <h4 className="mb-0 fw-bold">Create New Till</h4>
-              <small className="opacity-75">Fill in the details below to set up a new till</small>
+              <h4 className="mb-0 fw-bold text-dark">Create New Till</h4>
+              <small className="text-muted">Fill in the details below to set up a new till</small>
             </div>
           </div>
           <Badge bg="light" text="dark" className="px-3 py-2">
@@ -548,8 +548,9 @@ const CreateTill = () => {
       </Card>
 
       <style jsx>{`
-        .bg-gradient-primary {
-          background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+        /* Light blue header background */
+        .bg-light-blue {
+          background: #e3f2fd !important; /* Material light blue 50 */
         }
         .section-title hr {
           border: 0;
