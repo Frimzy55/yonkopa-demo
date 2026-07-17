@@ -1,103 +1,174 @@
-// teller/TillStatus.jsx
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useEffect, useState } from "react";
+import { Card, Table, Badge, Button, Row, Col, Alert, Spinner } from "react-bootstrap";
 
 const TillStatus = () => {
   const [tills, setTills] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  //const [selectedTill, setSelectedTill] = useState(null);
+  const [error, setError] = useState("");
+
+  const apiBase = process.env.REACT_APP_API_URL || "http://localhost:5002";
 
   useEffect(() => {
     fetchTills();
   }, []);
 
   const fetchTills = async () => {
+    setLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get('/api/teller/tills', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setTills(response.data);
+      const response = await fetch(`${apiBase}/api/tills`);
+      if (!response.ok) throw new Error("Failed to fetch");
+      const data = await response.json();
+      setTills(data);
+      setError("");
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to fetch tills');
+      setError("Failed to load till status");
     } finally {
       setLoading(false);
     }
   };
 
   const getStatusBadge = (status) => {
-    switch(status) {
-      case 'Open':
-        return <span className="badge bg-success">Open</span>;
-      case 'Closed':
-        return <span className="badge bg-danger">Closed</span>;
-      case 'Suspended':
-        return <span className="badge bg-warning">Suspended</span>;
+    switch (status?.toLowerCase()) {
+      case "open":
+        return <Badge bg="success">Open</Badge>;
+      case "active":
+        return <Badge bg="primary">Active</Badge>;
+      case "closed":
+        return <Badge bg="secondary">Closed</Badge>;
+      case "inactive":
+        return <Badge bg="warning">Inactive</Badge>;
+      case "pending":
+        return <Badge bg="info">Pending</Badge>;
       default:
-        return <span className="badge bg-secondary">{status}</span>;
+        return <Badge bg="dark">{status}</Badge>;
     }
   };
 
+  // --- Summary counts ---
+  const totalTills = tills.length;
+  const activeTills = tills.filter(
+    (till) => till.status === "active" || till.status === "open"
+  ).length;
+  const openTills = tills.filter(
+    (till) => till.status === "open"
+  ).length;
+  const closedTills = tills.filter(
+    (till) => till.status === "closed"
+  ).length;
+
   if (loading) {
-    return <div className="text-center py-4">Loading till status...</div>;
+    return (
+      <div className="text-center p-5">
+        <Spinner animation="border" />
+      </div>
+    );
   }
 
   return (
-    <div className="till-status-container">
-      <h4 className="mb-4">Till Status</h4>
-
-      {error && <div className="alert alert-danger">{error}</div>}
-
-      <div className="row">
-        {tills.map((till) => (
-          <div key={till.id} className="col-md-6 mb-3">
-            <div className="card">
-              <div className="card-body">
-                <div className="d-flex justify-content-between align-items-start">
-                  <div>
-                    <h6 className="card-title">{till.name}</h6>
-                    <p className="text-muted mb-1">Teller: {till.tellerName}</p>
-                  </div>
-                  {getStatusBadge(till.status)}
-                </div>
-                
-                <hr />
-                
-                <div className="row">
-                  <div className="col-6">
-                    <small className="text-muted">Current Balance</small>
-                    <p className="fw-bold mb-0">GHS {till.balance?.toLocaleString() || 0}</p>
-                  </div>
-                  <div className="col-6">
-                    <small className="text-muted">Opening Balance</small>
-                    <p className="mb-0">GHS {till.openingBalance?.toLocaleString() || 0}</p>
-                  </div>
-                  <div className="col-6 mt-2">
-                    <small className="text-muted">Today's Deposits</small>
-                    <p className="text-success mb-0">GHS {till.todayDeposits?.toLocaleString() || 0}</p>
-                  </div>
-                  <div className="col-6 mt-2">
-                    <small className="text-muted">Today's Withdrawals</small>
-                    <p className="text-danger mb-0">GHS {till.todayWithdrawals?.toLocaleString() || 0}</p>
-                  </div>
-                </div>
-
-                <div className="mt-3">
-                  <small className="text-muted">Last Opened</small>
-                  <p className="mb-0 small">{new Date(till.lastOpened).toLocaleString()}</p>
-                  <small className="text-muted">Last Closed</small>
-                  <p className="mb-0 small">{till.lastClosed ? new Date(till.lastClosed).toLocaleString() : 'N/A'}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        ))}
+    <div className="container-fluid py-4">
+      {/* --- Header with Refresh only --- */}
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h4 className="fw-bold mb-0">
+          <i className="bi bi-graph-up me-2 text-primary"></i> Till Status
+        </h4>
+        <Button
+          variant="outline-secondary"
+          size="sm"
+          onClick={fetchTills}
+        >
+          <i className="bi bi-arrow-repeat me-1"></i> Refresh
+        </Button>
       </div>
 
-      {tills.length === 0 && !loading && (
-        <div className="alert alert-info">No tills found</div>
-      )}
+      {error && <Alert variant="danger">{error}</Alert>}
+
+      {/* --- Summary Cards (4 columns) --- */}
+      <Row className="mb-4 g-3">
+        <Col md={3} sm={6}>
+          <Card className="shadow-sm text-center py-2">
+            <Card.Body>
+              <h6 className="text-muted">Total Tills</h6>
+              <h2 className="fw-bold text-primary">{totalTills}</h2>
+            </Card.Body>
+          </Card>
+        </Col>
+        <Col md={3} sm={6}>
+          <Card className="shadow-sm text-center py-2">
+            <Card.Body>
+              <h6 className="text-muted">Active Tills</h6>
+              <h2 className="fw-bold text-success">{activeTills}</h2>
+            </Card.Body>
+          </Card>
+        </Col>
+        <Col md={3} sm={6}>
+          <Card className="shadow-sm text-center py-2">
+            <Card.Body>
+              <h6 className="text-muted">Open Tills</h6>
+              <h2 className="fw-bold text-info">{openTills}</h2>
+            </Card.Body>
+          </Card>
+        </Col>
+        <Col md={3} sm={6}>
+          <Card className="shadow-sm text-center py-2">
+            <Card.Body>
+              <h6 className="text-muted">Closed Tills</h6>
+              <h2 className="fw-bold text-secondary">{closedTills}</h2>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+
+      {/* --- Till Table (no actions) --- */}
+      <Card className="shadow-sm">
+        <Card.Header className="bg-light">
+          <h6 className="mb-0 fw-bold">
+            <i className="bi bi-table me-2"></i> Till List
+          </h6>
+        </Card.Header>
+        <Card.Body className="p-0">
+          <Table responsive bordered hover className="mb-0">
+            <thead className="table-light">
+              <tr>
+                <th>Till Number</th>
+                <th>Till Name</th>
+                <th>Branch</th>
+                <th>Teller</th>
+                <th>Currency</th>
+                <th className="text-end">Balance</th>
+                <th>Status</th>
+                {/* Action column removed */}
+              </tr>
+            </thead>
+            <tbody>
+              {tills.length === 0 ? (
+                <tr>
+                  <td colSpan="7" className="text-center py-4 text-muted">
+                    No tills found
+                  </td>
+                </tr>
+              ) : (
+                tills.map((till) => (
+                  <tr key={till.id}>
+                    <td className="fw-semibold">{till.till_number}</td>
+                    <td>{till.till_name}</td>
+                    <td>{till.branch}</td>
+                    <td>{till.assigned_teller}</td>
+                    <td>{till.currency}</td>
+                    <td className="text-end">
+                      {Number(till.opening_balance).toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </td>
+                    <td>{getStatusBadge(till.status)}</td>
+                    {/* Action cell removed */}
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </Table>
+        </Card.Body>
+      </Card>
     </div>
   );
 };

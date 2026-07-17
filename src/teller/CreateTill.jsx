@@ -5,20 +5,17 @@ import { useNavigate } from 'react-router-dom';
 const CreateTill = () => {
   const navigate = useNavigate();
 
-  // --- Form state ---
+  // --- Form state (no tillNumber) ---
   const [formData, setFormData] = useState({
-    tillNumber: '',
     tillName: '',
     branch: '',
     currency: 'GHS',
     tillType: '',
     openingBalance: '',
     maxBalance: '',
-    // Cash limit fields
     cashLimitPerTransaction: '',
     dailyCashLimit: '',
     overLimitAction: 'block',
-    // Teller assignment
     assignedTeller: '',
     supervisor: '',
     effectiveDate: '',
@@ -28,8 +25,10 @@ const CreateTill = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [createdTillNumber, setCreatedTillNumber] = useState('');
+  const [isNavigating, setIsNavigating] = useState(false);
 
-  // --- Mock dropdown data (replace with API) ---
+  // --- Mock dropdown data (replace with API later) ---
   const branches = ['Accra Branch', 'Kumasi Branch', 'Takoradi Branch', 'Tema Branch'];
   const currencies = ['GHS', 'USD', 'EUR', 'GBP', 'NGN'];
   const tillTypes = ['Cash Till', 'Cheque Till', 'Hybrid Till', 'Mobile Till'];
@@ -41,17 +40,10 @@ const CreateTill = () => {
     { value: 'alert', label: 'Alert Only' },
   ];
 
-  // --- Generate random Till Number (6-digit numeric) ---
-  const generateTillNumber = () => {
-    const randomNum = String(Math.floor(Math.random() * 1000000)).padStart(6, '0');
-    return `TILL-${randomNum}`;
-  };
-
-  // Initialise till number and effective date on mount
+  // --- Set default effective date ---
   useEffect(() => {
     setFormData((prev) => ({
       ...prev,
-      tillNumber: generateTillNumber(),
       effectiveDate: new Date().toISOString().split('T')[0],
     }));
   }, []);
@@ -66,7 +58,6 @@ const CreateTill = () => {
   // --- Validation ---
   const validate = () => {
     const newErrors = {};
-    if (!formData.tillNumber.trim()) newErrors.tillNumber = 'Till Number is required';
     if (!formData.tillName.trim()) newErrors.tillName = 'Till Name is required';
     if (!formData.branch) newErrors.branch = 'Please select a Branch';
     if (!formData.currency) newErrors.currency = 'Please select a Currency';
@@ -75,7 +66,6 @@ const CreateTill = () => {
     if (!formData.supervisor) newErrors.supervisor = 'Please select a Supervisor';
     if (!formData.effectiveDate) newErrors.effectiveDate = 'Effective Date is required';
 
-    // Numeric validations for balances and limits
     ['openingBalance', 'maxBalance', 'cashLimitPerTransaction', 'dailyCashLimit'].forEach((field) => {
       if (formData[field] && isNaN(formData[field])) {
         newErrors[field] = 'Must be a number';
@@ -86,12 +76,10 @@ const CreateTill = () => {
         parseFloat(formData.openingBalance) > parseFloat(formData.maxBalance)) {
       newErrors.maxBalance = 'Maximum Balance cannot be less than Opening Balance';
     }
-
     if (formData.cashLimitPerTransaction && formData.maxBalance &&
         parseFloat(formData.cashLimitPerTransaction) > parseFloat(formData.maxBalance)) {
       newErrors.cashLimitPerTransaction = 'Transaction limit cannot exceed Maximum Balance';
     }
-
     if (formData.dailyCashLimit && formData.maxBalance &&
         parseFloat(formData.dailyCashLimit) > parseFloat(formData.maxBalance)) {
       newErrors.dailyCashLimit = 'Daily limit cannot exceed Maximum Balance';
@@ -106,8 +94,17 @@ const CreateTill = () => {
     e.preventDefault();
     setSubmitError('');
     setSuccess(false);
+    setCreatedTillNumber('');
+    setIsNavigating(false);
 
     if (!validate()) return;
+
+    // --- Check token before sending request ---
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setSubmitError('You are not logged in. Please log in again.');
+      return;
+    }
 
     setIsSubmitting(true);
 
@@ -120,26 +117,46 @@ const CreateTill = () => {
         dailyCashLimit: parseFloat(formData.dailyCashLimit) || 0,
       };
 
-      // --- Replace with real API call ---
-      const response = await fetch('/api/tills', {
+      const apiBaseUrl = process.env.REACT_APP_API_URL || '';
+      const url = `${apiBaseUrl}/api/tills`;
+
+      const response = await fetch(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
         body: JSON.stringify(payload),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to create till');
+      const rawText = await response.text();
+      console.log('📡 Raw response:', rawText);
+
+      let data;
+      try {
+        data = JSON.parse(rawText);
+      } catch (parseError) {
+        throw new Error(`Server returned invalid JSON: ${rawText.substring(0, 100)}`);
       }
 
-      const data = await response.json();
-      console.log('Till created:', data);
+      if (!response.ok) {
+        if (data.errors) {
+          const backendErrors = data.errors.reduce((acc, err) => {
+            acc[err.param] = err.msg;
+            return acc;
+          }, {});
+          setErrors(backendErrors);
+          throw new Error('Validation failed');
+        }
+        throw new Error(data.error || 'Failed to create till');
+      }
 
+      console.log('✅ Till created:', data);
+      setCreatedTillNumber(data.till.till_number);
       setSuccess(true);
 
-      // Reset form with new random till number
+      // --- Reset form ---
       setFormData({
-        tillNumber: generateTillNumber(),
         tillName: '',
         branch: '',
         currency: 'GHS',
@@ -154,7 +171,9 @@ const CreateTill = () => {
         effectiveDate: new Date().toISOString().split('T')[0],
       });
 
-      setTimeout(() => navigate('/teller/till-status'), 2000);
+      // --- Navigate to a page that does NOT force logout ---
+      // Option 1: Go to a public page (e.g., /teller) if it's not protected
+      setIsNavigating(false);
     } catch (error) {
       setSubmitError(error.message || 'An error occurred while creating the till.');
     } finally {
@@ -168,7 +187,6 @@ const CreateTill = () => {
   return (
     <div className="container-fluid py-4">
       <Card className="shadow-lg border-0">
-        {/* Header */}
         <Card.Header className="bg-gradient-primary text-white d-flex align-items-center justify-content-between py-3">
           <div className="d-flex align-items-center">
             <i className="bi bi-plus-circle fs-2 me-3"></i>
@@ -183,7 +201,6 @@ const CreateTill = () => {
         </Card.Header>
 
         <Card.Body className="p-4">
-          {/* Alerts */}
           {submitError && (
             <Alert variant="danger" onClose={() => setSubmitError('')} dismissible className="mb-4">
               <i className="bi bi-exclamation-triangle-fill me-2"></i> {submitError}
@@ -191,7 +208,9 @@ const CreateTill = () => {
           )}
           {success && (
             <Alert variant="success" onClose={() => setSuccess(false)} dismissible className="mb-4">
-              <i className="bi bi-check-circle-fill me-2"></i> Till created successfully! Redirecting…
+              <i className="bi bi-check-circle-fill me-2"></i>
+              Till <strong>#{createdTillNumber}</strong> created successfully!
+              {isNavigating && ' Redirecting…'}
             </Alert>
           )}
 
@@ -204,28 +223,6 @@ const CreateTill = () => {
             </div>
 
             <Row className="g-3">
-              <Col md={6} lg={4}>
-                <Form.Group controlId="tillNumber">
-                  <Form.Label className="fw-semibold">
-                    <i className="bi bi-hash me-1"></i> Till Number
-                    <span className="text-muted ms-1 small">(auto)</span>
-                  </Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="tillNumber"
-                    value={formData.tillNumber}
-                    onChange={handleChange}
-                    isInvalid={!!errors.tillNumber}
-                    disabled={isSubmitting || success}
-                    className="bg-light"
-                    style={{ fontFamily: 'monospace' }}
-                  />
-                  <Form.Control.Feedback type="invalid">
-                    {errors.tillNumber}
-                  </Form.Control.Feedback>
-                </Form.Group>
-              </Col>
-
               <Col md={6} lg={4}>
                 <Form.Group controlId="tillName">
                   <Form.Label className="fw-semibold">
@@ -287,7 +284,7 @@ const CreateTill = () => {
                   </Form.Select>
                   <Form.Control.Feedback type="invalid">
                     {errors.currency}
-                  </Form.Control.Feedback>
+                  </Form.Control.Feedback>  
                 </Form.Group>
               </Col>
 
@@ -561,9 +558,6 @@ const CreateTill = () => {
         }
         .section-title i {
           font-size: 1.25rem;
-        }
-        .form-control.bg-light {
-          background-color: #f8f9fa;
         }
         .card {
           border-radius: 12px;
