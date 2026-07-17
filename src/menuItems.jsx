@@ -44,6 +44,7 @@ export const menuItems = [
       },
       { name: 'Till Management', icon: 'bi-calculator',
         nestedMenus: [
+             { name: 'Create Till', icon: 'bi-plus-circle' },   // <-- new entry
           { name: 'Till Status', icon: 'bi-graph-up' },
           { name: 'Open or Close Till', icon: 'bi-toggle-on' },
           { name: 'Till Transfer', icon: 'bi-arrow-left-right' },

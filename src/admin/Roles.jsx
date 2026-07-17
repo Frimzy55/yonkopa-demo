@@ -227,7 +227,13 @@ const Roles = () => {
 
   // ======================== Helper functions ========================
   const getRoleDisplayName = (roleName) => {
-    const names = { 'loan_officer': 'Loan Officer', 'supervisor': 'Supervisor', 'manager': 'Manager', 'admin': 'Admin' };
+    const names = {
+      'loan_officer': 'Loan Officer',
+      'supervisor': 'Supervisor',
+      'manager': 'Manager',
+      'admin': 'Admin',
+      'master_till': 'Master Till'   // ✅ ADDED
+    };
     return names[roleName] || roleName;
   };
 
@@ -246,7 +252,13 @@ const Roles = () => {
   };
 
   const getRoleBadgeColor = (roleName) => {
-    const colors = { 'admin': 'primary', 'manager': 'primary', 'supervisor': 'primary', 'loan_officer': 'primary' };
+    const colors = {
+      'admin': 'primary',
+      'manager': 'primary',
+      'supervisor': 'primary',
+      'loan_officer': 'primary',
+      'master_till': 'info'          // ✅ ADDED (or use 'primary' / 'secondary')
+    };
     return colors[roleName] || 'secondary';
   };
 
@@ -275,7 +287,7 @@ const Roles = () => {
 
   // ======================== Staff list and filtering ========================
   const getStaffMembers = useCallback(() => {
-    const staffRoles = ['loan_officer', 'supervisor', 'manager', 'admin'];
+    const staffRoles = ['loan_officer', 'supervisor', 'manager', 'admin', 'master_till'];   // ✅ ADDED
     return users.filter(user => staffRoles.includes(user.role));
   }, [users]);
 
@@ -838,6 +850,21 @@ const Roles = () => {
             </div>
           </div>
         </div>
+        {/* ✅ NEW CARD FOR MASTER TILL */}
+        <div className="col-md-3 mb-3">
+          <div className="card bg-info bg-opacity-10 border-0">
+            <div className="card-body">
+              <div className="d-flex justify-content-between align-items-center">
+                <div>
+                  <h6 className="text-muted mb-1">Master Till</h6>
+                  <h3 className="mb-0">{staffMembers.filter(u => u.role === 'master_till').length}</h3>
+                </div>
+                <i className="bi bi-cash-stack fs-1 text-info"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        {/* End of new card */}
         <div className="col-md-3 mb-3">
           <div className="card bg-info bg-opacity-10 border-0">
             <div className="card-body">

@@ -1,0 +1,591 @@
+import React, { useState, useEffect } from 'react';
+import { Form, Button, Card, Alert, Row, Col, Badge } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
+
+const CreateTill = () => {
+  const navigate = useNavigate();
+
+  // --- Form state ---
+  const [formData, setFormData] = useState({
+    tillNumber: '',
+    tillName: '',
+    branch: '',
+    currency: 'GHS',
+    tillType: '',
+    openingBalance: '',
+    maxBalance: '',
+    // Cash limit fields
+    cashLimitPerTransaction: '',
+    dailyCashLimit: '',
+    overLimitAction: 'block',
+    // Teller assignment
+    assignedTeller: '',
+    supervisor: '',
+    effectiveDate: '',
+  });
+
+  const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const [success, setSuccess] = useState(false);
+
+  // --- Mock dropdown data (replace with API) ---
+  const branches = ['Accra Branch', 'Kumasi Branch', 'Takoradi Branch', 'Tema Branch'];
+  const currencies = ['GHS', 'USD', 'EUR', 'GBP', 'NGN'];
+  const tillTypes = ['Cash Till', 'Cheque Till', 'Hybrid Till', 'Mobile Till'];
+  const tellers = ['John Mensah', 'Ama Serwaa', 'Kwame Osei', 'Esi Addo'];
+  const supervisors = ['Manager', 'Senior Teller', 'Supervisor A', 'Supervisor B'];
+  const overLimitActions = [
+    { value: 'block', label: 'Block Transaction' },
+    { value: 'approval', label: 'Require Supervisor Approval' },
+    { value: 'alert', label: 'Alert Only' },
+  ];
+
+  // --- Generate random Till Number (6-digit numeric) ---
+  const generateTillNumber = () => {
+    const randomNum = String(Math.floor(Math.random() * 1000000)).padStart(6, '0');
+    return `TILL-${randomNum}`;
+  };
+
+  // Initialise till number and effective date on mount
+  useEffect(() => {
+    setFormData((prev) => ({
+      ...prev,
+      tillNumber: generateTillNumber(),
+      effectiveDate: new Date().toISOString().split('T')[0],
+    }));
+  }, []);
+
+  // --- Handlers ---
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }));
+  };
+
+  // --- Validation ---
+  const validate = () => {
+    const newErrors = {};
+    if (!formData.tillNumber.trim()) newErrors.tillNumber = 'Till Number is required';
+    if (!formData.tillName.trim()) newErrors.tillName = 'Till Name is required';
+    if (!formData.branch) newErrors.branch = 'Please select a Branch';
+    if (!formData.currency) newErrors.currency = 'Please select a Currency';
+    if (!formData.tillType) newErrors.tillType = 'Please select a Till Type';
+    if (!formData.assignedTeller) newErrors.assignedTeller = 'Please select an Assigned Teller';
+    if (!formData.supervisor) newErrors.supervisor = 'Please select a Supervisor';
+    if (!formData.effectiveDate) newErrors.effectiveDate = 'Effective Date is required';
+
+    // Numeric validations for balances and limits
+    ['openingBalance', 'maxBalance', 'cashLimitPerTransaction', 'dailyCashLimit'].forEach((field) => {
+      if (formData[field] && isNaN(formData[field])) {
+        newErrors[field] = 'Must be a number';
+      }
+    });
+
+    if (formData.openingBalance && formData.maxBalance &&
+        parseFloat(formData.openingBalance) > parseFloat(formData.maxBalance)) {
+      newErrors.maxBalance = 'Maximum Balance cannot be less than Opening Balance';
+    }
+
+    if (formData.cashLimitPerTransaction && formData.maxBalance &&
+        parseFloat(formData.cashLimitPerTransaction) > parseFloat(formData.maxBalance)) {
+      newErrors.cashLimitPerTransaction = 'Transaction limit cannot exceed Maximum Balance';
+    }
+
+    if (formData.dailyCashLimit && formData.maxBalance &&
+        parseFloat(formData.dailyCashLimit) > parseFloat(formData.maxBalance)) {
+      newErrors.dailyCashLimit = 'Daily limit cannot exceed Maximum Balance';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // --- Submit ---
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitError('');
+    setSuccess(false);
+
+    if (!validate()) return;
+
+    setIsSubmitting(true);
+
+    try {
+      const payload = {
+        ...formData,
+        openingBalance: parseFloat(formData.openingBalance) || 0,
+        maxBalance: parseFloat(formData.maxBalance) || 0,
+        cashLimitPerTransaction: parseFloat(formData.cashLimitPerTransaction) || 0,
+        dailyCashLimit: parseFloat(formData.dailyCashLimit) || 0,
+      };
+
+      // --- Replace with real API call ---
+      const response = await fetch('/api/tills', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create till');
+      }
+
+      const data = await response.json();
+      console.log('Till created:', data);
+
+      setSuccess(true);
+
+      // Reset form with new random till number
+      setFormData({
+        tillNumber: generateTillNumber(),
+        tillName: '',
+        branch: '',
+        currency: 'GHS',
+        tillType: '',
+        openingBalance: '',
+        maxBalance: '',
+        cashLimitPerTransaction: '',
+        dailyCashLimit: '',
+        overLimitAction: 'block',
+        assignedTeller: '',
+        supervisor: '',
+        effectiveDate: new Date().toISOString().split('T')[0],
+      });
+
+      setTimeout(() => navigate('/teller/till-status'), 2000);
+    } catch (error) {
+      setSubmitError(error.message || 'An error occurred while creating the till.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCancel = () => navigate(-1);
+
+  // --- Render ---
+  return (
+    <div className="container-fluid py-4">
+      <Card className="shadow-lg border-0">
+        {/* Header */}
+        <Card.Header className="bg-gradient-primary text-white d-flex align-items-center justify-content-between py-3">
+          <div className="d-flex align-items-center">
+            <i className="bi bi-plus-circle fs-2 me-3"></i>
+            <div>
+              <h4 className="mb-0 fw-bold">Create New Till</h4>
+              <small className="opacity-75">Fill in the details below to set up a new till</small>
+            </div>
+          </div>
+          <Badge bg="light" text="dark" className="px-3 py-2">
+            <i className="bi bi-clock me-1"></i> {new Date().toLocaleDateString()}
+          </Badge>
+        </Card.Header>
+
+        <Card.Body className="p-4">
+          {/* Alerts */}
+          {submitError && (
+            <Alert variant="danger" onClose={() => setSubmitError('')} dismissible className="mb-4">
+              <i className="bi bi-exclamation-triangle-fill me-2"></i> {submitError}
+            </Alert>
+          )}
+          {success && (
+            <Alert variant="success" onClose={() => setSuccess(false)} dismissible className="mb-4">
+              <i className="bi bi-check-circle-fill me-2"></i> Till created successfully! Redirecting…
+            </Alert>
+          )}
+
+          <Form onSubmit={handleSubmit} noValidate>
+            {/* ----- SECTION 1: TILL DETAILS ----- */}
+            <div className="section-title d-flex align-items-center mb-3">
+              <i className="bi bi-layout-three-columns me-2 fs-5 text-primary"></i>
+              <h6 className="fw-bold mb-0 text-uppercase text-muted">Till Details</h6>
+              <hr className="flex-grow-1 ms-3" />
+            </div>
+
+            <Row className="g-3">
+              <Col md={6} lg={4}>
+                <Form.Group controlId="tillNumber">
+                  <Form.Label className="fw-semibold">
+                    <i className="bi bi-hash me-1"></i> Till Number
+                    <span className="text-muted ms-1 small">(auto)</span>
+                  </Form.Label>
+                  <Form.Control
+                    type="text"
+                    name="tillNumber"
+                    value={formData.tillNumber}
+                    onChange={handleChange}
+                    isInvalid={!!errors.tillNumber}
+                    disabled={isSubmitting || success}
+                    className="bg-light"
+                    style={{ fontFamily: 'monospace' }}
+                  />
+                  <Form.Control.Feedback type="invalid">
+                    {errors.tillNumber}
+                  </Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+
+              <Col md={6} lg={4}>
+                <Form.Group controlId="tillName">
+                  <Form.Label className="fw-semibold">
+                    <i className="bi bi-tag me-1"></i> Till Name <span className="text-danger">*</span>
+                  </Form.Label>
+                  <Form.Control
+                    type="text"
+                    name="tillName"
+                    placeholder="e.g., Main Counter"
+                    value={formData.tillName}
+                    onChange={handleChange}
+                    isInvalid={!!errors.tillName}
+                    disabled={isSubmitting || success}
+                  />
+                  <Form.Control.Feedback type="invalid">
+                    {errors.tillName}
+                  </Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+
+              <Col md={6} lg={4}>
+                <Form.Group controlId="branch">
+                  <Form.Label className="fw-semibold">
+                    <i className="bi bi-building me-1"></i> Branch <span className="text-danger">*</span>
+                  </Form.Label>
+                  <Form.Select
+                    name="branch"
+                    value={formData.branch}
+                    onChange={handleChange}
+                    isInvalid={!!errors.branch}
+                    disabled={isSubmitting || success}
+                  >
+                    <option value="">Select Branch</option>
+                    {branches.map((b) => (
+                      <option key={b} value={b}>{b}</option>
+                    ))}
+                  </Form.Select>
+                  <Form.Control.Feedback type="invalid">
+                    {errors.branch}
+                  </Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+
+              <Col md={6} lg={4}>
+                <Form.Group controlId="currency">
+                  <Form.Label className="fw-semibold">
+                    <i className="bi bi-currency-exchange me-1"></i> Currency <span className="text-danger">*</span>
+                  </Form.Label>
+                  <Form.Select
+                    name="currency"
+                    value={formData.currency}
+                    onChange={handleChange}
+                    isInvalid={!!errors.currency}
+                    disabled={isSubmitting || success}
+                  >
+                    {currencies.map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </Form.Select>
+                  <Form.Control.Feedback type="invalid">
+                    {errors.currency}
+                  </Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+
+              <Col md={6} lg={4}>
+                <Form.Group controlId="tillType">
+                  <Form.Label className="fw-semibold">
+                    <i className="bi bi-box-seam me-1"></i> Till Type <span className="text-danger">*</span>
+                  </Form.Label>
+                  <Form.Select
+                    name="tillType"
+                    value={formData.tillType}
+                    onChange={handleChange}
+                    isInvalid={!!errors.tillType}
+                    disabled={isSubmitting || success}
+                  >
+                    <option value="">Select Type</option>
+                    {tillTypes.map((t) => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </Form.Select>
+                  <Form.Control.Feedback type="invalid">
+                    {errors.tillType}
+                  </Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+
+              <Col md={6} lg={4}>
+                <Form.Group controlId="openingBalance">
+                  <Form.Label className="fw-semibold">
+                    <i className="bi bi-cash-stack me-1"></i> Opening Balance
+                  </Form.Label>
+                  <Form.Control
+                    type="number"
+                    name="openingBalance"
+                    placeholder="0.00"
+                    step="0.01"
+                    min="0"
+                    value={formData.openingBalance}
+                    onChange={handleChange}
+                    isInvalid={!!errors.openingBalance}
+                    disabled={isSubmitting || success}
+                  />
+                  <Form.Control.Feedback type="invalid">
+                    {errors.openingBalance}
+                  </Form.Control.Feedback>
+                  <Form.Text className="text-muted">Leave blank or 0 for no opening balance.</Form.Text>
+                </Form.Group>
+              </Col>
+
+              <Col md={6} lg={4}>
+                <Form.Group controlId="maxBalance">
+                  <Form.Label className="fw-semibold">
+                    <i className="bi bi-arrow-up-circle me-1"></i> Maximum Balance
+                  </Form.Label>
+                  <Form.Control
+                    type="number"
+                    name="maxBalance"
+                    placeholder="0.00"
+                    step="0.01"
+                    min="0"
+                    value={formData.maxBalance}
+                    onChange={handleChange}
+                    isInvalid={!!errors.maxBalance}
+                    disabled={isSubmitting || success}
+                  />
+                  <Form.Control.Feedback type="invalid">
+                    {errors.maxBalance}
+                  </Form.Control.Feedback>
+                  <Form.Text className="text-muted">Optional ceiling for total cash in till.</Form.Text>
+                </Form.Group>
+              </Col>
+            </Row>
+
+            {/* ----- SECTION 2: CASH LIMIT HANDLING ----- */}
+            <div className="section-title d-flex align-items-center mt-4 mb-3">
+              <i className="bi bi-exclamation-triangle me-2 fs-5 text-warning"></i>
+              <h6 className="fw-bold mb-0 text-uppercase text-muted">Cash Limit Handling</h6>
+              <hr className="flex-grow-1 ms-3" />
+            </div>
+
+            <Row className="g-3">
+              <Col md={6} lg={4}>
+                <Form.Group controlId="cashLimitPerTransaction">
+                  <Form.Label className="fw-semibold">
+                    <i className="bi bi-arrow-left-right me-1"></i> Limit per Transaction
+                  </Form.Label>
+                  <Form.Control
+                    type="number"
+                    name="cashLimitPerTransaction"
+                    placeholder="0.00"
+                    step="0.01"
+                    min="0"
+                    value={formData.cashLimitPerTransaction}
+                    onChange={handleChange}
+                    isInvalid={!!errors.cashLimitPerTransaction}
+                    disabled={isSubmitting || success}
+                  />
+                  <Form.Control.Feedback type="invalid">
+                    {errors.cashLimitPerTransaction}
+                  </Form.Control.Feedback>
+                  <Form.Text className="text-muted">Max amount allowed for a single cash operation.</Form.Text>
+                </Form.Group>
+              </Col>
+
+              <Col md={6} lg={4}>
+                <Form.Group controlId="dailyCashLimit">
+                  <Form.Label className="fw-semibold">
+                    <i className="bi bi-calendar-day me-1"></i> Daily Cash Limit
+                  </Form.Label>
+                  <Form.Control
+                    type="number"
+                    name="dailyCashLimit"
+                    placeholder="0.00"
+                    step="0.01"
+                    min="0"
+                    value={formData.dailyCashLimit}
+                    onChange={handleChange}
+                    isInvalid={!!errors.dailyCashLimit}
+                    disabled={isSubmitting || success}
+                  />
+                  <Form.Control.Feedback type="invalid">
+                    {errors.dailyCashLimit}
+                  </Form.Control.Feedback>
+                  <Form.Text className="text-muted">Maximum cumulative cash for the till per day.</Form.Text>
+                </Form.Group>
+              </Col>
+
+              <Col md={6} lg={4}>
+                <Form.Group controlId="overLimitAction">
+                  <Form.Label className="fw-semibold">
+                    <i className="bi bi-shield-exclamation me-1"></i> Over‑Limit Action
+                  </Form.Label>
+                  <Form.Select
+                    name="overLimitAction"
+                    value={formData.overLimitAction}
+                    onChange={handleChange}
+                    disabled={isSubmitting || success}
+                  >
+                    {overLimitActions.map((action) => (
+                      <option key={action.value} value={action.value}>
+                        {action.label}
+                      </option>
+                    ))}
+                  </Form.Select>
+                  <Form.Text className="text-muted">
+                    What to do when a transaction exceeds the limits.
+                  </Form.Text>
+                </Form.Group>
+              </Col>
+            </Row>
+
+            {/* ----- SECTION 3: TELLER ASSIGNMENT ----- */}
+            <div className="section-title d-flex align-items-center mt-4 mb-3">
+              <i className="bi bi-people me-2 fs-5 text-success"></i>
+              <h6 className="fw-bold mb-0 text-uppercase text-muted">Teller Assignment</h6>
+              <hr className="flex-grow-1 ms-3" />
+            </div>
+
+            <Row className="g-3">
+              <Col md={6} lg={4}>
+                <Form.Group controlId="assignedTeller">
+                  <Form.Label className="fw-semibold">
+                    <i className="bi bi-person me-1"></i> Assigned Teller <span className="text-danger">*</span>
+                  </Form.Label>
+                  <Form.Select
+                    name="assignedTeller"
+                    value={formData.assignedTeller}
+                    onChange={handleChange}
+                    isInvalid={!!errors.assignedTeller}
+                    disabled={isSubmitting || success}
+                  >
+                    <option value="">Select Teller</option>
+                    {tellers.map((t) => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </Form.Select>
+                  <Form.Control.Feedback type="invalid">
+                    {errors.assignedTeller}
+                  </Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+
+              <Col md={6} lg={4}>
+                <Form.Group controlId="supervisor">
+                  <Form.Label className="fw-semibold">
+                    <i className="bi bi-person-badge me-1"></i> Supervisor <span className="text-danger">*</span>
+                  </Form.Label>
+                  <Form.Select
+                    name="supervisor"
+                    value={formData.supervisor}
+                    onChange={handleChange}
+                    isInvalid={!!errors.supervisor}
+                    disabled={isSubmitting || success}
+                  >
+                    <option value="">Select Supervisor</option>
+                    {supervisors.map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </Form.Select>
+                  <Form.Control.Feedback type="invalid">
+                    {errors.supervisor}
+                  </Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+
+              <Col md={6} lg={4}>
+                <Form.Group controlId="effectiveDate">
+                  <Form.Label className="fw-semibold">
+                    <i className="bi bi-calendar-event me-1"></i> Effective Date <span className="text-danger">*</span>
+                  </Form.Label>
+                  <Form.Control
+                    type="date"
+                    name="effectiveDate"
+                    value={formData.effectiveDate}
+                    onChange={handleChange}
+                    isInvalid={!!errors.effectiveDate}
+                    disabled={isSubmitting || success}
+                  />
+                  <Form.Control.Feedback type="invalid">
+                    {errors.effectiveDate}
+                  </Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+            </Row>
+
+            {/* ----- ACTION BUTTONS ----- */}
+            <div className="d-flex justify-content-end gap-2 border-top pt-4 mt-4">
+              <Button
+                variant="outline-secondary"
+                onClick={handleCancel}
+                disabled={isSubmitting}
+                className="px-4"
+              >
+                <i className="bi bi-x-circle me-1"></i> Cancel
+              </Button>
+              <Button
+                variant="primary"
+                type="submit"
+                disabled={isSubmitting || success}
+                className="px-5"
+                style={{ minWidth: '150px' }}
+              >
+                {isSubmitting ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    Creating…
+                  </>
+                ) : (
+                  <>
+                    <i className="bi bi-plus-circle me-1"></i> Create Till
+                  </>
+                )}
+              </Button>
+            </div>
+          </Form>
+        </Card.Body>
+
+        <Card.Footer className="bg-light text-muted small py-2 text-center border-0">
+          <i className="bi bi-info-circle me-1"></i> Fields marked with <span className="text-danger">*</span> are required.
+        </Card.Footer>
+      </Card>
+
+      <style jsx>{`
+        .bg-gradient-primary {
+          background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+        }
+        .section-title hr {
+          border: 0;
+          border-top: 2px dashed #dee2e6;
+          opacity: 0.5;
+        }
+        .section-title i {
+          font-size: 1.25rem;
+        }
+        .form-control.bg-light {
+          background-color: #f8f9fa;
+        }
+        .card {
+          border-radius: 12px;
+        }
+        .card-header {
+          border-radius: 12px 12px 0 0 !important;
+        }
+        .card-footer {
+          border-radius: 0 0 12px 12px !important;
+        }
+        @media (max-width: 576px) {
+          .container-fluid {
+            padding-left: 10px;
+            padding-right: 10px;
+          }
+          .card-body {
+            padding: 1.25rem !important;
+          }
+        }
+      `}</style>
+    </div>
+  );
+};
+
+export default CreateTill;

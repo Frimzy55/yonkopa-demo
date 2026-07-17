@@ -46,6 +46,7 @@ import BackdatedDeposit from './teller/BackdatedDeposit';
 import BackdatedWithdrawal from './teller/BackdatedWithdrawal';
 import BackdatedEntryReversal from './teller/BackdatedEntryReversal';
 import CallOver from './teller/CallOver';
+import CreateTill from './teller/CreateTill';
 
 // Loan Components
 import LoanApplication from './loans/LoanApplication';
@@ -608,6 +609,7 @@ const AdminDashboard = () => {
       
       if (activeSubMenu === 'Till Management') {
         const tillComponents = {
+          'Create Till': CreateTill,   
           'Till Status': TillStatus,
           'Open or Close Till': OpenCloseTill,
           'Till Transfer': TillTransfer,
