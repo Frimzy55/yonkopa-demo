@@ -1,14 +1,16 @@
 // TellerDeposit.jsx
 import React, { useState } from 'react';
 
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5002';
+
 const TellerDeposit = () => {
   const [formData, setFormData] = useState({
-    accountNumber: '',
+    customerId: '',
     amount: '',
     depositType: 'cash',
-    description: '',
+    description: 'Cash deposited by: ',
     reference: '',
-    tellerId: 'TEL001'
+    tellerId: 'TILL1001'
   });
   
   const [accountDetails, setAccountDetails] = useState(null);
@@ -21,36 +23,59 @@ const TellerDeposit = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    if (name === 'description') return;
+
+    if (name === 'reference') {
+      setFormData(prev => ({
+        ...prev,
+        reference: value,
+        description: 'Cash deposited by: ' + value
+      }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSearchAccount = async () => {
-    if (!formData.accountNumber) {
-      setError('Please enter an account number');
+    if (!formData.customerId) {
+      setError('Please enter a Customer ID');
       return;
     }
 
     setLoading(true);
     setError('');
+    setAccountDetails(null);
     
     try {
-      // Simulate API call to fetch account details
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await fetch(
+        `${API_BASE_URL}/api/tills/loan-account?customerId=${encodeURIComponent(formData.customerId)}`
+      );
       
-      // Mock account details
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Server error");
+      }
+      
+      const record = Array.isArray(data) ? data[0] : data;
+      
+      if (!record) {
+        throw new Error('No loan account found for this customer');
+      }
+      
       setAccountDetails({
-        accountNumber: formData.accountNumber,
-        accountName: 'John Doe',
-        accountType: 'Savings Account',
-        currentBalance: 5000.00,
-        currency: 'USD',
-        status: 'Active'
+        accountNumber: record.account_number || record.customer_id || 'N/A',
+        accountName: record.applicant_fullName || record.account_name || 'N/A',
+        accountType: record.account_type || 'Loan Account',
+        currentBalance: parseFloat(record.account_balance) || 0,
+        currency: record.account_currency || 'USD',
+        status: record.account_status || 'Active',
+        avatar: record.avatar || null,
+        signature: record.signature || null
       });
+      
     } catch (err) {
-      setError('Account not found. Please check the account number.');
+      setError(err.message || 'Failed to fetch customer account');
       setAccountDetails(null);
     } finally {
       setLoading(false);
@@ -61,7 +86,7 @@ const TellerDeposit = () => {
     e.preventDefault();
     
     if (!accountDetails) {
-      setError('Please search and verify the account first');
+      setError('Please search and verify the customer first');
       return;
     }
     
@@ -78,7 +103,6 @@ const TellerDeposit = () => {
     setError('');
     
     try {
-      // Simulate API call to process deposit
       await new Promise(resolve => setTimeout(resolve, 1500));
       
       const depositAmount = parseFloat(formData.amount);
@@ -86,15 +110,14 @@ const TellerDeposit = () => {
       
       setSuccess(`Deposit of ${accountDetails.currency} ${depositAmount.toFixed(2)} successfully processed! New balance: ${accountDetails.currency} ${newBalance.toFixed(2)}`);
       
-      // Reset form
       setTimeout(() => {
         setFormData({
-          accountNumber: '',
+          customerId: '',
           amount: '',
           depositType: 'cash',
-          description: '',
+          description: 'Cash deposited by: ',
           reference: '',
-          tellerId: 'TEL001'
+          tellerId: 'TILL1001'
         });
         setAccountDetails(null);
         setSuccess('');
@@ -128,7 +151,6 @@ const TellerDeposit = () => {
           <button type="button" className="btn-close" onClick={() => setError('')}></button>
         </div>
       )}
-
       {success && (
         <div className="alert alert-success alert-dismissible fade show" role="alert">
           <i className="bi bi-check-circle me-2"></i>
@@ -146,22 +168,22 @@ const TellerDeposit = () => {
             <div className="card-body">
               <div className="mb-3">
                 <label className="form-label fw-semibold">
-                  Account Number <span className="text-danger">*</span>
+                  Customer ID <span className="text-danger">*</span>
                 </label>
                 <div className="input-group">
                   <input
                     type="text"
                     className="form-control"
-                    name="accountNumber"
-                    value={formData.accountNumber}
+                    name="customerId"
+                    value={formData.customerId}
                     onChange={handleChange}
-                    placeholder="Enter Account Number"
+                    placeholder="Enter Customer ID"
                     disabled={loading}
                   />
                   <button
                     className="btn btn-primary"
                     onClick={handleSearchAccount}
-                    disabled={loading || !formData.accountNumber}
+                    disabled={loading || !formData.customerId}
                   >
                     {loading ? (
                       <span className="spinner-border spinner-border-sm"></span>
@@ -174,16 +196,83 @@ const TellerDeposit = () => {
 
               {accountDetails && (
                 <div className="bg-light p-3 rounded">
-                  <div className="row">
-                    <div className="col-6">
-                      <small className="text-muted">Account Name:</small>
-                      <div className="fw-semibold">{accountDetails.accountName}</div>
+                  {/* Avatar, Name, and Signature in one flex row */}
+                  <div className="d-flex align-items-center mb-3">
+                    {/* Avatar */}
+                    <div className="me-3">
+                      {accountDetails.avatar ? (
+                        <img
+                          src={`${API_BASE_URL}/uploads/${accountDetails.avatar}`}
+                          alt="Avatar"
+                          className="rounded-circle"
+                          style={{ width: '60px', height: '60px', objectFit: 'cover' }}
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            const parent = e.target.parentElement;
+                            const fallback = document.createElement('div');
+                            fallback.className = 'rounded-circle bg-secondary d-flex align-items-center justify-content-center';
+                            fallback.style.cssText = 'width: 60px; height: 60px; color: #fff; font-size: 24px;';
+                            fallback.innerHTML = '<i class="bi bi-person-fill"></i>';
+                            parent.appendChild(fallback);
+                          }}
+                        />
+                      ) : (
+                        <div
+                          className="rounded-circle bg-secondary d-flex align-items-center justify-content-center"
+                          style={{ width: '60px', height: '60px', color: '#fff', fontSize: '24px' }}
+                        >
+                          <i className="bi bi-person-fill"></i>
+                        </div>
+                      )}
                     </div>
+
+                    {/* Name and Account Number */}
+                    <div className="flex-grow-1">
+                      <div className="fw-bold">{accountDetails.accountName}</div>
+                      <small className="text-muted">{accountDetails.accountNumber}</small>
+                    </div>
+
+                    {/* Signature preview - right aligned */}
+                    <div>
+                      <small className="text-muted d-block text-center mb-1">Signature</small>
+                      {accountDetails.signature ? (
+                        <img
+                          src={`${API_BASE_URL}/uploads/${accountDetails.signature}`}
+                          alt="Signature"
+                          style={{
+                            maxWidth: '80px',
+                            maxHeight: '50px',
+                            border: '1px solid #ddd',
+                            borderRadius: '4px',
+                            padding: '2px',
+                            backgroundColor: '#fff',
+                            display: 'block'
+                          }}
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            const parent = e.target.parentElement;
+                            const fallback = document.createElement('span');
+                            fallback.className = 'text-muted';
+                            fallback.style.fontSize = '0.75rem';
+                            fallback.innerHTML = '<i class="bi bi-file-earmark-x me-1"></i>None';
+                            parent.appendChild(fallback);
+                          }}
+                        />
+                      ) : (
+                        <span className="text-muted" style={{ fontSize: '0.75rem' }}>
+                          <i className="bi bi-file-earmark-x me-1"></i>None
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Account details row (type, balance, status) */}
+                  <div className="row">
                     <div className="col-6">
                       <small className="text-muted">Account Type:</small>
                       <div>{accountDetails.accountType}</div>
                     </div>
-                    <div className="col-6 mt-2">
+                    <div className="col-6">
                       <small className="text-muted">Current Balance:</small>
                       <div className="fw-bold text-success">
                         {formatCurrency(accountDetails.currentBalance, accountDetails.currency)}
@@ -192,7 +281,9 @@ const TellerDeposit = () => {
                     <div className="col-6 mt-2">
                       <small className="text-muted">Status:</small>
                       <div>
-                        <span className="badge bg-success">{accountDetails.status}</span>
+                        <span className={`badge ${accountDetails.status === 'Active' ? 'bg-success' : 'bg-warning'}`}>
+                          {accountDetails.status}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -248,26 +339,14 @@ const TellerDeposit = () => {
                 </div>
 
                 <div className="mb-3">
-                  <label className="form-label fw-semibold">Description</label>
-                  <textarea
-                    className="form-control"
-                    name="description"
-                    value={formData.description}
-                    onChange={handleChange}
-                    rows="2"
-                    placeholder="Enter deposit description"
-                  ></textarea>
-                </div>
-
-                <div className="mb-3">
-                  <label className="form-label fw-semibold">Reference Number</label>
+                  <label className="form-label fw-semibold">Deposited By</label>
                   <input
                     type="text"
                     className="form-control"
                     name="reference"
                     value={formData.reference}
                     onChange={handleChange}
-                    placeholder="Cheque number or reference"
+                    placeholder="Enter depositor's name"
                   />
                 </div>
 
@@ -281,6 +360,21 @@ const TellerDeposit = () => {
                     onChange={handleChange}
                     disabled
                   />
+                </div>
+
+                <div className="mb-3">
+                  <label className="form-label fw-semibold">Description</label>
+                  <textarea
+                    className="form-control"
+                    name="description"
+                    value={formData.description}
+                    readOnly
+                    rows="2"
+                    style={{ backgroundColor: '#f8f9fa', cursor: 'not-allowed' }}
+                  />
+                  <small className="text-muted">
+                    Automatically updated from 'Deposited By' field.
+                  </small>
                 </div>
 
                 <button
@@ -297,7 +391,7 @@ const TellerDeposit = () => {
         </div>
       </div>
 
-      {/* Confirmation Modal */}
+      {/* Confirmation Modal – updated with clean vertical list */}
       {showConfirm && (
         <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
           <div className="modal-dialog modal-dialog-centered">
@@ -313,23 +407,36 @@ const TellerDeposit = () => {
               <div className="modal-body">
                 <p>Please confirm the deposit details:</p>
                 <div className="bg-light p-3 rounded mb-3">
-                  <div className="row mb-2">
-                    <div className="col-6"><strong>Account:</strong></div>
-                    <div className="col-6">{accountDetails?.accountNumber}</div>
+                  {/* Vertical list of fields */}
+                  <div className="d-flex py-1 border-bottom">
+                    <span className="fw-bold" style={{ width: '140px' }}>Customer ID:</span>
+                    <span>{formData.customerId}</span>
                   </div>
-                  <div className="row mb-2">
-                    <div className="col-6"><strong>Account Name:</strong></div>
-                    <div className="col-6">{accountDetails?.accountName}</div>
+                  <div className="d-flex py-1 border-bottom">
+                    <span className="fw-bold" style={{ width: '140px' }}>Account Number:</span>
+                    <span>{accountDetails?.accountNumber}</span>
                   </div>
-                  <div className="row mb-2">
-                    <div className="col-6"><strong>Deposit Type:</strong></div>
-                    <div className="col-6">{formData.depositType}</div>
+                  <div className="d-flex py-1 border-bottom">
+                    <span className="fw-bold" style={{ width: '140px' }}>Account Name:</span>
+                    <span>{accountDetails?.accountName}</span>
                   </div>
-                  <div className="row mb-2">
-                    <div className="col-6"><strong>Amount:</strong></div>
-                    <div className="col-6 fw-bold text-success">
+                  <div className="d-flex py-1 border-bottom">
+                    <span className="fw-bold" style={{ width: '140px' }}>Deposit Type:</span>
+                    <span>{formData.depositType.charAt(0).toUpperCase() + formData.depositType.slice(1)}</span>
+                  </div>
+                  <div className="d-flex py-1 border-bottom">
+                    <span className="fw-bold" style={{ width: '140px' }}>Amount:</span>
+                    <span className="fw-bold text-success">
                       {formatCurrency(parseFloat(formData.amount), accountDetails?.currency)}
-                    </div>
+                    </span>
+                  </div>
+                  <div className="d-flex py-1 border-bottom">
+                    <span className="fw-bold" style={{ width: '140px' }}>Deposited By:</span>
+                    <span>{formData.reference || '—'}</span>
+                  </div>
+                  <div className="d-flex py-1">
+                    <span className="fw-bold" style={{ width: '140px' }}>Description:</span>
+                    <span>{formData.description}</span>
                   </div>
                 </div>
                 <p className="text-warning mb-0">

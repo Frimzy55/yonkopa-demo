@@ -394,7 +394,7 @@ const ManagerDashboard = () => {
       if (isMobile) setMobileMenuOpen(false);
     },
     [handleNestedMenuClickBase, saveCurrentScrollPosition, isMobile]
-  );
+  );     
 
   const handleReportClick = useCallback(
     (reportType, reportName, e) => {
