@@ -196,78 +196,24 @@ const TellerDeposit = () => {
 
               {accountDetails && (
                 <div className="bg-light p-3 rounded">
-                  {/* Avatar, Name, and Signature in one flex row */}
-                  <div className="d-flex align-items-center mb-3">
-                    {/* Avatar */}
-                    <div className="me-3">
-                      {accountDetails.avatar ? (
-                        <img
-                          src={`${API_BASE_URL}/uploads/${accountDetails.avatar}`}
-                          alt="Avatar"
-                          className="rounded-circle"
-                          style={{ width: '60px', height: '60px', objectFit: 'cover' }}
-                          onError={(e) => {
-                            e.target.style.display = 'none';
-                            const parent = e.target.parentElement;
-                            const fallback = document.createElement('div');
-                            fallback.className = 'rounded-circle bg-secondary d-flex align-items-center justify-content-center';
-                            fallback.style.cssText = 'width: 60px; height: 60px; color: #fff; font-size: 24px;';
-                            fallback.innerHTML = '<i class="bi bi-person-fill"></i>';
-                            parent.appendChild(fallback);
-                          }}
-                        />
-                      ) : (
-                        <div
-                          className="rounded-circle bg-secondary d-flex align-items-center justify-content-center"
-                          style={{ width: '60px', height: '60px', color: '#fff', fontSize: '24px' }}
-                        >
-                          <i className="bi bi-person-fill"></i>
-                        </div>
-                      )}
+                  {/* Formatted Account Details with Prefixes */}
+                  <div className="mb-3">
+                    <div className="d-flex py-1">
+                      <span className="fw-bold" style={{ width: '130px' }}>Customer ID:</span>
+                      <span>{formData.customerId}</span>
                     </div>
-
-                    {/* Name and Account Number */}
-                    <div className="flex-grow-1">
-                      <div className="fw-bold">{accountDetails.accountName}</div>
-                      <small className="text-muted">{accountDetails.accountNumber}</small>
+                    <div className="d-flex py-1 border-top">
+                      <span className="fw-bold" style={{ width: '130px' }}>Name:</span>
+                      <span className="fw-bold fs-6">{accountDetails.accountName}</span>
                     </div>
-
-                    {/* Signature preview - right aligned */}
-                    <div>
-                      <small className="text-muted d-block text-center mb-1">Signature</small>
-                      {accountDetails.signature ? (
-                        <img
-                          src={`${API_BASE_URL}/uploads/${accountDetails.signature}`}
-                          alt="Signature"
-                          style={{
-                            maxWidth: '80px',
-                            maxHeight: '50px',
-                            border: '1px solid #ddd',
-                            borderRadius: '4px',
-                            padding: '2px',
-                            backgroundColor: '#fff',
-                            display: 'block'
-                          }}
-                          onError={(e) => {
-                            e.target.style.display = 'none';
-                            const parent = e.target.parentElement;
-                            const fallback = document.createElement('span');
-                            fallback.className = 'text-muted';
-                            fallback.style.fontSize = '0.75rem';
-                            fallback.innerHTML = '<i class="bi bi-file-earmark-x me-1"></i>None';
-                            parent.appendChild(fallback);
-                          }}
-                        />
-                      ) : (
-                        <span className="text-muted" style={{ fontSize: '0.75rem' }}>
-                          <i className="bi bi-file-earmark-x me-1"></i>None
-                        </span>
-                      )}
+                    <div className="d-flex py-1 border-top">
+                      <span className="fw-bold" style={{ width: '130px' }}>Account Number:</span>
+                      <span>{accountDetails.accountNumber}</span>
                     </div>
                   </div>
 
                   {/* Account details row (type, balance, status) */}
-                  <div className="row">
+                  <div className="row border-top pt-2">
                     <div className="col-6">
                       <small className="text-muted">Account Type:</small>
                       <div>{accountDetails.accountType}</div>
@@ -285,6 +231,68 @@ const TellerDeposit = () => {
                           {accountDetails.status}
                         </span>
                       </div>
+                    </div>
+                  </div>
+
+                  {/* Avatar and Signature – enlarged */}
+                  <div className="d-flex align-items-center mt-3 pt-2 border-top">
+                    <div className="me-4 text-center">
+                      <small className="text-muted d-block mb-1">Photo</small>
+                      {accountDetails.avatar ? (
+                        <img
+                          src={`${API_BASE_URL}/uploads/${accountDetails.avatar}`}
+                          alt="Avatar"
+                          className="rounded-circle"
+                          style={{ width: '120px', height: '120px', objectFit: 'cover' }}
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            const parent = e.target.parentElement;
+                            const fallback = document.createElement('div');
+                            fallback.className = 'rounded-circle bg-secondary d-flex align-items-center justify-content-center';
+                            fallback.style.cssText = 'width: 120px; height: 120px; color: #fff; font-size: 48px;';
+                            fallback.innerHTML = '<i class="bi bi-person-fill"></i>';
+                            parent.appendChild(fallback);
+                          }}
+                        />
+                      ) : (
+                        <div
+                          className="rounded-circle bg-secondary d-flex align-items-center justify-content-center"
+                          style={{ width: '120px', height: '120px', color: '#fff', fontSize: '48px' }}
+                        >
+                          <i className="bi bi-person-fill"></i>
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-center">
+                      <small className="text-muted d-block mb-1">Signature</small>
+                      {accountDetails.signature ? (
+                        <img
+                          src={`${API_BASE_URL}/uploads/${accountDetails.signature}`}
+                          alt="Signature"
+                          style={{
+                            maxWidth: '200px',
+                            maxHeight: '100px',
+                            border: '1px solid #ddd',
+                            borderRadius: '4px',
+                            padding: '4px',
+                            backgroundColor: '#fff',
+                            display: 'block'
+                          }}
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            const parent = e.target.parentElement;
+                            const fallback = document.createElement('span');
+                            fallback.className = 'text-muted';
+                            fallback.style.fontSize = '0.9rem';
+                            fallback.innerHTML = '<i class="bi bi-file-earmark-x me-1"></i>None';
+                            parent.appendChild(fallback);
+                          }}
+                        />
+                      ) : (
+                        <span className="text-muted" style={{ fontSize: '0.9rem' }}>
+                          <i className="bi bi-file-earmark-x me-1"></i>None
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
