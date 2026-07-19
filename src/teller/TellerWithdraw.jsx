@@ -1,150 +1,600 @@
+// TellerWithdraw.jsx
 import React, { useState } from 'react';
-import axios from 'axios';
-import TransactionDetails from './WithdrawalDetails';
-import DenominationDetails from './DenominationDetails';
 
-const ReverseWithdrawal = () => {
-  const [customerId, setCustomerId] = useState('');
-  const [accountNumber, setAccountNumber] = useState('');
-  const [transaction, setTransaction] = useState(null);
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5002';
+
+const TellerWithdraw = () => {
+  const [formData, setFormData] = useState({
+    customerId: '',
+    amount: '',
+    withdrawalType: 'cash',              // changed from depositType
+    description: 'Cash withdrawn by: ',
+    reference: '',
+    tellerId: 'TILL1001',
+    transactionReference: '' // auto-generated
+  });
+  
+  const [accountDetails, setAccountDetails] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [step, setStep] = useState(0);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successData, setSuccessData] = useState({ amount: 0, currency: 'GHS', reference: '' });
 
-  const handleSearch = async (e) => {
-    e.preventDefault();
+  const withdrawalTypes = ['cash', 'cheque', 'transfer'];   // renamed
 
-    if (!customerId.trim() && !accountNumber.trim()) {
-      setError('Please enter at least a Customer ID or Account Number');
+  // Generate a unique transaction reference
+  const generateTransactionReference = () => {
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+    return `WTH-${year}${month}${day}-${random}`;   // prefix WTH for withdrawal
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    if (name === 'description') return;
+
+    if (name === 'reference') {
+      setFormData(prev => ({
+        ...prev,
+        reference: value,
+        description: 'Cash withdrawn by: ' + value
+      }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
+  };
+
+  const handleSearchAccount = async () => {
+    if (!formData.customerId) {
+      setError('Please enter a Customer ID');
       return;
     }
 
     setLoading(true);
     setError('');
-    setTransaction(null);
-    setStep(0);
-
+    setAccountDetails(null);
+    
     try {
-      const token = localStorage.getItem('token');
-      const params = new URLSearchParams();
-      if (customerId.trim()) params.append('customerId', customerId.trim());
-      if (accountNumber.trim()) params.append('accountNumber', accountNumber.trim());
-
-      const response = await axios.get(
-        `http://localhost:5002/api/teller/transactions?${params.toString()}`,
-        { headers: { Authorization: `Bearer ${token}` } }
+      const response = await fetch(
+        `${API_BASE_URL}/api/tills/loan-account?customerId=${encodeURIComponent(formData.customerId)}`
       );
+      
+      const data = await response.json();
 
-      const data = response.data;
-      if (Array.isArray(data) && data.length > 0) {
-        setTransaction(data[0]);
-      } else {
-        setError('No account found');
+      if (!response.ok) {
+        throw new Error(data.error || "Server error");
       }
+      
+      const record = Array.isArray(data) ? data[0] : data;
+      
+      if (!record) {
+        throw new Error('No loan account found for this customer');
+      }
+      
+      setAccountDetails({
+        accountNumber: record.account_number || record.customer_id || 'N/A',
+        accountName: record.applicant_fullName || record.account_name || 'N/A',
+        accountType: record.account_type || 'Loan Account',
+        currentBalance: parseFloat(record.account_balance) || 0,
+        currency: record.account_currency || 'GHS',
+        status: record.account_status || 'Active',
+        avatar: record.avatar || null,
+        signature: record.signature || null
+      });
+      
     } catch (err) {
-      setError(err.response?.data?.message || 'Account not found');
+      setError(err.message || 'Failed to fetch customer account');
+      setAccountDetails(null);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleReverse = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!accountDetails) {
+      setError('Please search and verify the customer first');
+      return;
+    }
+    
+    if (!formData.amount || parseFloat(formData.amount) <= 0) {
+      setError('Please enter a valid withdrawal amount');
+      return;
+    }
+
+    // Auto-generate transaction reference when opening the modal
+    setFormData(prev => ({
+      ...prev,
+      transactionReference: generateTransactionReference()
+    }));
+
+    setShowConfirm(true);
+  };
+
+  // ---- Renamed and updated for withdrawal ----
+  const processWithdrawal = async () => {
     setLoading(true);
     setError('');
-    setSuccess('');
 
     try {
-      const token = localStorage.getItem('token');
-      await axios.post(
-        `/api/teller/transactions/${transaction.id}/reverse`,
-        { reason: 'Reversal requested', reversedBy: 'Admin User' },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const payload = {
+        customerId: formData.customerId,
+        accountNumber: accountDetails.accountNumber,
+        accountName: accountDetails.accountName,
+        withdrawalType: formData.withdrawalType,          // changed
+        amount: parseFloat(formData.amount),
+        currency: accountDetails.currency || 'GHS',
+        withdrawnBy: formData.reference || '',            // changed
+        tellerId: formData.tellerId,
+        transactionReference: formData.transactionReference,
+        description: formData.description
+      };
 
-      setSuccess('Withdrawal reversed successfully!');
-      setStep(0);
+      console.log('🚀 Sending withdrawal payload:', payload);
+
+      // ---- Updated endpoint ----
+      const response = await fetch(`${API_BASE_URL}/api/tills/withdrawals`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      console.log('📡 Response status:', response.status);
+
+      const data = await response.json();
+      console.log('📦 Response data:', data);
+
+      if (!response.ok) {
+        throw new Error(data.error || data.message || `HTTP ${response.status} - Withdrawal failed`);
+      }
+
+      const ref = data.transactionReference || data.reference || data.ref || formData.transactionReference;
+
+      setSuccessData({
+        amount: parseFloat(formData.amount),
+        currency: accountDetails.currency || 'GHS',
+        reference: ref
+      });
+
+      setShowSuccessModal(true);
+
+      // Reset form and close confirmation modal after 3 seconds
       setTimeout(() => {
-        setSuccess('');
-        setTransaction(null);
-        setCustomerId('');
-        setAccountNumber('');
+        setFormData({
+          customerId: '',
+          amount: '',
+          withdrawalType: 'cash',
+          description: 'Cash withdrawn by: ',
+          reference: '',
+          tellerId: 'TILL1001',
+          transactionReference: ''
+        });
+        setAccountDetails(null);
+        setShowConfirm(false);
       }, 3000);
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to reverse withdrawal');
+
+    } catch (error) {
+      console.error('❌ Withdrawal error:', error);
+      setError(error.message || 'Failed to process withdrawal. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleNext = () => setStep(1);
-  const handleBack = () => setStep(0);
+  const formatCurrency = (amount, currency = 'GHS') => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency
+    }).format(amount);
+  };
 
   return (
-    <div className="reverse-withdrawal-container">
-      <h4 className="mb-4">Withdrawal</h4>
+    <div className="teller-withdraw">
+      <div className="mb-4">
+        <h6 className="text-muted mb-2">Teller Withdrawal</h6>
+        <p className="small text-secondary">Process cash and cheque withdrawals</p>
+      </div>
 
-      <div className="card">
-        <div className="card-body">
-          <h6 className="card-title mb-3">Search Customer Account</h6>
-          <form onSubmit={handleSearch}>
-            <div className="row g-3 align-items-end">
-              <div className="col-md-5">
-                <label className="form-label">Customer ID</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="Enter Customer ID"
-                  value={customerId}
-                  onChange={(e) => setCustomerId(e.target.value)}
-                />
+      {error && (
+        <div className="alert alert-danger alert-dismissible fade show" role="alert">
+          <i className="bi bi-exclamation-triangle me-2"></i>
+          {error}
+          <button type="button" className="btn-close" onClick={() => setError('')}></button>
+        </div>
+      )}
+
+      <div className="row">
+        {/* Left column – Account Information */}
+        <div className="col-md-6">
+          <div className="card shadow-sm mb-3">
+            <div className="card-header bg-white">
+              <h6 className="mb-0">Account Information</h6>
+            </div>
+            <div className="card-body">
+              <div className="mb-3">
+                <label className="form-label fw-semibold">
+                  Customer ID (to) <span className="text-danger">*</span>
+                </label>
+                <div className="input-group">
+                  <input
+                    type="text"
+                    className="form-control"
+                    name="customerId"
+                    value={formData.customerId}
+                    onChange={handleChange}
+                    placeholder="Enter Customer ID"
+                    disabled={loading}
+                  />
+                  <button
+                    className="btn btn-primary"
+                    onClick={handleSearchAccount}
+                    disabled={loading || !formData.customerId}
+                  >
+                    {loading ? (
+                      <span className="spinner-border spinner-border-sm"></span>
+                    ) : (
+                      <i className="bi bi-search"></i>
+                    )}
+                  </button>
+                </div>
               </div>
-              <div className="col-md-5">
-                <label className="form-label">Account Number</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="Account Number"
-                  value={accountNumber}
-                  onChange={(e) => setAccountNumber(e.target.value)}
-                />
-              </div>
-              <div className="col-md-2">
+
+              {accountDetails && (
+                <div className="bg-light p-3 rounded">
+                  {/* ... same as deposit ... */}
+                  <div className="mb-3">
+                    <div className="d-flex py-1">
+                      <span className="fw-bold" style={{ width: '130px' }}>Customer ID:</span>
+                      <span>{formData.customerId}</span>
+                    </div>
+                    <div className="d-flex py-1 border-top">
+                      <span className="fw-bold" style={{ width: '130px' }}>Customer Name:</span>
+                      <span className="fw-bold fs-6">{accountDetails.accountName}</span>
+                    </div>
+                    <div className="d-flex py-1 border-top">
+                      <span className="fw-bold" style={{ width: '130px' }}>Account Number:</span>
+                      <span>{accountDetails.accountNumber}</span>
+                    </div>
+                  </div>
+
+                  <div className="row border-top pt-2">
+                    <div className="col-6">
+                      <small className="text-muted">Account Type:</small>
+                      <div>{accountDetails.accountType}</div>
+                    </div>
+                    <div className="col-6">
+                      <small className="text-muted">Current Balance:</small>
+                      <div className="fw-bold text-success">
+                        {formatCurrency(accountDetails.currentBalance, accountDetails.currency)}
+                      </div>
+                    </div>
+                    <div className="col-6 mt-2">
+                      <small className="text-muted">Status:</small>
+                      <div>
+                        <span className={`badge ${accountDetails.status === 'Active' ? 'bg-success' : 'bg-warning'}`}>
+                          {accountDetails.status}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="d-flex align-items-center mt-3 pt-2 border-top">
+                    <div className="me-4 text-center">
+                      <small className="text-muted d-block mb-1">Photo</small>
+                      {accountDetails.avatar ? (
+                        <img
+                          src={`${API_BASE_URL}/uploads/${accountDetails.avatar}`}
+                          alt="Avatar"
+                          className="rounded-circle"
+                          style={{ width: '120px', height: '120px', objectFit: 'cover' }}
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            const parent = e.target.parentElement;
+                            const fallback = document.createElement('div');
+                            fallback.className = 'rounded-circle bg-secondary d-flex align-items-center justify-content-center';
+                            fallback.style.cssText = 'width: 120px; height: 120px; color: #fff; font-size: 48px;';
+                            fallback.innerHTML = '<i class="bi bi-person-fill"></i>';
+                            parent.appendChild(fallback);
+                          }}
+                        />
+                      ) : (
+                        <div
+                          className="rounded-circle bg-secondary d-flex align-items-center justify-content-center"
+                          style={{ width: '120px', height: '120px', color: '#fff', fontSize: '48px' }}
+                        >
+                          <i className="bi bi-person-fill"></i>
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-center">
+                      <small className="text-muted d-block mb-1">Signature</small>
+                      {accountDetails.signature ? (
+                        <img
+                          src={`${API_BASE_URL}/uploads/${accountDetails.signature}`}
+                          alt="Signature"
+                          style={{
+                            maxWidth: '200px',
+                            maxHeight: '100px',
+                            border: '1px solid #ddd',
+                            borderRadius: '4px',
+                            padding: '4px',
+                            backgroundColor: '#fff',
+                            display: 'block'
+                          }}
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            const parent = e.target.parentElement;
+                            const fallback = document.createElement('span');
+                            fallback.className = 'text-muted';
+                            fallback.style.fontSize = '0.9rem';
+                            fallback.innerHTML = '<i class="bi bi-file-earmark-x me-1"></i>None';
+                            parent.appendChild(fallback);
+                          }}
+                        />
+                      ) : (
+                        <span className="text-muted" style={{ fontSize: '0.9rem' }}>
+                          <i className="bi bi-file-earmark-x me-1"></i>None
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Right column – Withdrawal Details */}
+        <div className="col-md-6">
+          <div className="card shadow-sm">
+            <div className="card-header bg-white">
+              <h6 className="mb-0">Withdrawal Details</h6>
+            </div>
+            <div className="card-body">
+              <form onSubmit={handleSubmit}>
+                <div className="mb-3">
+                  <label className="form-label fw-semibold">
+                    Withdrawal Type <span className="text-danger">*</span>
+                  </label>
+                  <select
+                    className="form-select"
+                    name="withdrawalType"
+                    value={formData.withdrawalType}
+                    onChange={handleChange}
+                  >
+                    {withdrawalTypes.map(type => (
+                      <option key={type} value={type}>
+                        {type.charAt(0).toUpperCase() + type.slice(1)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="mb-3">
+                  <label className="form-label fw-semibold">
+                    Amount <span className="text-danger">*</span>
+                  </label>
+                  <div className="input-group">
+                    <span className="input-group-text">₵</span>
+                    <input
+                      type="number"
+                      className="form-control"
+                      name="amount"
+                      value={formData.amount}
+                      onChange={handleChange}
+                      placeholder="0.00"
+                      step="0.01"
+                      min="0"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="mb-3">
+                  <label className="form-label fw-semibold">Withdrawn By</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    name="reference"
+                    value={formData.reference}
+                    onChange={handleChange}
+                    placeholder="Enter withdrawer's name"
+                  />
+                </div>
+
+                <div className="mb-3">
+                  <label className="form-label fw-semibold">
+                    Teller ID (from) <span className="text-danger">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    name="tellerId"
+                    value={formData.tellerId}
+                    disabled
+                  />
+                  <small className="text-muted">Auto‑filled with the current teller.</small>
+                </div>
+
+                <div className="mb-3">
+                  <label className="form-label fw-semibold">Description</label>
+                  <textarea
+                    className="form-control"
+                    name="description"
+                    value={formData.description}
+                    readOnly
+                    rows="2"
+                    style={{ backgroundColor: '#f8f9fa', cursor: 'not-allowed' }}
+                  />
+                  <small className="text-muted">
+                    Automatically updated from 'Withdrawn By' field.
+                  </small>
+                </div>
+
                 <button
                   type="submit"
-                  className="btn btn-success w-100"
+                  className="btn btn-danger w-100"
+                  disabled={loading || !accountDetails}
+                >
+                  <i className="bi bi-arrow-up-circle me-2"></i>
+                  Process Withdrawal
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Confirmation Modal */}
+      {showConfirm && (
+        <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Confirm Withdrawal</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setShowConfirm(false)}
+                ></button>
+              </div>
+              <div className="modal-body">
+                <p>Please confirm the withdrawal details:</p>
+                <div className="bg-light p-3 rounded mb-3">
+                  <div className="d-flex py-1 border-bottom">
+                    <span className="fw-bold" style={{ width: '140px' }}>Customer ID (to):</span>
+                    <span>{formData.customerId}</span>
+                  </div>
+                  <div className="d-flex py-1 border-bottom">
+                    <span className="fw-bold" style={{ width: '140px' }}>Account Number:</span>
+                    <span>{accountDetails?.accountNumber}</span>
+                  </div>
+                  <div className="d-flex py-1 border-bottom">
+                    <span className="fw-bold" style={{ width: '140px' }}>Account Name:</span>
+                    <span>{accountDetails?.accountName}</span>
+                  </div>
+                  <div className="d-flex py-1 border-bottom">
+                    <span className="fw-bold" style={{ width: '140px' }}>Withdrawal Type:</span>
+                    <span>{formData.withdrawalType.charAt(0).toUpperCase() + formData.withdrawalType.slice(1)}</span>
+                  </div>
+                  <div className="d-flex py-1 border-bottom">
+                    <span className="fw-bold" style={{ width: '140px' }}>Amount:</span>
+                    <span className="fw-bold text-danger">
+                      {formatCurrency(parseFloat(formData.amount), accountDetails?.currency)}
+                    </span>
+                  </div>
+                  <div className="d-flex py-1 border-bottom">
+                    <span className="fw-bold" style={{ width: '140px' }}>Transaction Reference:</span>
+                    <span className="fw-bold text-primary">{formData.transactionReference}</span>
+                  </div>
+                  <div className="d-flex py-1 border-bottom">
+                    <span className="fw-bold" style={{ width: '140px' }}>Withdrawn By:</span>
+                    <span>{formData.reference || '—'}</span>
+                  </div>
+                  <div className="d-flex py-1 border-bottom">
+                    <span className="fw-bold" style={{ width: '140px' }}>Teller ID (from):</span>
+                    <span>{formData.tellerId}</span>
+                  </div>
+                  <div className="d-flex py-1">
+                    <span className="fw-bold" style={{ width: '140px' }}>Description:</span>
+                    <span>{formData.description}</span>
+                  </div>
+                </div>
+                <p className="text-warning mb-0">
+                  <i className="bi bi-exclamation-triangle me-2"></i>
+                  Please verify the account details before confirming.
+                </p>
+              </div>
+              <div className="modal-footer">
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => setShowConfirm(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="btn btn-danger"
+                  onClick={processWithdrawal}     // ← updated handler
                   disabled={loading}
                 >
                   {loading ? (
-                    <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    <>
+                      <span className="spinner-border spinner-border-sm me-2"></span>
+                      Processing...
+                    </>
                   ) : (
-                    <i className="bi bi-search"></i>
+                    <>
+                      <i className="bi bi-check-lg me-2"></i>
+                      Confirm Withdrawal
+                    </>
                   )}
                 </button>
               </div>
             </div>
-          </form>
+          </div>
         </div>
-      </div>
-
-      {error && <div className="alert alert-danger mt-3">{error}</div>}
-      {success && <div className="alert alert-success mt-3">{success}</div>}
-
-      {transaction && step === 0 && (
-        <TransactionDetails transaction={transaction} onNext={handleNext} loading={loading} />
       )}
 
-      {transaction && step === 1 && (
-        <DenominationDetails
-          transaction={transaction}
-          onConfirm={handleReverse}
-          onBack={handleBack}
-          loading={loading}
-        />
+      {/* ===== SUCCESS MODAL ===== */}
+      {showSuccessModal && (
+        <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-header bg-success text-white">
+                <h5 className="modal-title text-white">
+                  <i className="bi bi-check-circle me-2"></i>
+                  Withdrawal Successful
+                </h5>
+                <button
+                  type="button"
+                  className="btn-close btn-close-white"
+                  onClick={() => {
+                    setShowSuccessModal(false);
+                    setSuccessData({ amount: 0, currency: 'GHS', reference: '' });
+                  }}
+                ></button>
+              </div>
+              <div className="modal-body">
+                <p className="fs-5 mb-3">Your withdrawal has been processed successfully.</p>
+                <div className="bg-light p-3 rounded">
+                  <div className="d-flex py-2 border-bottom">
+                    <span className="fw-bold" style={{ width: '140px' }}>Amount:</span>
+                    <span className="fw-bold text-danger">
+                      {formatCurrency(successData.amount, successData.currency)}
+                    </span>
+                  </div>
+                  <div className="d-flex py-2">
+                    <span className="fw-bold" style={{ width: '140px' }}>Reference:</span>
+                    <span className="fw-bold text-primary">{successData.reference}</span>
+                  </div>
+                </div>
+                <p className="text-muted mt-3 small">
+                  The withdrawal has been recorded in the system. You can close this window.
+                </p>
+              </div>
+              <div className="modal-footer">
+                <button
+                  className="btn btn-success"
+                  onClick={() => {
+                    setShowSuccessModal(false);
+                    setSuccessData({ amount: 0, currency: 'GHS', reference: '' });
+                  }}
+                >
+                  <i className="bi bi-check-lg me-2"></i>
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
 };
 
-export default ReverseWithdrawal;
+export default TellerWithdraw;

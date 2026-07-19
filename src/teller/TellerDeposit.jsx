@@ -10,16 +10,28 @@ const TellerDeposit = () => {
     depositType: 'cash',
     description: 'Cash deposited by: ',
     reference: '',
-    tellerId: 'TILL1001'
+    tellerId: 'TILL1001',
+    transactionReference: '' // auto-generated
   });
   
   const [accountDetails, setAccountDetails] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successData, setSuccessData] = useState({ amount: 0, currency: 'GHS', reference: '' });
 
   const depositTypes = ['cash', 'cheque', 'transfer'];
+
+  // Generate a unique transaction reference
+  const generateTransactionReference = () => {
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+    return `DEP-${year}${month}${day}-${random}`;
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -68,7 +80,7 @@ const TellerDeposit = () => {
         accountName: record.applicant_fullName || record.account_name || 'N/A',
         accountType: record.account_type || 'Loan Account',
         currentBalance: parseFloat(record.account_balance) || 0,
-        currency: record.account_currency || 'USD',
+        currency: record.account_currency || 'GHS',
         status: record.account_status || 'Active',
         avatar: record.avatar || null,
         signature: record.signature || null
@@ -95,21 +107,64 @@ const TellerDeposit = () => {
       return;
     }
 
+    // Auto-generate transaction reference when opening the modal
+    setFormData(prev => ({
+      ...prev,
+      transactionReference: generateTransactionReference()
+    }));
+
     setShowConfirm(true);
   };
 
   const processDeposit = async () => {
     setLoading(true);
     setError('');
-    
+
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      const depositAmount = parseFloat(formData.amount);
-      const newBalance = accountDetails.currentBalance + depositAmount;
-      
-      setSuccess(`Deposit of ${accountDetails.currency} ${depositAmount.toFixed(2)} successfully processed! New balance: ${accountDetails.currency} ${newBalance.toFixed(2)}`);
-      
+      const payload = {
+        customerId: formData.customerId,
+        accountNumber: accountDetails.accountNumber,
+        accountName: accountDetails.accountName,
+        depositType: formData.depositType,
+        amount: parseFloat(formData.amount),
+        currency: accountDetails.currency || 'GHS',
+        depositedBy: formData.reference || '',
+        tellerId: formData.tellerId,
+        transactionReference: formData.transactionReference,
+        description: formData.description
+      };
+
+      console.log('🚀 Sending deposit payload:', payload);
+
+      const response = await fetch(`${API_BASE_URL}/api/tills/deposits`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      console.log('📡 Response status:', response.status);
+
+      const data = await response.json();
+      console.log('📦 Response data:', data);
+
+      if (!response.ok) {
+        throw new Error(data.error || data.message || `HTTP ${response.status} - Deposit failed`);
+      }
+
+      // Extract reference
+      const ref = data.transactionReference || data.reference || data.ref || formData.transactionReference;
+
+      // Prepare success data for the modal
+      setSuccessData({
+        amount: parseFloat(formData.amount),
+        currency: accountDetails.currency || 'GHS',
+        reference: ref
+      });
+
+      // Show success modal
+      setShowSuccessModal(true);
+
+      // Reset form and close confirmation modal after 3 seconds
       setTimeout(() => {
         setFormData({
           customerId: '',
@@ -117,20 +172,22 @@ const TellerDeposit = () => {
           depositType: 'cash',
           description: 'Cash deposited by: ',
           reference: '',
-          tellerId: 'TILL1001'
+          tellerId: 'TILL1001',
+          transactionReference: ''
         });
         setAccountDetails(null);
-        setSuccess('');
         setShowConfirm(false);
       }, 3000);
-    } catch (err) {
-      setError('Failed to process deposit. Please try again.');
+
+    } catch (error) {
+      console.error('❌ Deposit error:', error);
+      setError(error.message || 'Failed to process deposit. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  const formatCurrency = (amount, currency) => {
+  const formatCurrency = (amount, currency = 'GHS') => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: currency
@@ -151,13 +208,6 @@ const TellerDeposit = () => {
           <button type="button" className="btn-close" onClick={() => setError('')}></button>
         </div>
       )}
-      {success && (
-        <div className="alert alert-success alert-dismissible fade show" role="alert">
-          <i className="bi bi-check-circle me-2"></i>
-          {success}
-          <button type="button" className="btn-close" onClick={() => setSuccess('')}></button>
-        </div>
-      )}
 
       <div className="row">
         <div className="col-md-6">
@@ -168,7 +218,7 @@ const TellerDeposit = () => {
             <div className="card-body">
               <div className="mb-3">
                 <label className="form-label fw-semibold">
-                  Customer ID <span className="text-danger">*</span>
+                  Customer ID (from) <span className="text-danger">*</span>
                 </label>
                 <div className="input-group">
                   <input
@@ -196,14 +246,13 @@ const TellerDeposit = () => {
 
               {accountDetails && (
                 <div className="bg-light p-3 rounded">
-                  {/* Formatted Account Details with Prefixes */}
                   <div className="mb-3">
                     <div className="d-flex py-1">
                       <span className="fw-bold" style={{ width: '130px' }}>Customer ID:</span>
                       <span>{formData.customerId}</span>
                     </div>
                     <div className="d-flex py-1 border-top">
-                      <span className="fw-bold" style={{ width: '130px' }}>Name:</span>
+                      <span className="fw-bold" style={{ width: '130px' }}>Customer Name:</span>
                       <span className="fw-bold fs-6">{accountDetails.accountName}</span>
                     </div>
                     <div className="d-flex py-1 border-top">
@@ -212,7 +261,6 @@ const TellerDeposit = () => {
                     </div>
                   </div>
 
-                  {/* Account details row (type, balance, status) */}
                   <div className="row border-top pt-2">
                     <div className="col-6">
                       <small className="text-muted">Account Type:</small>
@@ -234,7 +282,6 @@ const TellerDeposit = () => {
                     </div>
                   </div>
 
-                  {/* Avatar and Signature – enlarged */}
                   <div className="d-flex align-items-center mt-3 pt-2 border-top">
                     <div className="me-4 text-center">
                       <small className="text-muted d-block mb-1">Photo</small>
@@ -331,7 +378,7 @@ const TellerDeposit = () => {
                     Amount <span className="text-danger">*</span>
                   </label>
                   <div className="input-group">
-                    <span className="input-group-text">$</span>
+                    <span className="input-group-text">₵</span>
                     <input
                       type="number"
                       className="form-control"
@@ -359,7 +406,9 @@ const TellerDeposit = () => {
                 </div>
 
                 <div className="mb-3">
-                  <label className="form-label fw-semibold">Teller ID</label>
+                  <label className="form-label fw-semibold">
+                    Teller ID (to) <span className="text-danger">*</span>
+                  </label>
                   <input
                     type="text"
                     className="form-control"
@@ -368,6 +417,7 @@ const TellerDeposit = () => {
                     onChange={handleChange}
                     disabled
                   />
+                  <small className="text-muted">Auto‑filled with the current teller.</small>
                 </div>
 
                 <div className="mb-3">
@@ -399,7 +449,7 @@ const TellerDeposit = () => {
         </div>
       </div>
 
-      {/* Confirmation Modal – updated with clean vertical list */}
+      {/* Confirmation Modal */}
       {showConfirm && (
         <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
           <div className="modal-dialog modal-dialog-centered">
@@ -415,9 +465,8 @@ const TellerDeposit = () => {
               <div className="modal-body">
                 <p>Please confirm the deposit details:</p>
                 <div className="bg-light p-3 rounded mb-3">
-                  {/* Vertical list of fields */}
                   <div className="d-flex py-1 border-bottom">
-                    <span className="fw-bold" style={{ width: '140px' }}>Customer ID:</span>
+                    <span className="fw-bold" style={{ width: '140px' }}>Customer ID (from):</span>
                     <span>{formData.customerId}</span>
                   </div>
                   <div className="d-flex py-1 border-bottom">
@@ -439,8 +488,16 @@ const TellerDeposit = () => {
                     </span>
                   </div>
                   <div className="d-flex py-1 border-bottom">
+                    <span className="fw-bold" style={{ width: '140px' }}>Transaction Reference:</span>
+                    <span className="fw-bold text-primary">{formData.transactionReference}</span>
+                  </div>
+                  <div className="d-flex py-1 border-bottom">
                     <span className="fw-bold" style={{ width: '140px' }}>Deposited By:</span>
                     <span>{formData.reference || '—'}</span>
+                  </div>
+                  <div className="d-flex py-1 border-bottom">
+                    <span className="fw-bold" style={{ width: '140px' }}>Teller ID (to):</span>
+                    <span>{formData.tellerId}</span>
                   </div>
                   <div className="d-flex py-1">
                     <span className="fw-bold" style={{ width: '140px' }}>Description:</span>
@@ -475,6 +532,60 @@ const TellerDeposit = () => {
                       Confirm Deposit
                     </>
                   )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===== SUCCESS MODAL ===== */}
+      {showSuccessModal && (
+        <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-header bg-success text-white">
+                <h5 className="modal-title text-white">
+                  <i className="bi bi-check-circle me-2"></i>
+                  Deposit Successful
+                </h5>
+                <button
+                  type="button"
+                  className="btn-close btn-close-white"
+                  onClick={() => {
+                    setShowSuccessModal(false);
+                    setSuccessData({ amount: 0, currency: 'GHS', reference: '' });
+                  }}
+                ></button>
+              </div>
+              <div className="modal-body">
+                <p className="fs-5 mb-3">Your deposit has been processed successfully.</p>
+                <div className="bg-light p-3 rounded">
+                  <div className="d-flex py-2 border-bottom">
+                    <span className="fw-bold" style={{ width: '140px' }}>Amount:</span>
+                    <span className="fw-bold text-success">
+                      {formatCurrency(successData.amount, successData.currency)}
+                    </span>
+                  </div>
+                  <div className="d-flex py-2">
+                    <span className="fw-bold" style={{ width: '140px' }}>Reference:</span>
+                    <span className="fw-bold text-primary">{successData.reference}</span>
+                  </div>
+                </div>
+                <p className="text-muted mt-3 small">
+                  The deposit has been recorded in the system. You can close this window.
+                </p>
+              </div>
+              <div className="modal-footer">
+                <button
+                  className="btn btn-success"
+                  onClick={() => {
+                    setShowSuccessModal(false);
+                    setSuccessData({ amount: 0, currency: 'GHS', reference: '' });
+                  }}
+                >
+                  <i className="bi bi-check-lg me-2"></i>
+                  Close
                 </button>
               </div>
             </div>
