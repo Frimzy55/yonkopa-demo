@@ -2,22 +2,98 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 
+const API_BASE_URL = process.env.REACT_APP_API_URL || '';
+
+const apiClient = axios.create({
+  baseURL: API_BASE_URL,
+});
+
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
 const AccountStatement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [account, setAccount] = useState(null);
   const [transactions, setTransactions] = useState([]);
+  const [openingBalance, setOpeningBalance] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [dateRange, setDateRange] = useState({
     startDate: new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0],
     endDate: new Date().toISOString().split('T')[0]
   });
-  const [statementType, setStatementType] = useState('all'); // all, deposits, withdrawals
+  const [statementType, setStatementType] = useState('all');
+
+  // Helper: parse number from string or return 0
+  const toNumber = (val) => parseFloat(val) || 0;
+
+  // Helper: format currency with two decimals
+  const formatCurrency = (amount) => {
+    const num = toNumber(amount);
+    return `GHS ${num.toFixed(2)}`;
+  };
+
+  // Compute opening balance (balance before the first transaction in the list)
+  const computeOpeningBalance = (txs) => {
+    if (!txs || txs.length === 0) return 0;
+    const first = txs[0];
+    return first.balance - first.credit + first.debit;
+  };
+
+  // Fetch account details
+  const fetchAccountDetails = async (accountNumber) => {
+    try {
+      const response = await apiClient.get(`/statements/account/${accountNumber}`);
+      return response.data.data;
+    } catch (err) {
+      throw new Error(err.response?.data?.message || 'Account not found');
+    }
+  };
+
+  // Fetch transactions – convert strings to numbers
+  const fetchTransactions = async (accountNumber, startDate, endDate, type) => {
+    try {
+      const params = { accountNumber, startDate, endDate };
+      if (type && type !== 'all') params.type = type;
+      const response = await apiClient.get('/statements/transactions', { params });
+      const rows = response.data.data.map(t => ({
+        ...t,
+        debit: toNumber(t.debit),
+        credit: toNumber(t.credit),
+        balance: toNumber(t.balance)
+      }));
+      return rows;
+    } catch (err) {
+      throw new Error(err.response?.data?.message || 'Failed to fetch transactions');
+    }
+  };
+
+  // Resolve account number from Customer ID or Account Number
+  const resolveAccountNumber = async (input) => {
+    try {
+      const response = await apiClient.get(`/api/tills/loan-account?customerId=${encodeURIComponent(input)}`);
+      if (response.data && response.data.account_number) {
+        return response.data.account_number;
+      }
+    } catch (err) {
+      // Not a Customer ID, fall through
+    }
+    return input;
+  };
 
   const handleSearch = async (e) => {
     e.preventDefault();
-    if (!searchTerm.trim()) {
-      setError('Please enter an account number');
+    const trimmed = searchTerm.trim();
+    if (!trimmed) {
+      setError('Please enter a Customer ID or Account Number');
       return;
     }
 
@@ -25,37 +101,43 @@ const AccountStatement = () => {
     setError('');
     setAccount(null);
     setTransactions([]);
+    setOpeningBalance(0);
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`/api/accounts/${searchTerm}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      setAccount(response.data);
-      await fetchTransactions();
+      const accountNumber = await resolveAccountNumber(trimmed);
+      const accountData = await fetchAccountDetails(accountNumber);
+      setAccount(accountData);
+
+      const txData = await fetchTransactions(
+        accountNumber,
+        dateRange.startDate,
+        dateRange.endDate,
+        statementType
+      );
+      setTransactions(txData);
+      setOpeningBalance(computeOpeningBalance(txData));
     } catch (err) {
-      setError(err.response?.data?.message || 'Account not found');
+      setError(err.message);
+    } finally {
       setLoading(false);
     }
   };
 
-  const fetchTransactions = async () => {
+  const handleFilterSubmit = (e) => {
+    e.preventDefault();
+    if (account) {
+      fetchTransactionsAndUpdate(account.accountNumber, dateRange.startDate, dateRange.endDate, statementType);
+    }
+  };
+
+  const fetchTransactionsAndUpdate = async (accountNumber, startDate, endDate, type) => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`/api/accounts/${searchTerm}/transactions`, {
-        params: {
-          startDate: dateRange.startDate,
-          endDate: dateRange.endDate,
-          type: statementType !== 'all' ? statementType : undefined
-        },
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      setTransactions(response.data);
+      const txData = await fetchTransactions(accountNumber, startDate, endDate, type);
+      setTransactions(txData);
+      setOpeningBalance(computeOpeningBalance(txData));
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to fetch transactions');
+      setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -66,30 +148,24 @@ const AccountStatement = () => {
     setDateRange(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleFilterSubmit = (e) => {
-    e.preventDefault();
-    if (account) {
-      fetchTransactions();
-    }
-  };
-
-  const handlePrint = () => {
-    window.print();
-  };
+  const handlePrint = () => window.print();
 
   const handleExportCSV = () => {
     if (!transactions.length) return;
-    
+
     const headers = ['Date', 'Description', 'Transaction Type', 'Debit (GHS)', 'Credit (GHS)', 'Balance (GHS)'];
-    const csvData = transactions.map(t => [
-      new Date(t.date).toLocaleDateString(),
-      t.description,
-      t.type,
-      t.type === 'withdrawal' ? t.amount : '',
-      t.type === 'deposit' ? t.amount : '',
-      t.balance
-    ]);
-    
+    const csvData = transactions.map(t => {
+      const type = t.credit > 0 ? 'deposit' : (t.debit > 0 ? 'withdrawal' : 'other');
+      return [
+        new Date(t.transaction_date).toLocaleDateString(),
+        t.description || t.narration,
+        type,
+        t.debit !== 0 ? t.debit.toFixed(2) : '',
+        t.credit !== 0 ? t.credit.toFixed(2) : '',
+        t.balance.toFixed(2)
+      ];
+    });
+
     const csvContent = [headers, ...csvData].map(row => row.join(',')).join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -100,13 +176,15 @@ const AccountStatement = () => {
     URL.revokeObjectURL(url);
   };
 
+  // Calculate summary using parsed numbers
   const calculateSummary = () => {
-    const deposits = transactions.filter(t => t.type === 'deposit').reduce((sum, t) => sum + t.amount, 0);
-    const withdrawals = transactions.filter(t => t.type === 'withdrawal').reduce((sum, t) => sum + t.amount, 0);
+    const deposits = transactions.reduce((sum, t) => sum + (t.credit > 0 ? t.credit : 0), 0);
+    const withdrawals = transactions.reduce((sum, t) => sum + (t.debit > 0 ? t.debit : 0), 0);
     return { deposits, withdrawals, net: deposits - withdrawals };
   };
 
   const summary = calculateSummary();
+  const closingBalance = transactions.length > 0 ? transactions[transactions.length - 1].balance : 0;
 
   return (
     <div className="account-statement-container">
@@ -115,13 +193,13 @@ const AccountStatement = () => {
       {/* Search Section */}
       <div className="card mb-4">
         <div className="card-body">
-          <h6 className="card-title mb-3">Select Account</h6>
+          <h6 className="card-title mb-3">Search by Customer ID or Account Number</h6>
           <form onSubmit={handleSearch} className="row g-3">
             <div className="col-md-8">
               <input
                 type="text"
                 className="form-control"
-                placeholder="Enter Account Number"
+                placeholder="Enter Customer ID or Account Number"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -135,7 +213,6 @@ const AccountStatement = () => {
         </div>
       </div>
 
-      {/* Error Message */}
       {error && (
         <div className="alert alert-danger alert-dismissible fade show" role="alert">
           {error}
@@ -143,10 +220,9 @@ const AccountStatement = () => {
         </div>
       )}
 
-      {/* Account Statement */}
       {account && (
         <>
-          {/* Account Header */}
+          {/* Account Header – now shows both opening and closing balances */}
           <div className="card mb-4">
             <div className="card-body">
               <div className="row">
@@ -156,7 +232,8 @@ const AccountStatement = () => {
                 </div>
                 <div className="col-md-6 text-md-end">
                   <p className="mb-0">Statement Period: {new Date(dateRange.startDate).toLocaleDateString()} - {new Date(dateRange.endDate).toLocaleDateString()}</p>
-                  <p className="mb-0">Opening Balance: GHS {account.openingBalance?.toLocaleString() || 0}</p>
+                  <p className="mb-0">Opening Balance: {formatCurrency(openingBalance)}</p>
+                  <p className="mb-0">Closing Balance: {formatCurrency(closingBalance)}</p>
                 </div>
               </div>
             </div>
@@ -190,9 +267,9 @@ const AccountStatement = () => {
                 </div>
                 <div className="col-md-3">
                   <label className="form-label">Transaction Type</label>
-                  <select 
-                    className="form-select" 
-                    value={statementType} 
+                  <select
+                    className="form-select"
+                    value={statementType}
                     onChange={(e) => setStatementType(e.target.value)}
                   >
                     <option value="all">All Transactions</option>
@@ -216,7 +293,7 @@ const AccountStatement = () => {
               <div className="card text-center">
                 <div className="card-body">
                   <small className="text-muted">Total Deposits</small>
-                  <h5 className="text-success mb-0">GHS {summary.deposits.toLocaleString()}</h5>
+                  <h5 className="text-success mb-0">{formatCurrency(summary.deposits)}</h5>
                 </div>
               </div>
             </div>
@@ -224,7 +301,7 @@ const AccountStatement = () => {
               <div className="card text-center">
                 <div className="card-body">
                   <small className="text-muted">Total Withdrawals</small>
-                  <h5 className="text-danger mb-0">GHS {summary.withdrawals.toLocaleString()}</h5>
+                  <h5 className="text-danger mb-0">{formatCurrency(summary.withdrawals)}</h5>
                 </div>
               </div>
             </div>
@@ -233,7 +310,7 @@ const AccountStatement = () => {
                 <div className="card-body">
                   <small className="text-muted">Net Change</small>
                   <h5 className={summary.net >= 0 ? "text-success" : "text-danger"} style={{ marginBottom: 0 }}>
-                    GHS {summary.net.toLocaleString()}
+                    {formatCurrency(summary.net)}
                   </h5>
                 </div>
               </div>
@@ -281,24 +358,27 @@ const AccountStatement = () => {
                         </td>
                       </tr>
                     ) : (
-                      transactions.map((transaction, index) => (
-                        <tr key={index}>
-                          <td>{new Date(transaction.date).toLocaleDateString()}</td>
-                          <td>{transaction.description}</td>
-                          <td>
-                            <span className={`badge ${transaction.type === 'deposit' ? 'bg-success' : 'bg-danger'}`}>
-                              {transaction.type === 'deposit' ? 'Deposit' : 'Withdrawal'}
-                            </span>
-                          </td>
-                          <td className="text-end text-danger">
-                            {transaction.type === 'withdrawal' ? `GHS ${transaction.amount.toLocaleString()}` : '-'}
-                          </td>
-                          <td className="text-end text-success">
-                            {transaction.type === 'deposit' ? `GHS ${transaction.amount.toLocaleString()}` : '-'}
-                          </td>
-                          <td className="text-end fw-bold">GHS {transaction.balance.toLocaleString()}</td>
-                        </tr>
-                      ))
+                      transactions.map((transaction, index) => {
+                        const type = transaction.credit > 0 ? 'deposit' : 'withdrawal';
+                        return (
+                          <tr key={index}>
+                            <td>{new Date(transaction.transaction_date).toLocaleDateString()}</td>
+                            <td>{transaction.description || transaction.narration}</td>
+                            <td>
+                              <span className={`badge ${type === 'deposit' ? 'bg-success' : 'bg-danger'}`}>
+                                {type === 'deposit' ? 'Deposit' : 'Withdrawal'}
+                              </span>
+                            </td>
+                            <td className="text-end text-danger">
+                              {transaction.debit !== 0 ? formatCurrency(transaction.debit) : '-'}
+                            </td>
+                            <td className="text-end text-success">
+                              {transaction.credit !== 0 ? formatCurrency(transaction.credit) : '-'}
+                            </td>
+                            <td className="text-end fw-bold">{formatCurrency(transaction.balance)}</td>
+                          </tr>
+                        );
+                      })
                     )}
                   </tbody>
                 </table>
@@ -306,11 +386,11 @@ const AccountStatement = () => {
             </div>
           </div>
 
-          {/* Closing Balance */}
+          {/* Closing Balance Card at bottom */}
           {transactions.length > 0 && !loading && (
             <div className="card mt-3">
               <div className="card-body text-end">
-                <strong>Closing Balance: GHS {transactions[transactions.length - 1]?.balance?.toLocaleString() || 0}</strong>
+                <strong>Closing Balance: {formatCurrency(closingBalance)}</strong>
               </div>
             </div>
           )}
