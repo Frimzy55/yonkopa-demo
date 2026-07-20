@@ -1,5 +1,5 @@
 // TellerWithdraw.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5002';
 
@@ -7,11 +7,11 @@ const TellerWithdraw = () => {
   const [formData, setFormData] = useState({
     customerId: '',
     amount: '',
-    withdrawalType: 'cash',              // changed from depositType
+    withdrawalType: 'cash',
     description: 'Cash withdrawn by: ',
     reference: '',
-    tellerId: 'TILL1001',
-    transactionReference: '' // auto-generated
+    tellerId: '',                // Now selected from dropdown
+    transactionReference: ''     // auto-generated
   });
   
   const [accountDetails, setAccountDetails] = useState(null);
@@ -21,7 +21,45 @@ const TellerWithdraw = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successData, setSuccessData] = useState({ amount: 0, currency: 'GHS', reference: '' });
 
-  const withdrawalTypes = ['cash', 'cheque', 'transfer'];   // renamed
+  // State for teller list
+  const [tellers, setTellers] = useState([]);
+  const [tellersLoading, setTellersLoading] = useState(false);
+  const [tellersError, setTellersError] = useState('');
+
+  const withdrawalTypes = ['cash', 'cheque', 'transfer'];
+
+  // Fetch tellers on component mount
+  useEffect(() => {
+    const fetchTellers = async () => {
+      setTellersLoading(true);
+      setTellersError('');
+      try {
+        // Adjust endpoint according to your backend
+        const response = await fetch(`${API_BASE_URL}/api/tills/tellers`, {
+          credentials: 'include', // if authentication is required
+        });
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status} - ${response.statusText}`);
+        }
+        const data = await response.json();
+        const tellerList = Array.isArray(data) ? data : [];
+        setTellers(tellerList);
+        if (tellerList.length > 0) {
+          setFormData(prev => ({
+            ...prev,
+            tellerId: tellerList[0].teller_id || tellerList[0].id || ''
+          }));
+        }
+      } catch (err) {
+        console.error('Failed to fetch tellers:', err);
+        setTellersError('Could not load tellers. Please refresh.');
+      } finally {
+        setTellersLoading(false);
+      }
+    };
+
+    fetchTellers();
+  }, []);
 
   // Generate a unique transaction reference
   const generateTransactionReference = () => {
@@ -30,7 +68,7 @@ const TellerWithdraw = () => {
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     const random = Math.random().toString(36).substring(2, 6).toUpperCase();
-    return `WTH-${year}${month}${day}-${random}`;   // prefix WTH for withdrawal
+    return `WTH-${year}${month}${day}-${random}`;
   };
 
   const handleChange = (e) => {
@@ -107,7 +145,11 @@ const TellerWithdraw = () => {
       return;
     }
 
-    // Auto-generate transaction reference when opening the modal
+    if (!formData.tellerId) {
+      setError('Please select a teller');
+      return;
+    }
+
     setFormData(prev => ({
       ...prev,
       transactionReference: generateTransactionReference()
@@ -116,7 +158,6 @@ const TellerWithdraw = () => {
     setShowConfirm(true);
   };
 
-  // ---- Renamed and updated for withdrawal ----
   const processWithdrawal = async () => {
     setLoading(true);
     setError('');
@@ -126,10 +167,10 @@ const TellerWithdraw = () => {
         customerId: formData.customerId,
         accountNumber: accountDetails.accountNumber,
         accountName: accountDetails.accountName,
-        withdrawalType: formData.withdrawalType,          // changed
+        withdrawalType: formData.withdrawalType,
         amount: parseFloat(formData.amount),
         currency: accountDetails.currency || 'GHS',
-        withdrawnBy: formData.reference || '',            // changed
+        withdrawnBy: formData.reference || '',
         tellerId: formData.tellerId,
         transactionReference: formData.transactionReference,
         description: formData.description
@@ -137,7 +178,6 @@ const TellerWithdraw = () => {
 
       console.log('🚀 Sending withdrawal payload:', payload);
 
-      // ---- Updated endpoint ----
       const response = await fetch(`${API_BASE_URL}/api/tills/withdrawals`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -163,7 +203,6 @@ const TellerWithdraw = () => {
 
       setShowSuccessModal(true);
 
-      // Reset form and close confirmation modal after 3 seconds
       setTimeout(() => {
         setFormData({
           customerId: '',
@@ -171,7 +210,7 @@ const TellerWithdraw = () => {
           withdrawalType: 'cash',
           description: 'Cash withdrawn by: ',
           reference: '',
-          tellerId: 'TILL1001',
+          tellerId: tellers.length > 0 ? (tellers[0].teller_id || tellers[0].id || '') : '',
           transactionReference: ''
         });
         setAccountDetails(null);
@@ -246,7 +285,6 @@ const TellerWithdraw = () => {
 
               {accountDetails && (
                 <div className="bg-light p-3 rounded">
-                  {/* ... same as deposit ... */}
                   <div className="mb-3">
                     <div className="d-flex py-1">
                       <span className="fw-bold" style={{ width: '130px' }}>Customer ID:</span>
@@ -411,14 +449,34 @@ const TellerWithdraw = () => {
                   <label className="form-label fw-semibold">
                     Teller ID (from) <span className="text-danger">*</span>
                   </label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    name="tellerId"
-                    value={formData.tellerId}
-                    disabled
-                  />
-                  <small className="text-muted">Auto‑filled with the current teller.</small>
+                  {tellersLoading ? (
+                    <div className="d-flex align-items-center">
+                      <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+                      Loading tellers...
+                    </div>
+                  ) : tellersError ? (
+                    <div className="text-danger small">{tellersError}</div>
+                  ) : (
+                    <select
+                      className="form-select"
+                      name="tellerId"
+                      value={formData.tellerId}
+                      onChange={handleChange}
+                      required
+                    >
+                      <option value="">Select a teller</option>
+                      {tellers.map((teller) => {
+                        const id = teller.teller_id || teller.id;
+                        const name = teller.full_name || teller.name || 'Unknown';
+                        return (
+                          <option key={id} value={id}>
+                            {name} ({id})
+                          </option>
+                        );
+                      })}
+                    </select>
+                  )}
+                  <small className="text-muted">Only active tellers are shown.</small>
                 </div>
 
                 <div className="mb-3">
@@ -439,7 +497,7 @@ const TellerWithdraw = () => {
                 <button
                   type="submit"
                   className="btn btn-danger w-100"
-                  disabled={loading || !accountDetails}
+                  disabled={loading || !accountDetails || !formData.tellerId}
                 >
                   <i className="bi bi-arrow-up-circle me-2"></i>
                   Process Withdrawal
@@ -519,7 +577,7 @@ const TellerWithdraw = () => {
                 </button>
                 <button
                   className="btn btn-danger"
-                  onClick={processWithdrawal}     // ← updated handler
+                  onClick={processWithdrawal}
                   disabled={loading}
                 >
                   {loading ? (
@@ -540,7 +598,7 @@ const TellerWithdraw = () => {
         </div>
       )}
 
-      {/* ===== SUCCESS MODAL ===== */}
+      {/* Success Modal */}
       {showSuccessModal && (
         <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
           <div className="modal-dialog modal-dialog-centered">

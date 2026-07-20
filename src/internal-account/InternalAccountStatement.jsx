@@ -8,13 +8,16 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 const InternalAccountStatement = () => {
   const [accounts, setAccounts] = useState([]);
+  const [tellers, setTellers] = useState([]);
   const [loadingAccounts, setLoadingAccounts] = useState(true);
+  const [loadingTellers, setLoadingTellers] = useState(true);
   const [loadingStatement, setLoadingStatement] = useState(false);
   const [form, setForm] = useState({
     accountNumber: '',
     reportMode: 'summary',
     fromDate: '',
     toDate: '',
+    tellerId: '',
   });
   const [statementData, setStatementData] = useState([]);
   const [showResults, setShowResults] = useState(false);
@@ -22,9 +25,13 @@ const InternalAccountStatement = () => {
   const [closingBalance, setClosingBalance] = useState(0);
   const [accountName, setAccountName] = useState('');
   const [currency, setCurrency] = useState('GHS');
+  const [selectedTellerName, setSelectedTellerName] = useState('');
+  const [selectedEntity, setSelectedEntity] = useState(null);
+  const [hasTransactions, setHasTransactions] = useState(false);
+  const [debugInfo, setDebugInfo] = useState({ rawResponse: null, extractedCount: 0, entityId: null });
   const tableRef = useRef(null);
 
-  // Fetch GL accounts for dropdown
+  // Fetch GL accounts
   useEffect(() => {
     const fetchAccounts = async () => {
       try {
@@ -43,17 +50,57 @@ const InternalAccountStatement = () => {
     fetchAccounts();
   }, []);
 
-  const accountOptions = accounts.map((acc) => ({
-    value: acc.accountCode,
-    label: `${acc.accountCode} - ${acc.accountName}`,
-  }));
+  // Fetch tellers
+  useEffect(() => {
+    const fetchTellers = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await axios.get(`${API_BASE_URL}/api/tills/tellers`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const tellerData = Array.isArray(response.data)
+          ? response.data
+          : response.data?.data || [];
+        setTellers(tellerData);
+      } catch (error) {
+        console.error('Error fetching tellers:', error);
+        toast.error('Failed to load tellers');
+      } finally {
+        setLoadingTellers(false);
+      }
+    };
+    fetchTellers();
+  }, []);
 
-  const selectedOption = accountOptions.find(
-    (opt) => opt.value === form.accountNumber
-  );
+  // Build combined options
+  const combinedOptions = React.useMemo(() => {
+    const accountOpts = (accounts || []).map((acc) => ({
+      value: `acc-${acc.accountCode}`,
+      label: `${acc.accountCode} - ${acc.accountName} (Account)`,
+      type: 'account',
+      id: acc.accountCode,
+      name: acc.accountName,
+      tellerId: null,
+    }));
+    const tellerOpts = (tellers || []).map((t) => {
+      const id = t.id || t.userId || t.user_id;
+      const name = t.fullName || t.full_name || t.name || t.fullname || 'Unknown';
+      const tellerId = t.tellerId || t.teller_id || id;
+      const displayId = tellerId || 'N/A';
+      return {
+        value: `teller-${tellerId}`,
+        label: `${name} (${displayId}) (Teller)`,
+        type: 'teller',
+        id: tellerId,
+        name: name,
+        userId: id,
+      };
+    });
+    return [...accountOpts, ...tellerOpts];
+  }, [accounts, tellers]);
 
-  const selectedAccount = accounts.find(
-    (acc) => acc.accountCode === form.accountNumber
+  const selectedOption = combinedOptions.find(
+    (opt) => opt.value === (selectedEntity ? `${selectedEntity.type}-${selectedEntity.id}` : '')
   );
 
   const handleChange = (e) => {
@@ -61,21 +108,96 @@ const InternalAccountStatement = () => {
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleAccountChange = (selected) => {
-    setForm((prev) => ({
-      ...prev,
-      accountNumber: selected ? selected.value : '',
-    }));
+  const handleEntityChange = (selected) => {
+    if (selected) {
+      setSelectedEntity({
+        type: selected.type,
+        id: selected.id,
+        name: selected.name,
+        userId: selected.userId || null,
+      });
+      if (selected.type === 'account') {
+        setForm((prev) => ({ ...prev, accountNumber: selected.id, tellerId: '' }));
+        setSelectedTellerName('');
+      } else {
+        setForm((prev) => ({ ...prev, tellerId: selected.id, accountNumber: '' }));
+        setSelectedTellerName(selected.name);
+      }
+    } else {
+      setSelectedEntity(null);
+      setForm((prev) => ({ ...prev, accountNumber: '', tellerId: '' }));
+      setSelectedTellerName('');
+    }
+  };
+
+  // Extract transactions and info from response
+  const extractData = (responseData) => {
+    let transactions = [];
+    let info = {
+      accountName: '',
+      currency: 'GHS',
+      openingBalance: 0,
+      closingBalance: 0,
+      tellerName: '',
+      tellerId: '',
+    };
+
+    console.log('🔍 Full API Response:', JSON.stringify(responseData, null, 2));
+
+    // Try to get the data object
+    let data = responseData?.data || responseData;
+
+    // If data is an object with a data property (nested), unwrap again
+    if (data && data.data && typeof data.data === 'object') {
+      data = data.data;
+    }
+
+    if (data) {
+      // Try different keys for transactions
+      transactions = data.transactions || data.items || data.results || data.records || [];
+      if (!Array.isArray(transactions)) transactions = [];
+
+      // If transactions is still empty, try to find any array in the response
+      if (transactions.length === 0 && typeof data === 'object') {
+        for (const key of Object.keys(data)) {
+          if (Array.isArray(data[key]) && data[key].length > 0) {
+            console.log(`Found array in key "${key}"`, data[key]);
+            transactions = data[key];
+            break;
+          }
+        }
+      }
+
+      info.accountName = data.accountName || data.tellerName || data.name || '';
+      info.currency = data.currency || 'GHS';
+      info.openingBalance = parseFloat(data.openingBalance) || 0;
+      info.closingBalance = parseFloat(data.closingBalance) || 0;
+      info.tellerName = data.tellerName || data.teller_name || '';
+      info.tellerId = data.tellerId || data.teller_id || '';
+    }
+
+    console.log(`📊 Extracted ${transactions.length} transactions.`, transactions);
+    console.log('ℹ️ Info:', info);
+
+    return { transactions, info };
   };
 
   // --- Generate Statement ---
   const handleGenerate = async (e) => {
     e.preventDefault();
 
-    if (!form.accountNumber) {
-      toast.error('Please select an account.');
-      return;
+    if (form.reportMode === 'teller') {
+      if (!selectedEntity || selectedEntity.type !== 'teller') {
+        toast.error('Please select a teller.');
+        return;
+      }
+    } else {
+      if (!selectedEntity || selectedEntity.type !== 'account') {
+        toast.error('Please select an account.');
+        return;
+      }
     }
+
     if (!form.fromDate || !form.toDate) {
       toast.error('Please select both From and To dates.');
       return;
@@ -90,62 +212,57 @@ const InternalAccountStatement = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const url = `${API_BASE_URL}/api/internal-account-statement`;
-      const params = {
-        accountCode: form.accountNumber,
-        fromDate: form.fromDate,
-        toDate: form.toDate,
-      };
+      let url, params;
+
+      const fromDateTime = form.fromDate + 'T00:00:00';
+      const toDateTime = form.toDate + 'T23:59:59';
+
+      if (form.reportMode === 'teller') {
+        url = `${API_BASE_URL}/api/teller-statement`;
+        params = {
+          tellerId: selectedEntity.id,
+          fromDate: fromDateTime,
+          toDate: toDateTime,
+        };
+      } else {
+        url = `${API_BASE_URL}/api/internal-account-statement`;
+        params = {
+          accountCode: selectedEntity.id,
+          fromDate: fromDateTime,
+          toDate: toDateTime,
+          tellerId: form.tellerId || undefined,
+        };
+      }
+
+      console.log('🚀 Request params:', params);
 
       const response = await axios.get(url, {
         params,
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      const responseData = response.data;
-      let transactions = [];
-      let accountInfo = {};
+      const { transactions, info } = extractData(response.data);
 
-      if (responseData && responseData.data) {
-        const { data } = responseData;
-        transactions = data.transactions || [];
-        accountInfo = {
-          accountName: data.accountName || selectedAccount?.accountName || form.accountNumber,
-          currency: data.currency || selectedAccount?.currency || 'GHS',
-          openingBalance: data.openingBalance || 0,
-          closingBalance: data.closingBalance || 0,
-        };
-      } else if (responseData && responseData.transactions) {
-        transactions = responseData.transactions || [];
-        accountInfo = {
-          accountName: responseData.accountName || selectedAccount?.accountName || form.accountNumber,
-          currency: responseData.currency || selectedAccount?.currency || 'GHS',
-          openingBalance: responseData.openingBalance || 0,
-          closingBalance: responseData.closingBalance || 0,
-        };
-      } else {
-        toast.error('Unexpected response from server.');
-        setLoadingStatement(false);
-        return;
-      }
-
-      setAccountName(accountInfo.accountName);
-      setCurrency(accountInfo.currency);
-      setOpeningBalance(accountInfo.openingBalance);
-      setClosingBalance(accountInfo.closingBalance);
+      setAccountName(info.accountName || selectedEntity.name);
+      setCurrency(info.currency);
+      setOpeningBalance(info.openingBalance);
+      setClosingBalance(info.closingBalance);
+      if (info.tellerName) setSelectedTellerName(info.tellerName);
 
       // Map transactions
       const mappedTransactions = transactions.map((item) => ({
-        transactionDate: item.transactionDate || item.date || '',
-        transactionDateTime: item.transactionDateTime || item.transactionDate || '',
-        valueDate: item.transactionDate || item.date || '',
-        description: item.description || item.narration || '',
-        debit: Number(item.debit || 0),
-        credit: Number(item.credit || 0),
-        balance: Number(item.balance || 0),
+        transactionDate: item.transactionDate || item.transaction_date || item.date || '',
+        transactionDateTime: item.transactionDateTime || item.created_at || item.transaction_date || item.date || '',
+        valueDate: item.valueDate || item.transactionDate || item.transaction_date || item.date || '',
+        description: item.description || item.narration || item.remarks || '',
+        debit: parseFloat(item.debit) || parseFloat(item.Debit) || parseFloat(item.debitAmount) || 0,
+        credit: parseFloat(item.credit) || parseFloat(item.Credit) || parseFloat(item.creditAmount) || 0,
+        balance: parseFloat(item.balance) || parseFloat(item.Balance) || parseFloat(item.balanceAmount) || 0,
+        _raw: item,
       }));
 
-      // Build final data: opening row + transactions + closing row
+      const hasRealTransactions = mappedTransactions.length > 0;
+
       const openingRow = {
         transactionDate: '',
         transactionDateTime: '',
@@ -153,7 +270,7 @@ const InternalAccountStatement = () => {
         description: 'Opening Balance',
         debit: 0,
         credit: 0,
-        balance: accountInfo.openingBalance,
+        balance: info.openingBalance,
         isOpening: true,
       };
 
@@ -164,14 +281,36 @@ const InternalAccountStatement = () => {
         description: 'Closing Balance',
         debit: 0,
         credit: 0,
-        balance: accountInfo.closingBalance,
+        balance: info.closingBalance,
         isClosing: true,
       };
 
-      setStatementData([openingRow, ...mappedTransactions, closingRow]);
+      let rows = [openingRow];
+      if (hasRealTransactions) {
+        rows = rows.concat(mappedTransactions);
+      } else {
+        rows.push({
+          transactionDate: '',
+          transactionDateTime: '',
+          valueDate: '',
+          description: 'No transactions found for the selected period.',
+          debit: 0,
+          credit: 0,
+          balance: 0,
+          isNoData: true,
+        });
+      }
+      rows.push(closingRow);
+
+      setStatementData(rows);
+      setHasTransactions(hasRealTransactions);
+      setDebugInfo({
+        rawResponse: response.data,
+        extractedCount: transactions.length,
+        entityId: selectedEntity.id,
+      });
       setShowResults(true);
       toast.success('Statement generated successfully.');
-
     } catch (error) {
       console.error('Statement Error:', error);
       toast.error(error.response?.data?.message || 'Failed to generate statement.');
@@ -180,12 +319,11 @@ const InternalAccountStatement = () => {
     }
   };
 
-  // --- Print ---
+  // --- Print & Export ---
   const handlePrint = () => {
     window.print();
   };
 
-  // --- Export to Excel (CSV) ---
   const handleExportExcel = () => {
     if (statementData.length === 0) {
       toast.warn('No data to export.');
@@ -195,8 +333,8 @@ const InternalAccountStatement = () => {
     const headers = ['S/N', 'Transaction Date', 'Value Date', 'Description', 'Debit', 'Credit', 'Balance'];
     const rows = statementData.map((t, idx) => [
       idx + 1,
-      t.isOpening || t.isClosing ? '' : formatDateTime(t.transactionDateTime || t.transactionDate),
-      t.isOpening || t.isClosing ? '' : formatDate(t.valueDate),
+      t.isOpening || t.isClosing || t.isNoData ? '' : formatDateTime(t.transactionDateTime || t.transactionDate),
+      t.isOpening || t.isClosing || t.isNoData ? '' : formatDate(t.valueDate),
       t.description,
       Number(t.debit).toFixed(2),
       Number(t.credit).toFixed(2),
@@ -204,7 +342,7 @@ const InternalAccountStatement = () => {
     ]);
     const totalDebit = statementData.reduce((sum, t) => sum + Number(t.debit), 0);
     const totalCredit = statementData.reduce((sum, t) => sum + Number(t.credit), 0);
-    rows.push(['', '', '', 'TOTALS', totalDebit.toFixed(2), totalCredit.toFixed(2), '']);
+    rows.push(['', '', '', '', totalDebit.toFixed(2), totalCredit.toFixed(2), '']);
 
     const csvContent = [headers, ...rows].map((row) => row.join(',')).join('\n');
 
@@ -212,7 +350,7 @@ const InternalAccountStatement = () => {
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.href = url;
-    link.setAttribute('download', `Statement_${form.accountNumber}.csv`);
+    link.setAttribute('download', `Statement_${selectedEntity?.id || 'entity'}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -257,7 +395,6 @@ const InternalAccountStatement = () => {
     }
   };
 
-  // Exclude opening/closing rows from totals (they have 0 debit/credit)
   const totalDebit = statementData.reduce((sum, t) => sum + Number(t.debit), 0);
   const totalCredit = statementData.reduce((sum, t) => sum + Number(t.credit), 0);
 
@@ -325,7 +462,7 @@ const InternalAccountStatement = () => {
             Internal Account Statement
           </h1>
           <p style={{ color: '#6b7a8a', margin: '4px 0 0', fontSize: '0.95rem' }}>
-            View transactions and balances for a selected account over a period.
+            View transactions and balances for a selected account or teller over a period.
           </p>
         </div>
 
@@ -333,26 +470,33 @@ const InternalAccountStatement = () => {
         <form onSubmit={handleGenerate} style={{ marginBottom: '32px' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '3fr 1.2fr 1.5fr 1.5fr', gap: '16px', alignItems: 'end' }}>
             <div>
-              <label style={labelStyle}>Account *</label>
+              <label style={labelStyle}>
+                {form.reportMode === 'teller' ? 'Teller *' : 'Account *'}
+              </label>
               <Select
-                options={accountOptions}
+                options={combinedOptions}
                 value={selectedOption}
-                onChange={handleAccountChange}
-                placeholder="Select account"
-                isLoading={loadingAccounts}
-                isDisabled={loadingAccounts}
+                onChange={handleEntityChange}
+                placeholder={form.reportMode === 'teller' ? 'Search teller...' : 'Search account...'}
+                isLoading={loadingAccounts || loadingTellers}
+                isDisabled={loadingAccounts || loadingTellers}
                 styles={customSelectStyles}
-                noOptionsMessage={() => 'No accounts found'}
+                noOptionsMessage={() => 'No options found'}
               />
-              {loadingAccounts && <p style={{ fontSize: '0.7rem', color: '#6b7a8a', margin: '2px 0 0' }}>Loading...</p>}
+              {(loadingAccounts || loadingTellers) && (
+                <p style={{ fontSize: '0.7rem', color: '#6b7a8a', margin: '2px 0 0' }}>Loading...</p>
+              )}
             </div>
+
             <div>
               <label style={labelStyle}>Report Mode</label>
               <select name="reportMode" value={form.reportMode} onChange={handleChange} style={inputStyle}>
                 <option value="summary">Head Office</option>
                 <option value="detailed">Consolidated</option>
+                <option value="teller">Teller Statement</option>
               </select>
             </div>
+
             <div>
               <label style={labelStyle}>From Date *</label>
               <input type="date" name="fromDate" value={form.fromDate} onChange={handleChange} style={inputStyle} required />
@@ -362,7 +506,8 @@ const InternalAccountStatement = () => {
               <input type="date" name="toDate" value={form.toDate} onChange={handleChange} style={inputStyle} required />
             </div>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid #e5e9f0', paddingTop: '24px', marginTop: '24px' }}>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px' }}>
             <button
               type="submit"
               disabled={loadingStatement}
@@ -389,10 +534,9 @@ const InternalAccountStatement = () => {
           </div>
         </form>
 
-        {/* Results Section */}
+        {/* Results */}
         {showResults && (
           <>
-            {/* Company Heading */}
             <div style={{ textAlign: 'center', marginBottom: '24px' }}>
               <div style={{ display: 'inline-block', borderBottom: '3px solid #1e4f8a', paddingBottom: '6px' }}>
                 <h2 style={{ fontSize: '1.6rem', fontWeight: 700, color: '#0b1a33', margin: 0, letterSpacing: '0.5px', textTransform: 'uppercase' }}>
@@ -401,16 +545,26 @@ const InternalAccountStatement = () => {
               </div>
             </div>
 
-            {/* Account Details – now includes Opening & Closing */}
             <div style={{ backgroundColor: '#f8fafc', borderRadius: '16px', padding: '12px 24px', marginBottom: '24px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.95rem' }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
-                <span style={{ color: '#4a5a6e', fontWeight: 500, width: '160px', flexShrink: 0 }}>Account Name:</span>
+                <span style={{ color: '#4a5a6e', fontWeight: 500, width: '160px', flexShrink: 0 }}>
+                  {form.reportMode === 'teller' ? 'Teller Name:' : 'Account Name:'}
+                </span>
                 <strong style={{ wordBreak: 'break-word' }}>{accountName}</strong>
               </div>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
-                <span style={{ color: '#4a5a6e', fontWeight: 500, width: '160px', flexShrink: 0 }}>Account Number:</span>
-                <strong>{form.accountNumber}</strong>
-              </div>
+
+              {form.reportMode === 'teller' ? (
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
+                  <span style={{ color: '#4a5a6e', fontWeight: 500, width: '160px', flexShrink: 0 }}>Teller ID:</span>
+                  <strong>{selectedEntity?.id}</strong>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
+                  <span style={{ color: '#4a5a6e', fontWeight: 500, width: '160px', flexShrink: 0 }}>Account Number:</span>
+                  <strong>{selectedEntity?.id}</strong>
+                </div>
+              )}
+
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
                 <span style={{ color: '#4a5a6e', fontWeight: 500, width: '160px', flexShrink: 0 }}>Currency:</span>
                 <strong>{currency}</strong>
@@ -427,7 +581,12 @@ const InternalAccountStatement = () => {
                 <span style={{ color: '#4a5a6e', fontWeight: 500, width: '160px', flexShrink: 0 }}>To:</span>
                 <strong>{formatDate(form.toDate)}</strong>
               </div>
-              {/* Opening & Closing balance shown here too */}
+              {form.reportMode !== 'teller' && selectedTellerName && (
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
+                  <span style={{ color: '#4a5a6e', fontWeight: 500, width: '160px', flexShrink: 0 }}>Teller (Filter):</span>
+                  <strong>{selectedTellerName}</strong>
+                </div>
+              )}
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px', borderTop: '1px solid #e2e8f0', paddingTop: '8px', marginTop: '4px' }}>
                 <span style={{ color: '#4a5a6e', fontWeight: 500, width: '160px', flexShrink: 0 }}>Opening Balance:</span>
                 <strong style={{ color: '#1e4f8a' }}>{formatCurrency(openingBalance)}</strong>
@@ -438,12 +597,14 @@ const InternalAccountStatement = () => {
               </div>
             </div>
 
-            {/* Print & Export Buttons */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', flexWrap: 'wrap', gap: '12px' }}>
               <div>
                 <h4 style={{ margin: 0, fontWeight: 600, color: '#0b1a33', fontSize: '1.1rem' }}>Transaction Details</h4>
                 <p style={{ margin: '2px 0 0', fontSize: '0.85rem', color: '#6b7a8a' }}>
-                  {form.reportMode === 'summary' ? 'Head Office' : 'Consolidated'} view
+                  {form.reportMode === 'teller'
+                    ? `Teller Statement for ${selectedTellerName || selectedEntity?.id}`
+                    : `${form.reportMode === 'summary' ? 'Head Office' : 'Consolidated'} view`}
+                  {selectedTellerName && form.reportMode !== 'teller' && ` • Filtered by Teller: ${selectedTellerName}`}
                 </p>
               </div>
               <div style={{ display: 'flex', gap: '12px' }}>
@@ -462,14 +623,13 @@ const InternalAccountStatement = () => {
               </div>
             </div>
 
-            {/* ✅ Table with Opening & Closing Rows */}
             <div ref={tableRef} style={{ overflowX: 'auto', borderRadius: '12px', border: '1px solid #e5e9f0' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem', fontFamily: "'Inter', sans-serif", tableLayout: 'fixed' }}>
                 <thead>
                   <tr style={{ backgroundColor: '#1e4f8a' }}>
                     <th style={{ ...thStyle, width: '6%', textAlign: 'center', padding: '14px 8px', color: '#fff' }}>#</th>
-                    <th style={{ ...thStyle, width: '16%', padding: '14px 8px', color: '#fff' }}>Transaction Date</th>
-                    <th style={{ ...thStyle, width: '14%', padding: '14px 8px', color: '#fff' }}>Value Date</th>
+                    <th style={{ ...thStyle, width: '18%', padding: '14px 8px', color: '#fff' }}>Transaction Date</th>
+                    <th style={{ ...thStyle, width: '16%', padding: '14px 8px', color: '#fff' }}>Value Date</th>
                     <th style={{ ...thStyle, width: '28%', maxWidth: '200px', padding: '14px 8px', wordBreak: 'break-word', color: '#fff' }}>Description</th>
                     <th style={{ ...thStyle, width: '12%', textAlign: 'right', padding: '14px 8px', color: '#fff' }}>Debit (₵)</th>
                     <th style={{ ...thStyle, width: '12%', textAlign: 'right', padding: '14px 8px', color: '#fff' }}>Credit (₵)</th>
@@ -488,11 +648,13 @@ const InternalAccountStatement = () => {
                       {statementData.map((row, idx) => {
                         const isOpening = row.isOpening;
                         const isClosing = row.isClosing;
-                        const isSpecial = isOpening || isClosing;
+                        const isNoData = row.isNoData;
+                        const isSpecial = isOpening || isClosing || isNoData;
                         const isEven = idx % 2 === 0;
                         let bgColor = '#ffffff';
                         if (isOpening) bgColor = '#f0f4ff';
                         else if (isClosing) bgColor = '#e6f7ed';
+                        else if (isNoData) bgColor = '#fef9e7';
                         else bgColor = isEven ? '#ffffff' : '#f9fbfd';
 
                         return (
@@ -524,42 +686,57 @@ const InternalAccountStatement = () => {
                               {row.description}
                             </td>
                             <td style={{ ...tdStyle, textAlign: 'right', fontWeight: isSpecial ? 700 : 400, padding: '8px 6px' }}>
-                              {row.debit > 0 ? formatCurrency(row.debit) : '—'}
+                              {row.debit > 0 ? formatCurrency(row.debit) : (isSpecial ? '' : '—')}
                             </td>
                             <td style={{ ...tdStyle, textAlign: 'right', fontWeight: isSpecial ? 700 : 400, padding: '8px 6px' }}>
-                              {row.credit > 0 ? formatCurrency(row.credit) : '—'}
+                              {row.credit > 0 ? formatCurrency(row.credit) : (isSpecial ? '' : '—')}
                             </td>
-                            <td style={{ ...tdStyle, textAlign: 'right', fontWeight: isSpecial ? 700 : 500, color: isOpening ? '#1e4f8a' : (isClosing ? '#0b7e3d' : '#0b1a33'), padding: '8px 6px' }}>
-                              {formatCurrency(row.balance)}
+                            <td style={{ ...tdStyle, textAlign: 'right', fontWeight: isSpecial ? 700 : 500, color: isOpening ? '#1e4f8a' : (isClosing ? '#0b7e3d' : (isNoData ? '#b8860b' : '#0b1a33')), padding: '8px 6px' }}>
+                              {isNoData ? '' : formatCurrency(row.balance)}
                             </td>
                           </tr>
                         );
                       })}
-                      {/* Totals row */}
-                      <tr style={{ backgroundColor: '#e8edf5', fontWeight: 700, borderTop: '2px solid #1e4f8a' }}>
-                        <td colSpan="4" style={{ ...tdStyle, textAlign: 'right', padding: '10px 8px', borderBottomLeftRadius: '12px' }}>Totals</td>
-                        <td style={{ ...tdStyle, textAlign: 'right', padding: '10px 8px' }}>{formatCurrency(totalDebit)}</td>
-                        <td style={{ ...tdStyle, textAlign: 'right', padding: '10px 8px' }}>{formatCurrency(totalCredit)}</td>
-                        <td style={{ ...tdStyle, textAlign: 'right', padding: '10px 8px', borderBottomRightRadius: '12px' }}>{formatCurrency(closingBalance)}</td>
-                      </tr>
+                      {hasTransactions && (
+                        <tr style={{ backgroundColor: '#e8edf5', fontWeight: 700, borderTop: '2px solid #1e4f8a' }}>
+                          <td colSpan="4" style={{ ...tdStyle, textAlign: 'right', padding: '10px 8px', borderBottomLeftRadius: '12px' }}>Totals</td>
+                          <td style={{ ...tdStyle, textAlign: 'right', padding: '10px 8px' }}>{formatCurrency(totalDebit)}</td>
+                          <td style={{ ...tdStyle, textAlign: 'right', padding: '10px 8px' }}>{formatCurrency(totalCredit)}</td>
+                          <td style={{ ...tdStyle, textAlign: 'right', padding: '10px 8px', borderBottomRightRadius: '12px' }}>{formatCurrency(closingBalance)}</td>
+                        </tr>
+                      )}
                     </>
                   )}
                 </tbody>
               </table>
             </div>
 
-            {statementData.length > 0 && (
+            {statementData.length > 0 && hasTransactions && (
               <div style={{ fontSize: '0.85rem', color: '#3a4a5e', backgroundColor: '#f1f5f9', padding: '12px 18px', borderRadius: '10px', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', marginTop: '12px' }}>
                 <span>Total Debits: <strong>{formatCurrency(totalDebit)}</strong></span>
                 <span>Total Credits: <strong>{formatCurrency(totalCredit)}</strong></span>
                 <span>Closing Balance: <strong>{formatCurrency(closingBalance)}</strong></span>
               </div>
             )}
+
+            {/* Debug Info Panel */}
+            {debugInfo.rawResponse && (
+              <div style={{ marginTop: '24px', padding: '16px', backgroundColor: '#f0f8ff', borderRadius: '8px', border: '1px solid #b0d4f1', fontSize: '0.85rem' }}>
+                <h5 style={{ margin: '0 0 8px', color: '#1e4f8a' }}>🔍 Debug Information</h5>
+                <div><strong>Selected Entity ID:</strong> {debugInfo.entityId}</div>
+                <div><strong>Transactions extracted:</strong> {debugInfo.extractedCount}</div>
+                <details>
+                  <summary style={{ cursor: 'pointer', color: '#1e4f8a', fontWeight: 500 }}>View Raw API Response</summary>
+                  <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', maxHeight: '300px', overflow: 'auto', backgroundColor: '#fff', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}>
+                    {JSON.stringify(debugInfo.rawResponse, null, 2)}
+                  </pre>
+                </details>
+              </div>
+            )}
           </>
         )}
       </div>
 
-      {/* Print styles */}
       <style>{`
         @media print {
           body * { visibility: hidden; }
@@ -578,7 +755,6 @@ const InternalAccountStatement = () => {
   );
 };
 
-// --- Styles ---
 const labelStyle = {
   display: 'block',
   fontSize: '0.8rem',

@@ -1,5 +1,5 @@
 // TellerDeposit.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5002';
 
@@ -10,8 +10,8 @@ const TellerDeposit = () => {
     depositType: 'cash',
     description: 'Cash deposited by: ',
     reference: '',
-    tellerId: 'TILL1001',
-    transactionReference: '' // auto-generated
+    tellerId: '',                // Now selected from dropdown
+    transactionReference: ''     // auto-generated
   });
   
   const [accountDetails, setAccountDetails] = useState(null);
@@ -21,7 +21,48 @@ const TellerDeposit = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successData, setSuccessData] = useState({ amount: 0, currency: 'GHS', reference: '' });
 
+  // State for teller list
+  const [tellers, setTellers] = useState([]);
+  const [tellersLoading, setTellersLoading] = useState(false);
+  const [tellersError, setTellersError] = useState('');
+
   const depositTypes = ['cash', 'cheque', 'transfer'];
+
+  // Fetch tellers on component mount
+  useEffect(() => {
+    const fetchTellers = async () => {
+      setTellersLoading(true);
+      setTellersError('');
+      try {
+        // Adjust endpoint according to your backend
+        const response = await fetch(`${API_BASE_URL}/api/tills/tellers`, {
+          credentials: 'include', // if authentication is required
+        });
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status} - ${response.statusText}`);
+        }
+        const data = await response.json();
+        // Expecting an array of tellers with at least { teller_id, full_name }
+        // You can map to a consistent structure
+        const tellerList = Array.isArray(data) ? data : [];
+        setTellers(tellerList);
+        // If there are tellers, select the first one by default (optional)
+        if (tellerList.length > 0) {
+          setFormData(prev => ({
+            ...prev,
+            tellerId: tellerList[0].teller_id || tellerList[0].id || ''
+          }));
+        }
+      } catch (err) {
+        console.error('Failed to fetch tellers:', err);
+        setTellersError('Could not load tellers. Please refresh.');
+      } finally {
+        setTellersLoading(false);
+      }
+    };
+
+    fetchTellers();
+  }, []);
 
   // Generate a unique transaction reference
   const generateTransactionReference = () => {
@@ -107,6 +148,11 @@ const TellerDeposit = () => {
       return;
     }
 
+    if (!formData.tellerId) {
+      setError('Please select a teller');
+      return;
+    }
+
     // Auto-generate transaction reference when opening the modal
     setFormData(prev => ({
       ...prev,
@@ -172,7 +218,7 @@ const TellerDeposit = () => {
           depositType: 'cash',
           description: 'Cash deposited by: ',
           reference: '',
-          tellerId: 'TILL1001',
+          tellerId: tellers.length > 0 ? (tellers[0].teller_id || tellers[0].id || '') : '',
           transactionReference: ''
         });
         setAccountDetails(null);
@@ -409,15 +455,34 @@ const TellerDeposit = () => {
                   <label className="form-label fw-semibold">
                     Teller ID (to) <span className="text-danger">*</span>
                   </label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    name="tellerId"
-                    value={formData.tellerId}
-                    onChange={handleChange}
-                    disabled
-                  />
-                  <small className="text-muted">Auto‑filled with the current teller.</small>
+                  {tellersLoading ? (
+                    <div className="d-flex align-items-center">
+                      <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+                      Loading tellers...
+                    </div>
+                  ) : tellersError ? (
+                    <div className="text-danger small">{tellersError}</div>
+                  ) : (
+                    <select
+                      className="form-select"
+                      name="tellerId"
+                      value={formData.tellerId}
+                      onChange={handleChange}
+                      required
+                    >
+                      <option value="">Select a teller</option>
+                      {tellers.map((teller) => {
+                        const id = teller.teller_id || teller.id;
+                        const name = teller.full_name || teller.name || 'Unknown';
+                        return (
+                          <option key={id} value={id}>
+                            {name} ({id})
+                          </option>
+                        );
+                      })}
+                    </select>
+                  )}
+                  <small className="text-muted">Only tellers are shown.</small>
                 </div>
 
                 <div className="mb-3">
@@ -438,7 +503,7 @@ const TellerDeposit = () => {
                 <button
                   type="submit"
                   className="btn btn-success w-100"
-                  disabled={loading || !accountDetails}
+                  disabled={loading || !accountDetails || !formData.tellerId}
                 >
                   <i className="bi bi-arrow-down-circle me-2"></i>
                   Process Deposit
@@ -539,7 +604,7 @@ const TellerDeposit = () => {
         </div>
       )}
 
-      {/* ===== SUCCESS MODAL ===== */}
+      {/* Success Modal */}
       {showSuccessModal && (
         <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
           <div className="modal-dialog modal-dialog-centered">

@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router-dom';
 const CreateTill = () => {
   const navigate = useNavigate();
 
-  // --- Form state (removed tillName, openingBalance, maxBalance) ---
   const [formData, setFormData] = useState({
     branch: '',
     currency: 'GHS',
@@ -25,13 +24,11 @@ const CreateTill = () => {
   const [createdTillNumber, setCreatedTillNumber] = useState('');
   const [isNavigating, setIsNavigating] = useState(false);
   const [tellers, setTellers] = useState([]);
-const [loadingTellers, setLoadingTellers] = useState(false);
+  const [loadingTellers, setLoadingTellers] = useState(false);
 
-  // --- Mock dropdown data (replace with API later) ---
   const branches = ['HEAD OFFICE'];
   const currencies = ['GHS', 'USD', 'EUR', 'GBP', 'NGN'];
   const tillTypes = ['Cash Till', 'Cheque Till', 'Hybrid Till', 'Mobile Till'];
-  //const tellers = ['John Mensah', 'Ama Serwaa', 'Kwame Osei', 'Esi Addo'];
   const supervisors = ['Manager', 'Senior Teller', 'Supervisor A', 'Supervisor B'];
   const overLimitActions = [
     { value: 'block', label: 'Block Transaction' },
@@ -39,26 +36,39 @@ const [loadingTellers, setLoadingTellers] = useState(false);
     { value: 'alert', label: 'Alert Only' },
   ];
 
-  // --- Set default effective date ---
-  
   useEffect(() => {
-  setFormData((prev) => ({
-    ...prev,
-    effectiveDate: new Date().toISOString().split('T')[0],
-  }));
+    setFormData((prev) => ({
+      ...prev,
+      effectiveDate: new Date().toISOString().split('T')[0],
+    }));
+    fetchTellers();
+  }, []);
 
-  fetchTellers();
+  // --- Fetch tellers with teller_id ---
+  const fetchTellers = async () => {
+    setLoadingTellers(true);
+    try {
+      const token = localStorage.getItem('token');
+      const apiBaseUrl = process.env.REACT_APP_API_URL || '';
+      const response = await fetch(`${apiBaseUrl}/api/tills/tellers`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) throw new Error('Failed to load tellers');
+      const data = await response.json();
+      setTellers(data);
+    } catch (error) {
+      console.error('Error loading tellers:', error);
+    } finally {
+      setLoadingTellers(false);
+    }
+  };
 
-}, []);
-
-  // --- Handlers ---
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }));
   };
 
-  // --- Validation (removed tillName, openingBalance, maxBalance) ---
   const validate = () => {
     const newErrors = {};
     if (!formData.branch) newErrors.branch = 'Please select a Branch';
@@ -67,19 +77,15 @@ const [loadingTellers, setLoadingTellers] = useState(false);
     if (!formData.assignedTeller) newErrors.assignedTeller = 'Please select an Assigned Teller';
     if (!formData.supervisor) newErrors.supervisor = 'Please select a Supervisor';
     if (!formData.effectiveDate) newErrors.effectiveDate = 'Effective Date is required';
-
-    // Validate numeric fields (only cashLimitPerTransaction and dailyCashLimit)
     ['cashLimitPerTransaction', 'dailyCashLimit'].forEach((field) => {
       if (formData[field] && isNaN(formData[field])) {
         newErrors[field] = 'Must be a number';
       }
     });
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  // --- Submit ---
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitError('');
@@ -111,14 +117,12 @@ const [loadingTellers, setLoadingTellers] = useState(false);
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(payload),
       });
 
       const rawText = await response.text();
-      console.log('📡 Raw response:', rawText);
-
       let data;
       try {
         data = JSON.parse(rawText);
@@ -138,11 +142,9 @@ const [loadingTellers, setLoadingTellers] = useState(false);
         throw new Error(data.error || 'Failed to create till');
       }
 
-      console.log('✅ Till created:', data);
       setCreatedTillNumber(data.till.till_number);
       setSuccess(true);
 
-      // --- Reset form (without removed fields) ---
       setFormData({
         branch: '',
         currency: 'GHS',
@@ -154,7 +156,6 @@ const [loadingTellers, setLoadingTellers] = useState(false);
         supervisor: '',
         effectiveDate: new Date().toISOString().split('T')[0],
       });
-
       setIsNavigating(false);
     } catch (error) {
       setSubmitError(error.message || 'An error occurred while creating the till.');
@@ -165,48 +166,9 @@ const [loadingTellers, setLoadingTellers] = useState(false);
 
   const handleCancel = () => navigate(-1);
 
-
-
-
-
-
-  const fetchTellers = async () => {
-  setLoadingTellers(true);
-
-  try {
-    const token = localStorage.getItem("token");
-
-    const apiBaseUrl = process.env.REACT_APP_API_URL || "";
-
-    const response = await fetch(
-      `${apiBaseUrl}/api/tills/tellers`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error("Failed to load tellers");
-    }
-
-    const data = await response.json();
-
-    setTellers(data);
-
-  } catch (error) {
-    console.error("Error loading tellers:", error);
-  } finally {
-    setLoadingTellers(false);
-  }
-};
-
-  // --- Render ---
   return (
     <div className="container-fluid py-4">
       <Card className="shadow-lg border-0">
-        {/* --- Header with light blue background --- */}
         <Card.Header className="bg-light-blue d-flex align-items-center justify-content-between py-3">
           <div className="d-flex align-items-center">
             <i className="bi bi-plus-circle fs-2 me-3 text-primary"></i>
@@ -235,7 +197,7 @@ const [loadingTellers, setLoadingTellers] = useState(false);
           )}
 
           <Form onSubmit={handleSubmit} noValidate>
-            {/* ----- SECTION 1: TILL DETAILS (removed tillName, openingBalance, maxBalance) ----- */}
+            {/* Till Details Section */}
             <div className="section-title d-flex align-items-center mb-3">
               <i className="bi bi-layout-three-columns me-2 fs-5 text-primary"></i>
               <h6 className="fw-bold mb-0 text-uppercase text-muted">Till Details</h6>
@@ -260,9 +222,7 @@ const [loadingTellers, setLoadingTellers] = useState(false);
                       <option key={b} value={b}>{b}</option>
                     ))}
                   </Form.Select>
-                  <Form.Control.Feedback type="invalid">
-                    {errors.branch}
-                  </Form.Control.Feedback>
+                  <Form.Control.Feedback type="invalid">{errors.branch}</Form.Control.Feedback>
                 </Form.Group>
               </Col>
 
@@ -282,9 +242,7 @@ const [loadingTellers, setLoadingTellers] = useState(false);
                       <option key={c} value={c}>{c}</option>
                     ))}
                   </Form.Select>
-                  <Form.Control.Feedback type="invalid">
-                    {errors.currency}
-                  </Form.Control.Feedback>
+                  <Form.Control.Feedback type="invalid">{errors.currency}</Form.Control.Feedback>
                 </Form.Group>
               </Col>
 
@@ -305,14 +263,12 @@ const [loadingTellers, setLoadingTellers] = useState(false);
                       <option key={t} value={t}>{t}</option>
                     ))}
                   </Form.Select>
-                  <Form.Control.Feedback type="invalid">
-                    {errors.tillType}
-                  </Form.Control.Feedback>
+                  <Form.Control.Feedback type="invalid">{errors.tillType}</Form.Control.Feedback>
                 </Form.Group>
               </Col>
             </Row>
 
-            {/* ----- SECTION 2: CASH LIMIT HANDLING (kept) ----- */}
+            {/* Cash Limit Handling */}
             <div className="section-title d-flex align-items-center mt-4 mb-3">
               <i className="bi bi-exclamation-triangle me-2 fs-5 text-warning"></i>
               <h6 className="fw-bold mb-0 text-uppercase text-muted">Cash Limit Handling</h6>
@@ -336,9 +292,7 @@ const [loadingTellers, setLoadingTellers] = useState(false);
                     isInvalid={!!errors.cashLimitPerTransaction}
                     disabled={isSubmitting || success}
                   />
-                  <Form.Control.Feedback type="invalid">
-                    {errors.cashLimitPerTransaction}
-                  </Form.Control.Feedback>
+                  <Form.Control.Feedback type="invalid">{errors.cashLimitPerTransaction}</Form.Control.Feedback>
                   <Form.Text className="text-muted">Max amount allowed for a single cash operation.</Form.Text>
                 </Form.Group>
               </Col>
@@ -359,9 +313,7 @@ const [loadingTellers, setLoadingTellers] = useState(false);
                     isInvalid={!!errors.dailyCashLimit}
                     disabled={isSubmitting || success}
                   />
-                  <Form.Control.Feedback type="invalid">
-                    {errors.dailyCashLimit}
-                  </Form.Control.Feedback>
+                  <Form.Control.Feedback type="invalid">{errors.dailyCashLimit}</Form.Control.Feedback>
                   <Form.Text className="text-muted">Maximum cumulative cash for the till per day.</Form.Text>
                 </Form.Group>
               </Col>
@@ -390,7 +342,7 @@ const [loadingTellers, setLoadingTellers] = useState(false);
               </Col>
             </Row>
 
-            {/* ----- SECTION 3: TELLER ASSIGNMENT (unchanged) ----- */}
+            {/* Teller Assignment */}
             <div className="section-title d-flex align-items-center mt-4 mb-3">
               <i className="bi bi-people me-2 fs-5 text-success"></i>
               <h6 className="fw-bold mb-0 text-uppercase text-muted">Teller Assignment</h6>
@@ -412,23 +364,18 @@ const [loadingTellers, setLoadingTellers] = useState(false);
                   >
                     <option value="">Select Teller</option>
                     {loadingTellers ? (
-  <option>Loading tellers...</option>
-) : tellers.length === 0 ? (
-  <option>No active tellers found</option>
-) : (
-  tellers.map((teller) => (
-    <option 
-      key={teller.full_name} 
-      value={teller.full_name}
-    >
-      {teller.full_name}
-    </option>
-  ))
-)}
+                      <option>Loading tellers...</option>
+                    ) : tellers.length === 0 ? (
+                      <option>No active tellers found</option>
+                    ) : (
+                      tellers.map((teller) => (
+                        <option key={teller.userId} value={teller.full_name}>
+                          {teller.full_name} ({teller.teller_id || 'No ID'})
+                        </option>
+                      ))
+                    )}
                   </Form.Select>
-                  <Form.Control.Feedback type="invalid">
-                    {errors.assignedTeller}
-                  </Form.Control.Feedback>
+                  <Form.Control.Feedback type="invalid">{errors.assignedTeller}</Form.Control.Feedback>
                 </Form.Group>
               </Col>
 
@@ -449,9 +396,7 @@ const [loadingTellers, setLoadingTellers] = useState(false);
                       <option key={s} value={s}>{s}</option>
                     ))}
                   </Form.Select>
-                  <Form.Control.Feedback type="invalid">
-                    {errors.supervisor}
-                  </Form.Control.Feedback>
+                  <Form.Control.Feedback type="invalid">{errors.supervisor}</Form.Control.Feedback>
                 </Form.Group>
               </Col>
 
@@ -468,14 +413,12 @@ const [loadingTellers, setLoadingTellers] = useState(false);
                     isInvalid={!!errors.effectiveDate}
                     disabled={isSubmitting || success}
                   />
-                  <Form.Control.Feedback type="invalid">
-                    {errors.effectiveDate}
-                  </Form.Control.Feedback>
+                  <Form.Control.Feedback type="invalid">{errors.effectiveDate}</Form.Control.Feedback>
                 </Form.Group>
               </Col>
             </Row>
 
-            {/* ----- ACTION BUTTONS (unchanged) ----- */}
+            {/* Action Buttons */}
             <div className="d-flex justify-content-end gap-2 border-top pt-4 mt-4">
               <Button
                 variant="outline-secondary"
