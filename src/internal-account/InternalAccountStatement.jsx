@@ -220,7 +220,8 @@ const InternalAccountStatement = () => {
       if (form.reportMode === 'teller') {
         url = `${API_BASE_URL}/api/teller-statement`;
         params = {
-          tellerId: selectedEntity.id,
+          //tellerId: selectedEntity.id,
+            accountName: selectedEntity.name, // send the account name
           fromDate: fromDateTime,
           toDate: toDateTime,
         };
