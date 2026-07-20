@@ -144,20 +144,15 @@ const InternalAccountStatement = () => {
 
     console.log('🔍 Full API Response:', JSON.stringify(responseData, null, 2));
 
-    // Try to get the data object
     let data = responseData?.data || responseData;
-
-    // If data is an object with a data property (nested), unwrap again
     if (data && data.data && typeof data.data === 'object') {
       data = data.data;
     }
 
     if (data) {
-      // Try different keys for transactions
       transactions = data.transactions || data.items || data.results || data.records || [];
       if (!Array.isArray(transactions)) transactions = [];
 
-      // If transactions is still empty, try to find any array in the response
       if (transactions.length === 0 && typeof data === 'object') {
         for (const key of Object.keys(data)) {
           if (Array.isArray(data[key]) && data[key].length > 0) {
@@ -221,7 +216,7 @@ const InternalAccountStatement = () => {
         url = `${API_BASE_URL}/api/teller-statement`;
         params = {
           //tellerId: selectedEntity.id,
-            accountName: selectedEntity.name, // send the account name
+          accountName: selectedEntity.name, // send the account name
           fromDate: fromDateTime,
           toDate: toDateTime,
         };
@@ -250,7 +245,6 @@ const InternalAccountStatement = () => {
       setClosingBalance(info.closingBalance);
       if (info.tellerName) setSelectedTellerName(info.tellerName);
 
-      // Map transactions
       const mappedTransactions = transactions.map((item) => ({
         transactionDate: item.transactionDate || item.transaction_date || item.date || '',
         transactionDateTime: item.transactionDateTime || item.created_at || item.transaction_date || item.date || '',
@@ -686,11 +680,12 @@ const InternalAccountStatement = () => {
                             <td style={{ ...tdStyle, fontWeight: isSpecial ? 700 : 400, fontStyle: isSpecial ? 'italic' : 'normal', padding: '8px 6px', wordBreak: 'break-word' }}>
                               {row.description}
                             </td>
+                            {/* Changed debit and credit columns: show "0.00" instead of "—" for regular rows */}
                             <td style={{ ...tdStyle, textAlign: 'right', fontWeight: isSpecial ? 700 : 400, padding: '8px 6px' }}>
-                              {row.debit > 0 ? formatCurrency(row.debit) : (isSpecial ? '' : '—')}
+                              {isSpecial ? '' : (row.debit > 0 ? formatCurrency(row.debit) : '0.00')}
                             </td>
                             <td style={{ ...tdStyle, textAlign: 'right', fontWeight: isSpecial ? 700 : 400, padding: '8px 6px' }}>
-                              {row.credit > 0 ? formatCurrency(row.credit) : (isSpecial ? '' : '—')}
+                              {isSpecial ? '' : (row.credit > 0 ? formatCurrency(row.credit) : '0.00')}
                             </td>
                             <td style={{ ...tdStyle, textAlign: 'right', fontWeight: isSpecial ? 700 : 500, color: isOpening ? '#1e4f8a' : (isClosing ? '#0b7e3d' : (isNoData ? '#b8860b' : '#0b1a33')), padding: '8px 6px' }}>
                               {isNoData ? '' : formatCurrency(row.balance)}
