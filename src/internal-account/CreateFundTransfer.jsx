@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -9,7 +9,10 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 const CreateFundTransfer = () => {
   const [loading, setLoading] = useState(false);
   const [accountsLoading, setAccountsLoading] = useState(true);
+  const [tellersLoading, setTellersLoading] = useState(true);
   const [accountOptions, setAccountOptions] = useState([]);
+  const [tellerOptions, setTellerOptions] = useState([]);
+  const [selectedTeller, setSelectedTeller] = useState(null);
   const [form, setForm] = useState({
     reference: '',
     transferDate: new Date().toISOString().split('T')[0],
@@ -24,7 +27,7 @@ const CreateFundTransfer = () => {
     createdBy: '',
   });
 
-  // Fetch accounts and build options with code stored
+  // Fetch accounts
   useEffect(() => {
     const fetchAccounts = async () => {
       try {
@@ -33,24 +36,15 @@ const CreateFundTransfer = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
         const accounts = response.data;
-
-        const grouped = accounts.reduce((acc, account) => {
-          const type = account.accountType || 'Other';
-          if (!acc[type]) acc[type] = [];
-          acc[type].push({
-            value: account.accountName,          // for submission (name)
-            label: `${account.accountCode} - ${account.accountName}`,
-            code: account.accountCode,           // store code for later use
-          });
-          return acc;
-        }, {});
-
-        const options = Object.keys(grouped).map((type) => ({
-          label: type,
-          options: grouped[type],
+        const flatAccounts = accounts.map((acc) => ({
+          value: `acc-${acc.accountCode}`,
+          label: `${acc.accountCode} - ${acc.accountName}`,
+          code: acc.accountCode,
+          name: acc.accountName,
+          type: 'account',
+          searchString: `${acc.accountCode} ${acc.accountName}`.toLowerCase(),
         }));
-
-        setAccountOptions(options);
+        setAccountOptions(flatAccounts);
       } catch (error) {
         console.error('Failed to load accounts:', error);
         toast.error('Could not load accounts. Please refresh.');
@@ -58,9 +52,52 @@ const CreateFundTransfer = () => {
         setAccountsLoading(false);
       }
     };
-
     fetchAccounts();
   }, []);
+
+  // Fetch tellers
+  useEffect(() => {
+    const fetchTellers = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await axios.get(`${API_BASE_URL}/api/tills/tellers`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const tellers = response.data.data || response.data || [];
+        const flatTellers = tellers.map((t) => {
+          const id = t.id || t.userId || t.user_id;
+          const name = t.fullName || t.full_name || t.name || 'Unknown';
+          const tellerId = t.tellerId || t.teller_id || id;
+          return {
+            value: `teller-${tellerId}`,
+            label: `${name} (${tellerId})`,
+            name: name,
+            tellerId: tellerId,
+            type: 'teller',
+            searchString: `${name} ${tellerId}`.toLowerCase(),
+          };
+        });
+        setTellerOptions(flatTellers);
+      } catch (error) {
+        console.error('Failed to load tellers:', error);
+        toast.error('Could not load tellers. Please refresh.');
+      } finally {
+        setTellersLoading(false);
+      }
+    };
+    fetchTellers();
+  }, []);
+
+  const combinedOptions = useMemo(() => {
+    const groups = [];
+    if (accountOptions.length > 0) {
+      groups.push({ label: 'Accounts', options: accountOptions });
+    }
+    if (tellerOptions.length > 0) {
+      groups.push({ label: 'Tellers', options: tellerOptions });
+    }
+    return groups;
+  }, [accountOptions, tellerOptions]);
 
   // Generate reference and creator
   useEffect(() => {
@@ -88,6 +125,7 @@ const CreateFundTransfer = () => {
       status: 'Pending',
       createdBy: form.createdBy,
     });
+    setSelectedTeller(null);
   };
 
   const handleChange = (e) => {
@@ -95,35 +133,73 @@ const CreateFundTransfer = () => {
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleFromAccountChange = (selected) => {
-    setForm((prev) => ({
-      ...prev,
-      fromAccountCode: selected ? selected.code : '',
-      fromAccountName: selected ? selected.value : '',
-    }));
+  // Updated handler for From Account dropdown
+  const handleFromChange = (selected) => {
+    if (!selected) {
+      setForm((prev) => ({ ...prev, fromAccountCode: '', fromAccountName: '' }));
+      setSelectedTeller(null);
+      return;
+    }
+    if (selected.type === 'account') {
+      setForm((prev) => ({
+        ...prev,
+        fromAccountCode: selected.code,
+        fromAccountName: selected.name,
+      }));
+      setSelectedTeller(null);
+    } else if (selected.type === 'teller') {
+      // Set from account to the teller's details
+      setForm((prev) => ({
+        ...prev,
+        fromAccountCode: selected.tellerId,
+        fromAccountName: selected.name,
+      }));
+      // Store teller info for backend (optional, but we'll send it)
+      setSelectedTeller({
+        name: selected.name,
+        id: selected.tellerId,
+      });
+    }
   };
 
-  const handleToAccountChange = (selected) => {
-    setForm((prev) => ({
-      ...prev,
-      toAccountCode: selected ? selected.code : '',
-      toAccountName: selected ? selected.value : '',
-    }));
+  // Updated handler for To Account dropdown
+  const handleToChange = (selected) => {
+    if (!selected) {
+      setForm((prev) => ({ ...prev, toAccountCode: '', toAccountName: '' }));
+      return;
+    }
+    if (selected.type === 'account') {
+      setForm((prev) => ({
+        ...prev,
+        toAccountCode: selected.code,
+        toAccountName: selected.name,
+      }));
+    } else if (selected.type === 'teller') {
+      // Set to account to the teller's details
+      setForm((prev) => ({
+        ...prev,
+        toAccountCode: selected.tellerId,
+        toAccountName: selected.name,
+      }));
+      // Store teller info for backend
+      setSelectedTeller({
+        name: selected.name,
+        id: selected.tellerId,
+      });
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!form.fromAccountName || !form.toAccountName) {
-      toast.error('Please select both accounts');
-      return;
-    }
-    if (form.fromAccountName === form.toAccountName) {
-      toast.error('From and To accounts must be different');
-      return;
-    }
     if (parseFloat(form.amount) <= 0) {
       toast.error('Amount must be greater than zero');
+      return;
+    }
+
+    // Ensure both accounts are selected
+    if (!form.fromAccountCode || !form.fromAccountName || !form.toAccountCode || !form.toAccountName) {
+      toast.error('Please select both From and To accounts');
       return;
     }
 
@@ -144,6 +220,11 @@ const CreateFundTransfer = () => {
         status: form.status,
         createdBy: form.createdBy,
       };
+      // Only send teller info if selected (for backend reference)
+      if (selectedTeller) {
+        payload.tellerName = selectedTeller.name;
+        payload.tellerId = selectedTeller.id;
+      }
 
       const response = await axios.post(
         `${API_BASE_URL}/api/fund-transfers`,
@@ -162,19 +243,15 @@ const CreateFundTransfer = () => {
     }
   };
 
-  const formatCurrency = (amount) => {
-    return `₵ ${Number(amount).toFixed(2)}`;
-  };
-
+  const formatCurrency = (amount) => `₵ ${Number(amount).toFixed(2)}`;
   const amountNum = parseFloat(form.amount) || 0;
 
-  // Find selected options (by name, since value = accountName)
-  const selectedFrom = accountOptions
-    .flatMap((g) => g.options)
-    .find((opt) => opt.value === form.fromAccountName);
-  const selectedTo = accountOptions
-    .flatMap((g) => g.options)
-    .find((opt) => opt.value === form.toAccountName);
+  const selectedFrom = accountOptions.find(
+    (opt) => opt.code === form.fromAccountCode
+  );
+  const selectedTo = accountOptions.find(
+    (opt) => opt.code === form.toAccountCode
+  );
 
   const customSelectStyles = {
     control: (provided) => ({
@@ -311,27 +388,49 @@ const CreateFundTransfer = () => {
               <div>
                 <label style={labelStyle}>From Account (Source)</label>
                 <Select
-                  options={accountOptions}
+                  options={combinedOptions}
                   value={selectedFrom}
-                  onChange={handleFromAccountChange}
-                  placeholder={accountsLoading ? 'Loading accounts...' : 'Select account'}
+                  onChange={handleFromChange}
+                  placeholder={
+                    accountsLoading || tellersLoading
+                      ? 'Loading...'
+                      : 'Search account or teller...'
+                  }
                   isClearable={false}
-                  isLoading={accountsLoading}
+                  isLoading={accountsLoading || tellersLoading}
                   styles={customSelectStyles}
-                  noOptionsMessage={() => 'No accounts found'}
+                  noOptionsMessage={() => 'No accounts or tellers found'}
+                  filterOption={(option, search) => {
+                    const searchLower = search.toLowerCase();
+                    return (
+                      option.label.toLowerCase().includes(searchLower) ||
+                      option.data.searchString?.includes(searchLower)
+                    );
+                  }}
                 />
               </div>
               <div>
                 <label style={labelStyle}>To Account (Destination)</label>
                 <Select
-                  options={accountOptions}
+                  options={combinedOptions}
                   value={selectedTo}
-                  onChange={handleToAccountChange}
-                  placeholder={accountsLoading ? 'Loading accounts...' : 'Select account'}
+                  onChange={handleToChange}
+                  placeholder={
+                    accountsLoading || tellersLoading
+                      ? 'Loading...'
+                      : 'Search account or teller...'
+                  }
                   isClearable={false}
-                  isLoading={accountsLoading}
+                  isLoading={accountsLoading || tellersLoading}
                   styles={customSelectStyles}
-                  noOptionsMessage={() => 'No accounts found'}
+                  noOptionsMessage={() => 'No accounts or tellers found'}
+                  filterOption={(option, search) => {
+                    const searchLower = search.toLowerCase();
+                    return (
+                      option.label.toLowerCase().includes(searchLower) ||
+                      option.data.searchString?.includes(searchLower)
+                    );
+                  }}
                 />
               </div>
             </div>
@@ -395,7 +494,6 @@ const CreateFundTransfer = () => {
               />
             </div>
 
-            {/* Accounting Preview – shows account names only */}
             <div style={{ marginBottom: '32px' }}>
               <label style={{ ...labelStyle, fontWeight: 600, fontSize: '0.9rem' }}>
                 Accounting Preview
@@ -420,7 +518,7 @@ const CreateFundTransfer = () => {
                   }}
                 >
                   <div style={{ fontWeight: 600, color: '#991b1b', marginBottom: '4px' }}>
-                    Debit
+                    Debit (To Account)
                   </div>
                   <div style={{ fontSize: '0.9rem', color: '#1f2937' }}>
                     {form.toAccountName || '—'}
@@ -441,7 +539,7 @@ const CreateFundTransfer = () => {
                   }}
                 >
                   <div style={{ fontWeight: 600, color: '#065f46', marginBottom: '4px' }}>
-                    Credit
+                    Credit (From Account)
                   </div>
                   <div style={{ fontSize: '0.9rem', color: '#1f2937' }}>
                     {form.fromAccountName || '—'}
@@ -519,24 +617,27 @@ const CreateFundTransfer = () => {
               </button>
               <button
                 type="submit"
-                disabled={loading || accountsLoading}
+                disabled={loading || accountsLoading || tellersLoading}
                 style={{
                   padding: '10px 32px',
                   borderRadius: '40px',
                   border: 'none',
-                  backgroundColor: loading || accountsLoading ? '#94a3b8' : '#3b82f6',
+                  backgroundColor:
+                    loading || accountsLoading || tellersLoading ? '#94a3b8' : '#3b82f6',
                   color: 'white',
                   fontWeight: 600,
                   fontSize: '0.95rem',
-                  cursor: loading || accountsLoading ? 'not-allowed' : 'pointer',
+                  cursor: loading || accountsLoading || tellersLoading ? 'not-allowed' : 'pointer',
                   transition: 'background-color 0.2s',
                   fontFamily: 'inherit',
                 }}
                 onMouseEnter={(e) => {
-                  if (!loading && !accountsLoading) e.target.style.backgroundColor = '#2563eb';
+                  if (!loading && !accountsLoading && !tellersLoading)
+                    e.target.style.backgroundColor = '#2563eb';
                 }}
                 onMouseLeave={(e) => {
-                  if (!loading && !accountsLoading) e.target.style.backgroundColor = '#3b82f6';
+                  if (!loading && !accountsLoading && !tellersLoading)
+                    e.target.style.backgroundColor = '#3b82f6';
                 }}
               >
                 {loading ? 'Submitting...' : 'Submit'}

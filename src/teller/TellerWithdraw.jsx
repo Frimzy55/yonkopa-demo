@@ -10,10 +10,13 @@ const TellerWithdraw = () => {
     withdrawalType: 'cash',
     description: 'Cash withdrawn by: ',
     reference: '',
-    tellerId: '',                // Now selected from dropdown
-    transactionReference: ''     // auto-generated
+    tellerId: '',                // Auto‑filled from logged‑in user
+    transactionReference: ''     // auto‑generated
   });
-  
+
+  // Store logged‑in teller’s full name for display
+  const [loggedTellerName, setLoggedTellerName] = useState('');
+
   const [accountDetails, setAccountDetails] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -21,44 +24,29 @@ const TellerWithdraw = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successData, setSuccessData] = useState({ amount: 0, currency: 'GHS', reference: '' });
 
-  // State for teller list
-  const [tellers, setTellers] = useState([]);
-  const [tellersLoading, setTellersLoading] = useState(false);
-  const [tellersError, setTellersError] = useState('');
-
   const withdrawalTypes = ['cash', 'cheque', 'transfer'];
 
-  // Fetch tellers on component mount
+  // On mount: read logged‑in user from localStorage
   useEffect(() => {
-    const fetchTellers = async () => {
-      setTellersLoading(true);
-      setTellersError('');
+    const userJson = localStorage.getItem('user');
+    if (userJson) {
       try {
-        // Adjust endpoint according to your backend
-        const response = await fetch(`${API_BASE_URL}/api/tills/tellers`, {
-          credentials: 'include', // if authentication is required
-        });
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status} - ${response.statusText}`);
-        }
-        const data = await response.json();
-        const tellerList = Array.isArray(data) ? data : [];
-        setTellers(tellerList);
-        if (tellerList.length > 0) {
-          setFormData(prev => ({
-            ...prev,
-            tellerId: tellerList[0].teller_id || tellerList[0].id || ''
-          }));
-        }
-      } catch (err) {
-        console.error('Failed to fetch tellers:', err);
-        setTellersError('Could not load tellers. Please refresh.');
-      } finally {
-        setTellersLoading(false);
-      }
-    };
+        const user = JSON.parse(userJson);
+        const tellerId = user.teller_id || user.tellerId || '';
+        const fullName = user.full_name || user.fullName || user.name || 'Unknown Teller';
 
-    fetchTellers();
+        setLoggedTellerName(fullName);
+        setFormData(prev => ({
+          ...prev,
+          tellerId: tellerId
+        }));
+      } catch (e) {
+        console.error('Failed to parse user from localStorage', e);
+      }
+    } else {
+      setLoggedTellerName('Not logged in');
+      setFormData(prev => ({ ...prev, tellerId: '' }));
+    }
   }, []);
 
   // Generate a unique transaction reference
@@ -95,24 +83,24 @@ const TellerWithdraw = () => {
     setLoading(true);
     setError('');
     setAccountDetails(null);
-    
+
     try {
       const response = await fetch(
         `${API_BASE_URL}/api/tills/loan-account?customerId=${encodeURIComponent(formData.customerId)}`
       );
-      
+
       const data = await response.json();
 
       if (!response.ok) {
         throw new Error(data.error || "Server error");
       }
-      
+
       const record = Array.isArray(data) ? data[0] : data;
-      
+
       if (!record) {
         throw new Error('No loan account found for this customer');
       }
-      
+
       setAccountDetails({
         accountNumber: record.account_number || record.customer_id || 'N/A',
         accountName: record.applicant_fullName || record.account_name || 'N/A',
@@ -123,7 +111,7 @@ const TellerWithdraw = () => {
         avatar: record.avatar || null,
         signature: record.signature || null
       });
-      
+
     } catch (err) {
       setError(err.message || 'Failed to fetch customer account');
       setAccountDetails(null);
@@ -134,19 +122,19 @@ const TellerWithdraw = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!accountDetails) {
       setError('Please search and verify the customer first');
       return;
     }
-    
+
     if (!formData.amount || parseFloat(formData.amount) <= 0) {
       setError('Please enter a valid withdrawal amount');
       return;
     }
 
     if (!formData.tellerId) {
-      setError('Please select a teller');
+      setError('Teller information is missing. Please log in again.');
       return;
     }
 
@@ -203,6 +191,7 @@ const TellerWithdraw = () => {
 
       setShowSuccessModal(true);
 
+      // Reset form – keep tellerId
       setTimeout(() => {
         setFormData({
           customerId: '',
@@ -210,7 +199,7 @@ const TellerWithdraw = () => {
           withdrawalType: 'cash',
           description: 'Cash withdrawn by: ',
           reference: '',
-          tellerId: tellers.length > 0 ? (tellers[0].teller_id || tellers[0].id || '') : '',
+          tellerId: formData.tellerId,
           transactionReference: ''
         });
         setAccountDetails(null);
@@ -445,38 +434,26 @@ const TellerWithdraw = () => {
                   />
                 </div>
 
+                {/* ✅ Teller field – auto‑filled from logged‑in user, read‑only */}
                 <div className="mb-3">
                   <label className="form-label fw-semibold">
-                    Teller ID (from) <span className="text-danger">*</span>
+                    Teller (Logged‑in) <span className="text-danger">*</span>
                   </label>
-                  {tellersLoading ? (
-                    <div className="d-flex align-items-center">
-                      <span className="spinner-border spinner-border-sm me-2" role="status"></span>
-                      Loading tellers...
-                    </div>
-                  ) : tellersError ? (
-                    <div className="text-danger small">{tellersError}</div>
-                  ) : (
-                    <select
-                      className="form-select"
-                      name="tellerId"
-                      value={formData.tellerId}
-                      onChange={handleChange}
-                      required
-                    >
-                      <option value="">Select a teller</option>
-                      {tellers.map((teller) => {
-                        const id = teller.teller_id || teller.id;
-                        const name = teller.full_name || teller.name || 'Unknown';
-                        return (
-                          <option key={id} value={id}>
-                            {name} ({id})
-                          </option>
-                        );
-                      })}
-                    </select>
-                  )}
-                  <small className="text-muted">Only active tellers are shown.</small>
+                  <div className="input-group">
+                    <span className="input-group-text bg-light">
+                      <i className="bi bi-person-badge"></i>
+                    </span>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={`${loggedTellerName} (${formData.tellerId})`}
+                      disabled
+                      style={{ backgroundColor: '#e9ecef', cursor: 'not-allowed' }}
+                    />
+                  </div>
+                  <small className="text-muted">
+                    The logged‑in teller is automatically assigned.
+                  </small>
                 </div>
 
                 <div className="mb-3">
@@ -555,8 +532,8 @@ const TellerWithdraw = () => {
                     <span>{formData.reference || '—'}</span>
                   </div>
                   <div className="d-flex py-1 border-bottom">
-                    <span className="fw-bold" style={{ width: '140px' }}>Teller ID (from):</span>
-                    <span>{formData.tellerId}</span>
+                    <span className="fw-bold" style={{ width: '140px' }}>Teller (logged‑in):</span>
+                    <span>{loggedTellerName} ({formData.tellerId})</span>
                   </div>
                   <div className="d-flex py-1">
                     <span className="fw-bold" style={{ width: '140px' }}>Description:</span>

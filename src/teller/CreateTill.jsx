@@ -28,7 +28,7 @@ const CreateTill = () => {
 
   const branches = ['HEAD OFFICE'];
   const currencies = ['GHS', 'USD', 'EUR', 'GBP', 'NGN'];
-  const tillTypes = ['Cash Till', 'Cheque Till', 'Hybrid Till', 'Mobile Till'];
+  const tillTypes = ['Teller Till', 'Momo Till', 'Master Till'];
   const supervisors = ['Manager', 'Senior Teller', 'Supervisor A', 'Supervisor B'];
   const overLimitActions = [
     { value: 'block', label: 'Block Transaction' },

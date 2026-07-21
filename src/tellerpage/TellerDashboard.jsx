@@ -239,7 +239,12 @@ const TellerDashboard = () => {
     return originalUser?.fullName || originalUser?.name || 'Teller';
   }, [originalUser]);
 
-  // For the top bar – override the name to "Manager"
+  // ✅ Get the teller ID from the user object
+  const tellerId = useMemo(() => {
+    return originalUser?.teller_id || originalUser?.tellerId || '';
+  }, [originalUser]);
+
+  // For the top bar – override the name to "Teller" (keep as is)
   const userForTopBar = useMemo(() => {
     return {
       ...originalUser,
@@ -1150,7 +1155,15 @@ const TellerDashboard = () => {
             <div className="p-3 p-md-4">
               <div className="card border-0 shadow-sm mb-3 mb-md-4">
                 <div className="card-body bg-primary bg-opacity-10 rounded-3 p-3 p-md-4">
-                  <h4 className="mb-2 fs-5 fs-md-4">Welcome back, {realUserName}!</h4>
+                  <h4 className="mb-2 fs-5 fs-md-4">
+                    Welcome back, {realUserName}!
+                    {/* ✅ Display teller ID as a badge */}
+                    {tellerId && (
+                      <span className="badge bg-secondary ms-2" style={{ fontSize: '0.8rem' }}>
+                        ID: {tellerId}
+                      </span>
+                    )}
+                  </h4>
                   <p className="mb-0 text-secondary small">
                     You are currently viewing: <strong>{getDisplayTitle()}</strong>
                   </p>

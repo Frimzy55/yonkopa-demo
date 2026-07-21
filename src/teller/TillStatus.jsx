@@ -74,6 +74,7 @@ const TillStatus = () => {
     );
   }
 
+  // --- Action handlers ---
   const handleView = (till) => {
     console.log("View:", till);
     // navigate(`/teller/till-management/view/${till.id}`);
@@ -112,23 +113,19 @@ const TillStatus = () => {
 
   return (
     <div className="container-fluid py-4">
-      {/* --- Header with Refresh only --- */}
+      {/* --- Header --- */}
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h4 className="fw-bold mb-0">
           <i className="bi bi-graph-up me-2 text-primary"></i> Till Status
         </h4>
-        <Button
-          variant="outline-secondary"
-          size="sm"
-          onClick={fetchTills}
-        >
+        <Button variant="outline-secondary" size="sm" onClick={fetchTills}>
           <i className="bi bi-arrow-repeat me-1"></i> Refresh
         </Button>
       </div>
 
       {error && <Alert variant="danger">{error}</Alert>}
 
-      {/* --- Summary Cards (4 columns) --- */}
+      {/* --- Summary Cards --- */}
       <Row className="mb-4 g-3">
         <Col md={3} sm={6}>
           <Card className="shadow-sm text-center py-2">
@@ -164,97 +161,191 @@ const TillStatus = () => {
         </Col>
       </Row>
 
-      {/* --- Till Table (no Till Name column) --- */}
-      <Card className="shadow-sm">
-        <Card.Header className="bg-light">
-          <h6 className="mb-0 fw-bold">
-            <i className="bi bi-table me-2"></i> Till List
-          </h6>
-        </Card.Header>
-        <Card.Body className="p-0">
-          <Table responsive bordered hover className="mb-0">
-            <thead className="table-light">
-              <tr>
-                <th>Till Number</th>
-                <th>Branch</th>
-                <th>Teller</th>
-                <th>Currency</th>
-                <th className="text-end">Balance</th>
-                <th>Status</th>
-                <th width="140">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {tills.length === 0 ? (
-                <tr>
-                  <td colSpan="7" className="text-center py-4 text-muted">
-                    No tills found
-                  </td>
-                </tr>
-              ) : (
-                tills.map((till) => (
-                  <tr key={till.id}>
-                    <td className="fw-semibold">{till.till_number}</td>
-                    <td>{till.branch}</td>
-                    <td>{till.assigned_teller}</td>
-                    <td>{till.currency}</td>
-                    <td className="text-end">
-                      {Number(till.opening_balance).toLocaleString(undefined, {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
-                    </td>
-                    <td>{getStatusBadge(till.status)}</td>
-                    <td className="text-center">
-                      <Dropdown>
-                        <Dropdown.Toggle
-                          variant="outline-secondary"
-                          size="sm"
-                          id={`dropdown-${till.id}`}
-                        >
-                          Actions
-                        </Dropdown.Toggle>
+      {/* --- Till Table – with overflow: visible --- */}
+      {/* --- Till Table --- */}
+<Card
+  className="shadow-sm"
+  style={{ overflow: "visible" }}
+>
+  <Card.Header className="bg-light">
+    <h6 className="mb-0 fw-bold">
+      <i className="bi bi-table me-2"></i> Till List
+    </h6>
+  </Card.Header>
 
-                        <Dropdown.Menu>
-                          <Dropdown.Item onClick={() => handleView(till)}>
-                            <i className="bi bi-eye me-2"></i>
-                            View
-                          </Dropdown.Item>
+  <Card.Body
+    className="p-0"
+    style={{ overflow: "visible" }}
+  >
 
-                          <Dropdown.Item onClick={() => handleEdit(till)}>
-                            <i className="bi bi-pencil-square me-2"></i>
-                            Edit
-                          </Dropdown.Item>
+    <Table
+      bordered
+      hover
+      className="mb-0"
+    >
+      <thead className="table-light">
+        <tr>
+          <th>Till Number</th>
+          <th>Branch</th>
+          <th>Teller</th>
+          <th>Currency</th>
+          <th className="text-end">Balance</th>
+          <th>Status</th>
+          <th width="120">Actions</th>
+        </tr>
+      </thead>
 
-                          <Dropdown.Divider />
+      <tbody>
 
-                          {till.status?.toLowerCase() === "inactive" ? (
-                            <Dropdown.Item
-                              className="text-success"
-                              onClick={() => handleEnable(till)}
-                            >
-                              <i className="bi bi-check-circle me-2"></i>
-                              Enable
-                            </Dropdown.Item>
-                          ) : (
-                            <Dropdown.Item
-                              className="text-danger"
-                              onClick={() => handleDisable(till)}
-                            >
-                              <i className="bi bi-slash-circle me-2"></i>
-                              Disable
-                            </Dropdown.Item>
-                          )}
-                        </Dropdown.Menu>
-                      </Dropdown>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </Table>
-        </Card.Body>
-      </Card>
+        {tills.length === 0 ? (
+          <tr>
+            <td
+              colSpan="7"
+              className="text-center py-4 text-muted"
+            >
+              No tills found
+            </td>
+          </tr>
+
+        ) : (
+
+          tills.map((till) => (
+
+            <tr key={till.id}>
+
+              <td className="fw-semibold">
+                {till.till_number}
+              </td>
+
+              <td>
+                {till.branch}
+              </td>
+
+              <td>
+                {till.assigned_teller}
+              </td>
+
+              <td>
+                {till.currency}
+              </td>
+
+              <td className="text-end">
+                {Number(till.opening_balance)
+                  .toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+              </td>
+
+              <td>
+                {getStatusBadge(till.status)}
+              </td>
+
+
+              <td className="text-center">
+
+                <Dropdown
+                  drop="up"
+                  align="end"
+                >
+
+                  <Dropdown.Toggle
+                    variant="outline-primary"
+                    size="sm"
+                  >
+                    <i className="bi bi-three-dots"></i>
+                    {" "}
+                    Actions
+                  </Dropdown.Toggle>
+
+
+                  <Dropdown.Menu
+                    style={{
+                      zIndex: 9999,
+                      position: "absolute"
+                    }}
+                  >
+
+                    <Dropdown.Item
+                      onClick={() => handleView(till)}
+                    >
+                      <i className="bi bi-eye me-2"></i>
+                      View
+                    </Dropdown.Item>
+
+
+                    <Dropdown.Item
+                      onClick={() => handleEdit(till)}
+                    >
+                      <i className="bi bi-pencil-square me-2"></i>
+                      Edit
+                    </Dropdown.Item>
+
+
+                    <Dropdown.Divider />
+
+
+                    {
+                      till.status?.toLowerCase() === "inactive"
+
+                      ?
+
+                      (
+
+                      <Dropdown.Item
+                        className="text-success"
+                        onClick={() =>
+                          handleEnable(till)
+                        }
+                      >
+
+                        <i className="bi bi-check-circle me-2"></i>
+                        Enable
+
+                      </Dropdown.Item>
+
+                      )
+
+                      :
+
+                      (
+
+                      <Dropdown.Item
+                        className="text-danger"
+                        onClick={() =>
+                          handleDisable(till)
+                        }
+                      >
+
+                        <i className="bi bi-slash-circle me-2"></i>
+                        Disable
+
+                      </Dropdown.Item>
+
+                      )
+
+                    }
+
+
+                  </Dropdown.Menu>
+
+                </Dropdown>
+
+              </td>
+
+            </tr>
+
+          ))
+
+        )}
+
+      </tbody>
+
+    </Table>
+
+  </Card.Body>
+
+</Card>
     </div>
   );
 };
