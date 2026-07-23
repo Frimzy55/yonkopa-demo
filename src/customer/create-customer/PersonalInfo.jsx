@@ -1,7 +1,7 @@
 // PersonalInfo.jsx
 import React, { useState, useEffect } from "react";
 
-// --- DEFAULT AVATAR (inline SVG as data URI) ---
+// --- DEFAULT AVATAR (inline SVG) ---
 const defaultAvatar = "data:image/svg+xml;base64," + btoa(`
   <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
     <circle cx="50" cy="50" r="45" fill="#E0E7EF" stroke="#B0C4DE" stroke-width="2"/>
@@ -22,7 +22,6 @@ const PersonalInfo = ({
 }) => {
   const [preview, setPreview] = useState(defaultAvatar);
 
-  // Update preview when avatar file changes
   useEffect(() => {
     if (!formData?.avatar) {
       setPreview(defaultAvatar);
@@ -93,11 +92,21 @@ const PersonalInfo = ({
           <div className="form-control bg-light">{formData?.userId || "-"}</div>
         </div>
 
+        {/* First Name - now editable */}
         <div className="form-group">
           <label>First Name *</label>
-          <div className="form-control bg-light">{formData?.firstName || "-"}</div>
+          <input
+            type="text"
+            name="firstName"
+            value={formData?.firstName || ""}
+            onChange={handleInputChange}
+            placeholder="First Name"
+            className={formErrors?.firstName ? "error-input" : ""}
+          />
+          {formErrors?.firstName && <span className="error-message">{formErrors.firstName}</span>}
         </div>
 
+        {/* Middle Name (optional) */}
         <div className="form-group">
           <label>Middle Name (optional)</label>
           <input
@@ -109,11 +118,21 @@ const PersonalInfo = ({
           />
         </div>
 
+        {/* Last Name - now editable */}
         <div className="form-group">
           <label>Last Name *</label>
-          <div className="form-control bg-light">{formData?.lastName || "-"}</div>
+          <input
+            type="text"
+            name="lastName"
+            value={formData?.lastName || ""}
+            onChange={handleInputChange}
+            placeholder="Last Name"
+            className={formErrors?.lastName ? "error-input" : ""}
+          />
+          {formErrors?.lastName && <span className="error-message">{formErrors.lastName}</span>}
         </div>
 
+        {/* Date of Birth */}
         <div className="form-group">
           <label>Date of Birth (yyyy-mm-dd) *</label>
           <input
@@ -129,6 +148,7 @@ const PersonalInfo = ({
           {formErrors?.dateOfBirth && <span className="error-message">{formErrors.dateOfBirth}</span>}
         </div>
 
+        {/* Gender */}
         <div className="form-group">
           <label>Gender *</label>
           <select
@@ -144,6 +164,7 @@ const PersonalInfo = ({
           {formErrors?.gender && <span className="error-message">{formErrors.gender}</span>}
         </div>
 
+        {/* Marital Status */}
         <div className="form-group">
           <label>Marital Status *</label>
           <select
@@ -161,6 +182,7 @@ const PersonalInfo = ({
           {formErrors?.maritalStatus && <span className="error-message">{formErrors.maritalStatus}</span>}
         </div>
 
+        {/* National ID */}
         <div className="form-group">
           <label>National ID *</label>
           <input
@@ -175,6 +197,7 @@ const PersonalInfo = ({
           {formErrors?.nationalId && <span className="error-message">{formErrors.nationalId}</span>}
         </div>
 
+        {/* Residential Location */}
         <div className="form-group">
           <label>Residential Location *</label>
           <input
@@ -188,6 +211,7 @@ const PersonalInfo = ({
           {formErrors?.residentialLocation && <span className="error-message">{formErrors.residentialLocation}</span>}
         </div>
 
+        {/* Spouse Fields (conditional) */}
         {formData?.maritalStatus === "married" && (
           <>
             <div className="form-group">

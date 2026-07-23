@@ -11,6 +11,11 @@ const IndividualCustomer = () => {
   const [registrationType, setRegistrationType] = useState("detailed");
   const [formErrors, setFormErrors] = useState({});
   const [checkingNationalId, setCheckingNationalId] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Modal state
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successKycCode, setSuccessKycCode] = useState("");
 
   const user = { fullName: "Jane Doe" };
 
@@ -69,8 +74,6 @@ const IndividualCustomer = () => {
     referenceName3: "",
     referencePhone3: "",
     referenceRelationship3: "",
-
-    // PEP – REMOVED
   });
 
   // ---- Handlers ----
@@ -92,7 +95,7 @@ const IndividualCustomer = () => {
     setActiveSection("biodata");
   };
 
-  // ---- Steps (uploads and PEP removed) ----
+  // ---- Steps ----
   const getSteps = () => {
     return registrationType === "express"
       ? ["biodata", "contact"]
@@ -119,11 +122,64 @@ const IndividualCustomer = () => {
     }
   };
 
-  const handleCreateCustomer = () => {
-    console.log("Form Data:", formData);
-    console.log("Registration Type:", registrationType);
-    alert("Customer created successfully!");
-    // Submit to API...
+  // ---- API Submission ----
+  const handleCreateCustomer = async () => {
+    setIsSubmitting(true);
+    setFormErrors({});
+
+    try {
+      const data = new FormData();
+      Object.keys(formData).forEach((key) => {
+        if (formData[key] !== null && key !== "userId") {
+          data.append(key, formData[key]);
+        }
+      });
+
+      const token = localStorage.getItem("token");
+      const res = await fetch(
+        `${process.env.REACT_APP_API_URL}/api/kyc/save-all`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: data,
+        }
+      );
+      const result = await res.json();
+
+      if (!result.success) {
+        if (result.message?.includes("National ID")) {
+          setFormErrors((prev) => ({
+            ...prev,
+            nationalId: result.message,
+          }));
+          setActiveSection("biodata");
+        } else {
+          alert(`Submission failed: ${result.message || "Unknown error"}`);
+        }
+        setIsSubmitting(false);
+        return;
+      }
+
+      // ---- Success ----
+      const kycCode = result.kycCode || "";
+      setSuccessKycCode(kycCode);
+      setShowSuccessModal(true);
+      setIsSubmitting(false);
+    } catch (err) {
+      console.error("Submit error:", err);
+      alert("An error occurred while submitting. Please try again.");
+      setIsSubmitting(false);
+    }
+  };
+
+  // ---- Close modal and reset form (optional) ----
+  const handleModalClose = () => {
+    setShowSuccessModal(false);
+    // Optionally reset the form to initial state
+    // You could reset all fields or navigate away.
+    // For now, we just close the modal.
   };
 
   // ---- Render ----
@@ -212,20 +268,44 @@ const IndividualCustomer = () => {
         <div className="form-actions">
           <button
             onClick={handlePrevious}
-            disabled={currentIndex === 0}
+            disabled={currentIndex === 0 || isSubmitting}
             className={currentIndex === 0 ? "disabled" : ""}
           >
             Previous
           </button>
           {currentIndex < steps.length - 1 ? (
-            <button onClick={handleNext}>Next</button>
+            <button onClick={handleNext} disabled={isSubmitting}>
+              Next
+            </button>
           ) : (
-            <button onClick={handleCreateCustomer} className="create-btn">
-              Create Customer
+            <button
+              onClick={handleCreateCustomer}
+              className="create-btn"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Submitting..." : "Create Customer"}
             </button>
           )}
         </div>
       </div>
+
+      {/* SUCCESS MODAL */}
+      {showSuccessModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h2>🎉 Customer Created!</h2>
+            <p>Your customer has been successfully registered.</p>
+            {successKycCode && (
+              <div className="kyc-code-box">
+                <strong>KYC Code:</strong> <span>{successKycCode}</span>
+              </div>
+            )}
+            <button className="modal-close-btn" onClick={handleModalClose}>
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
