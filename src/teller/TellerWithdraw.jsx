@@ -246,7 +246,7 @@ const TellerWithdraw = () => {
             <div className="card-body">
               <div className="mb-3">
                 <label className="form-label fw-semibold">
-                  Customer ID (to) <span className="text-danger">*</span>
+                  Customer ID  <span className="text-danger">*</span>
                 </label>
                 <div className="input-group">
                   <input
@@ -437,7 +437,7 @@ const TellerWithdraw = () => {
                 {/* ✅ Teller field – auto‑filled from logged‑in user, read‑only */}
                 <div className="mb-3">
                   <label className="form-label fw-semibold">
-                    Teller (Logged‑in) <span className="text-danger">*</span>
+                    Teller  <span className="text-danger">*</span>
                   </label>
                   <div className="input-group">
                     <span className="input-group-text bg-light">
@@ -532,7 +532,7 @@ const TellerWithdraw = () => {
                     <span>{formData.reference || '—'}</span>
                   </div>
                   <div className="d-flex py-1 border-bottom">
-                    <span className="fw-bold" style={{ width: '140px' }}>Teller (logged‑in):</span>
+                    <span className="fw-bold" style={{ width: '140px' }}>Teller :</span>
                     <span>{loggedTellerName} ({formData.tellerId})</span>
                   </div>
                   <div className="d-flex py-1">
@@ -632,4 +632,4 @@ const TellerWithdraw = () => {
   );
 };
 
-export default TellerWithdraw;
+export default TellerWithdraw;  

@@ -247,7 +247,7 @@ const TellerDeposit = () => {
             <div className="card-body">
               <div className="mb-3">
                 <label className="form-label fw-semibold">
-                  Customer ID (from) <span className="text-danger">*</span>
+                  Customer ID  <span className="text-danger">*</span>
                 </label>
                 <div className="input-group">
                   <input
@@ -437,7 +437,7 @@ const TellerDeposit = () => {
                 {/* ✅ Teller field – auto‑filled from logged‑in user, read‑only */}
                 <div className="mb-3">
                   <label className="form-label fw-semibold">
-                    Teller (Logged‑in) <span className="text-danger">*</span>
+                    Teller  <span className="text-danger">*</span>
                   </label>
                   <div className="input-group">
                     <span className="input-group-text bg-light">
