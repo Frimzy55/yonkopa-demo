@@ -263,7 +263,7 @@ const CustomerLoanForm = ({ user, handleReset }) => {
         }
       });
       const res = await fetch(
-        `${process.env.REACT_APP_API_URL}/api/loan/submit-full-application`,
+        `${process.env.REACT_APP_API_URL}/api/loan/submit-full-application-manual`,
         { method: "POST", body: formPayload }
       );
       const data = await res.json();

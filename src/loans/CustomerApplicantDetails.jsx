@@ -2,8 +2,9 @@
 import React from "react";
 
 const ApplicantDetails = ({ formData }) => {
-  // Helper to format empty values
-  const displayValue = (value) => value || "—";
+  // Helper to check if a value is actually present
+  const hasValue = (value) =>
+    value !== null && value !== undefined && value !== "" && value !== "—";
 
   return (
     <div className="form-step">
@@ -66,116 +67,138 @@ const ApplicantDetails = ({ formData }) => {
           }}
         >
           {/* Full Name */}
-          <div>
-            <label style={{ fontWeight: "600", fontSize: "0.85rem", color: "#666", display: "block", marginBottom: "4px" }}>
-              Full Name
-            </label>
-            <div style={{ fontSize: "1rem", padding: "6px 0", borderBottom: "1px solid #f0f0f0" }}>
-              {displayValue(formData.fullName)}
+          {hasValue(formData.fullName) && (
+            <div>
+              <label style={{ fontWeight: "600", fontSize: "0.85rem", color: "#666", display: "block", marginBottom: "4px" }}>
+                Full Name
+              </label>
+              <div style={{ fontSize: "1rem", padding: "6px 0", borderBottom: "1px solid #f0f0f0" }}>
+                {formData.fullName}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Phone */}
-          <div>
-            <label style={{ fontWeight: "600", fontSize: "0.85rem", color: "#666", display: "block", marginBottom: "4px" }}>
-              Phone Number
-            </label>
-            <div style={{ fontSize: "1rem", padding: "6px 0", borderBottom: "1px solid #f0f0f0" }}>
-              {displayValue(formData.phone)}
+          {hasValue(formData.phone) && (
+            <div>
+              <label style={{ fontWeight: "600", fontSize: "0.85rem", color: "#666", display: "block", marginBottom: "4px" }}>
+                Phone Number
+              </label>
+              <div style={{ fontSize: "1rem", padding: "6px 0", borderBottom: "1px solid #f0f0f0" }}>
+                {formData.phone}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Email */}
-          <div>
-            <label style={{ fontWeight: "600", fontSize: "0.85rem", color: "#666", display: "block", marginBottom: "4px" }}>
-              Email Address
-            </label>
-            <div style={{ fontSize: "1rem", padding: "6px 0", borderBottom: "1px solid #f0f0f0" }}>
-              {displayValue(formData.email)}
+          {hasValue(formData.email) && (
+            <div>
+              <label style={{ fontWeight: "600", fontSize: "0.85rem", color: "#666", display: "block", marginBottom: "4px" }}>
+                Email Address
+              </label>
+              <div style={{ fontSize: "1rem", padding: "6px 0", borderBottom: "1px solid #f0f0f0" }}>
+                {formData.email}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Date of Birth */}
-          <div>
-            <label style={{ fontWeight: "600", fontSize: "0.85rem", color: "#666", display: "block", marginBottom: "4px" }}>
-              Date of Birth
-            </label>
-            <div style={{ fontSize: "1rem", padding: "6px 0", borderBottom: "1px solid #f0f0f0" }}>
-              {displayValue(formData.dateofbirth)}
+          {hasValue(formData.dateofbirth) && (
+            <div>
+              <label style={{ fontWeight: "600", fontSize: "0.85rem", color: "#666", display: "block", marginBottom: "4px" }}>
+                Date of Birth
+              </label>
+              <div style={{ fontSize: "1rem", padding: "6px 0", borderBottom: "1px solid #f0f0f0" }}>
+                {formData.dateofbirth}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Gender */}
-          <div>
-            <label style={{ fontWeight: "600", fontSize: "0.85rem", color: "#666", display: "block", marginBottom: "4px" }}>
-              Gender
-            </label>
-            <div style={{ fontSize: "1rem", padding: "6px 0", borderBottom: "1px solid #f0f0f0" }}>
-              {displayValue(formData.gender)}
+          {hasValue(formData.gender) && (
+            <div>
+              <label style={{ fontWeight: "600", fontSize: "0.85rem", color: "#666", display: "block", marginBottom: "4px" }}>
+                Gender
+              </label>
+              <div style={{ fontSize: "1rem", padding: "6px 0", borderBottom: "1px solid #f0f0f0" }}>
+                {formData.gender}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* National ID */}
-          <div>
-            <label style={{ fontWeight: "600", fontSize: "0.85rem", color: "#666", display: "block", marginBottom: "4px" }}>
-              National ID
-            </label>
-            <div style={{ fontSize: "1rem", padding: "6px 0", borderBottom: "1px solid #f0f0f0" }}>
-              {displayValue(formData.nationalid)}
+          {hasValue(formData.nationalid) && (
+            <div>
+              <label style={{ fontWeight: "600", fontSize: "0.85rem", color: "#666", display: "block", marginBottom: "4px" }}>
+                National ID
+              </label>
+              <div style={{ fontSize: "1rem", padding: "6px 0", borderBottom: "1px solid #f0f0f0" }}>
+                {formData.nationalid}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Marital Status */}
-          <div>
-            <label style={{ fontWeight: "600", fontSize: "0.85rem", color: "#666", display: "block", marginBottom: "4px" }}>
-              Marital Status
-            </label>
-            <div style={{ fontSize: "1rem", padding: "6px 0", borderBottom: "1px solid #f0f0f0" }}>
-              {displayValue(formData.maritalstatus)}
+          {hasValue(formData.maritalstatus) && (
+            <div>
+              <label style={{ fontWeight: "600", fontSize: "0.85rem", color: "#666", display: "block", marginBottom: "4px" }}>
+                Marital Status
+              </label>
+              <div style={{ fontSize: "1rem", padding: "6px 0", borderBottom: "1px solid #f0f0f0" }}>
+                {formData.maritalstatus}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Dependents */}
-          <div>
-            <label style={{ fontWeight: "600", fontSize: "0.85rem", color: "#666", display: "block", marginBottom: "4px" }}>
-              Dependents
-            </label>
-            <div style={{ fontSize: "1rem", padding: "6px 0", borderBottom: "1px solid #f0f0f0" }}>
-              {displayValue(formData.dependents)}
+          {hasValue(formData.dependents) && (
+            <div>
+              <label style={{ fontWeight: "600", fontSize: "0.85rem", color: "#666", display: "block", marginBottom: "4px" }}>
+                Dependents
+              </label>
+              <div style={{ fontSize: "1rem", padding: "6px 0", borderBottom: "1px solid #f0f0f0" }}>
+                {formData.dependents}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Residential Address */}
-          <div>
-            <label style={{ fontWeight: "600", fontSize: "0.85rem", color: "#666", display: "block", marginBottom: "4px" }}>
-              Residential Address
-            </label>
-            <div style={{ fontSize: "1rem", padding: "6px 0", borderBottom: "1px solid #f0f0f0" }}>
-              {displayValue(formData.residentialAddress)}
+          {hasValue(formData.residentialAddress) && (
+            <div>
+              <label style={{ fontWeight: "600", fontSize: "0.85rem", color: "#666", display: "block", marginBottom: "4px" }}>
+                Residential Address
+              </label>
+              <div style={{ fontSize: "1rem", padding: "6px 0", borderBottom: "1px solid #f0f0f0" }}>
+                {formData.residentialAddress}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Residential GPS */}
-          <div>
-            <label style={{ fontWeight: "600", fontSize: "0.85rem", color: "#666", display: "block", marginBottom: "4px" }}>
-              Residential GPS
-            </label>
-            <div style={{ fontSize: "1rem", padding: "6px 0", borderBottom: "1px solid #f0f0f0" }}>
-              {displayValue(formData.residentialGPS)}
+          {hasValue(formData.residentialGPS) && (
+            <div>
+              <label style={{ fontWeight: "600", fontSize: "0.85rem", color: "#666", display: "block", marginBottom: "4px" }}>
+                Residential GPS
+              </label>
+              <div style={{ fontSize: "1rem", padding: "6px 0", borderBottom: "1px solid #f0f0f0" }}>
+                {formData.residentialGPS}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Employment Status */}
-          <div>
-            <label style={{ fontWeight: "600", fontSize: "0.85rem", color: "#666", display: "block", marginBottom: "4px" }}>
-              Employment Status
-            </label>
-            <div style={{ fontSize: "1rem", padding: "6px 0", borderBottom: "1px solid #f0f0f0" }}>
-              {displayValue(formData.employmentStatus)}
+          {hasValue(formData.employmentStatus) && (
+            <div>
+              <label style={{ fontWeight: "600", fontSize: "0.85rem", color: "#666", display: "block", marginBottom: "4px" }}>
+                Employment Status
+              </label>
+              <div style={{ fontSize: "1rem", padding: "6px 0", borderBottom: "1px solid #f0f0f0" }}>
+                {formData.employmentStatus}
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Hidden fields for KYC Code and User ID – not displayed but kept for form submission */}
+          {/* Hidden fields – always present for form submission */}
           <input type="hidden" name="userId" value={formData.userId} />
           <input type="hidden" name="kycCode" value={formData.kycCode} />
         </div>

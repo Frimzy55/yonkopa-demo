@@ -12,10 +12,7 @@ const IndividualCustomer = () => {
   const [formErrors, setFormErrors] = useState({});
   const [checkingNationalId, setCheckingNationalId] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Modal state
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [successKycCode, setSuccessKycCode] = useState("");
 
   const user = { fullName: "Jane Doe" };
 
@@ -80,6 +77,10 @@ const IndividualCustomer = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    // Clear error for this field as user types
+    if (formErrors[name]) {
+      setFormErrors((prev) => ({ ...prev, [name]: "" }));
+    }
   };
 
   const handleFileChange = (e) => {
@@ -93,6 +94,7 @@ const IndividualCustomer = () => {
   const handleRegistrationTypeChange = (e) => {
     setRegistrationType(e.target.value);
     setActiveSection("biodata");
+    setFormErrors({});
   };
 
   // ---- Steps ----
@@ -105,8 +107,174 @@ const IndividualCustomer = () => {
   const steps = getSteps();
   const currentIndex = steps.indexOf(activeSection);
 
+  // ---- Validation Logic ----
+  const validateStep = (step) => {
+    const errors = {};
+    let isValid = true;
+
+    switch (step) {
+      case "biodata":
+        if (!formData.title) {
+          errors.title = "Title is required";
+          isValid = false;
+        }
+        if (!formData.firstName) {
+          errors.firstName = "First name is required";
+          isValid = false;
+        }
+        if (!formData.lastName) {
+          errors.lastName = "Last name is required";
+          isValid = false;
+        }
+        if (!formData.gender) {
+          errors.gender = "Gender is required";
+          isValid = false;
+        }
+        if (!formData.dateOfBirth) {
+          errors.dateOfBirth = "Date of birth is required";
+          isValid = false;
+        }
+        if (!formData.maritalStatus) {
+          errors.maritalStatus = "Marital status is required";
+          isValid = false;
+        }
+        if (!formData.nationalId) {
+          errors.nationalId = "National ID is required";
+          isValid = false;
+        }
+        if (!formData.residentialLocation) {
+          errors.residentialLocation = "Residential location is required";
+          isValid = false;
+        }
+        break;
+
+      case "contact":
+        if (!formData.mobileNumber) {
+          errors.mobileNumber = "Mobile number is required";
+          isValid = false;
+        }
+       
+        if (!formData.residentialAddress) {
+          errors.residentialAddress = "Residential address is required";
+          isValid = false;
+        }
+        if (!formData.city) {
+          errors.city = "City is required";
+          isValid = false;
+        }
+        if (!formData.state) {
+          errors.state = "State/Region is required";
+          isValid = false;
+        }
+        break;
+
+      case "occupation":
+        if (registrationType === "detailed") {
+          if (!formData.employmentStatus) {
+            errors.employmentStatus = "Employment status is required";
+            isValid = false;
+          }
+          if (formData.employmentStatus === "employed") {
+            if (!formData.employerName) {
+              errors.employerName = "Employer name is required";
+              isValid = false;
+            }
+            if (!formData.jobTitle) {
+              errors.jobTitle = "Job title is required";
+              isValid = false;
+            }
+            if (!formData.monthlyIncome) {
+              errors.monthlyIncome = "Monthly income is required";
+              isValid = false;
+            }
+            if (!formData.yearsInCurrentEmployment) {
+              errors.yearsInCurrentEmployment =
+                "Years in current employment is required";
+              isValid = false;
+            }
+            if (!formData.workplaceLocation) {
+              errors.workplaceLocation = "Workplace location is required";
+              isValid = false;
+            }
+          } else if (formData.employmentStatus === "self-employed") {
+            if (!formData.businessName) {
+              errors.businessName = "Business name is required";
+              isValid = false;
+            }
+            if (!formData.businessType) {
+              errors.businessType = "Business type is required";
+              isValid = false;
+            }
+            if (!formData.monthlyBusinessIncome) {
+              errors.monthlyBusinessIncome =
+                "Monthly business income is required";
+              isValid = false;
+            }
+            if (!formData.businessLocation) {
+              errors.businessLocation = "Business location is required";
+              isValid = false;
+            }
+            if (!formData.businessGpsAddress) {
+              errors.businessGpsAddress = "Business GPS address is required";
+              isValid = false;
+            }
+            if (!formData.yearsInBusiness) {
+              errors.yearsInBusiness = "Years in business is required";
+              isValid = false;
+            }
+          }
+        }
+        break;
+
+      case "references":
+        if (registrationType === "detailed") {
+          if (!formData.referenceName1) {
+            errors.referenceName1 = "Reference 1 name is required";
+            isValid = false;
+          }
+          if (!formData.referencePhone1) {
+            errors.referencePhone1 = "Reference 1 phone is required";
+            isValid = false;
+          }
+          if (!formData.referenceRelationship1) {
+            errors.referenceRelationship1 =
+              "Reference 1 relationship is required";
+            isValid = false;
+          }
+          if (!formData.referenceName2) {
+            errors.referenceName2 = "Reference 2 name is required";
+            isValid = false;
+          }
+          if (!formData.referencePhone2) {
+            errors.referencePhone2 = "Reference 2 phone is required";
+            isValid = false;
+          }
+          if (!formData.referenceRelationship2) {
+            errors.referenceRelationship2 =
+              "Reference 2 relationship is required";
+            isValid = false;
+          }
+          // reference 3 is optional
+        }
+        break;
+
+      default:
+        break;
+    }
+
+    setFormErrors(errors);
+    return isValid;
+  };
+
   // ---- Navigation ----
   const handleNext = () => {
+    if (!validateStep(activeSection)) {
+      // Scroll to the top of the form to show errors
+      const el = document.querySelector(".individual-customer-container .form-content");
+      if (el) el.scrollTop = 0;
+      return;
+    }
+
     if (currentIndex < steps.length - 1) {
       setActiveSection(steps[currentIndex + 1]);
       const el = document.querySelector(".individual-customer-container .form-content");
@@ -122,8 +290,19 @@ const IndividualCustomer = () => {
     }
   };
 
-  // ---- API Submission ----
+  // ---- Final Submission ----
   const handleCreateCustomer = async () => {
+    // Validate all steps
+    for (const step of steps) {
+      if (!validateStep(step)) {
+        setActiveSection(step);
+        const el = document.querySelector(".individual-customer-container .form-content");
+        if (el) el.scrollTop = 0;
+        return;
+      }
+    }
+
+    // All valid – proceed with submission
     setIsSubmitting(true);
     setFormErrors({});
 
@@ -137,7 +316,7 @@ const IndividualCustomer = () => {
 
       const token = localStorage.getItem("token");
       const res = await fetch(
-        `${process.env.REACT_APP_API_URL}/api/kyc/save-all`,
+        `${process.env.REACT_APP_API_URL}/api/kyc/save-all-manual`,
         {
           method: "POST",
           headers: {
@@ -162,9 +341,6 @@ const IndividualCustomer = () => {
         return;
       }
 
-      // ---- Success ----
-      const kycCode = result.kycCode || "";
-      setSuccessKycCode(kycCode);
       setShowSuccessModal(true);
       setIsSubmitting(false);
     } catch (err) {
@@ -174,12 +350,9 @@ const IndividualCustomer = () => {
     }
   };
 
-  // ---- Close modal and reset form (optional) ----
+  // ---- Modal close ----
   const handleModalClose = () => {
     setShowSuccessModal(false);
-    // Optionally reset the form to initial state
-    // You could reset all fields or navigate away.
-    // For now, we just close the modal.
   };
 
   // ---- Render ----
@@ -223,7 +396,6 @@ const IndividualCustomer = () => {
 
         {/* SCROLLABLE CONTENT */}
         <div className="form-content">
-          {/* BIODATA */}
           {activeSection === "biodata" && (
             <PersonalInfo
               formData={formData}
@@ -235,7 +407,6 @@ const IndividualCustomer = () => {
             />
           )}
 
-          {/* CONTACT */}
           {activeSection === "contact" && (
             <ContactInfo
               formData={formData}
@@ -244,7 +415,6 @@ const IndividualCustomer = () => {
             />
           )}
 
-          {/* OCCUPATION – only in detailed mode */}
           {registrationType === "detailed" && activeSection === "occupation" && (
             <EmploymentInfo
               formData={formData}
@@ -254,7 +424,6 @@ const IndividualCustomer = () => {
             />
           )}
 
-          {/* REFERENCES – only in detailed mode */}
           {registrationType === "detailed" && activeSection === "references" && (
             <ReferenceInfo
               formData={formData}
@@ -264,7 +433,7 @@ const IndividualCustomer = () => {
           )}
         </div>
 
-        {/* ACTIONS – fixed at bottom */}
+        {/* ACTIONS */}
         <div className="form-actions">
           <button
             onClick={handlePrevious}
@@ -292,14 +461,9 @@ const IndividualCustomer = () => {
       {/* SUCCESS MODAL */}
       {showSuccessModal && (
         <div className="modal-overlay">
-          <div className="modal-content">
-            <h2>🎉 Customer Created!</h2>
-            <p>Your customer has been successfully registered.</p>
-            {successKycCode && (
-              <div className="kyc-code-box">
-                <strong>KYC Code:</strong> <span>{successKycCode}</span>
-              </div>
-            )}
+          <div className="modal-content" style={{ textAlign: "center" }}>
+            <h2 style={{ color: "#28a745" }}>✅ Customer Created Successfully!</h2>
+            <p>Your customer account has been created successfully.</p>
             <button className="modal-close-btn" onClick={handleModalClose}>
               Close
             </button>

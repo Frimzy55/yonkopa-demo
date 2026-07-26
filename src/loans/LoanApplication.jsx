@@ -4,7 +4,7 @@ import LoanForm from "./CustomerLoanForm";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 const LoanApplication = () => {
-  const [formData, setFormData] = useState({ kycCode: "" });
+  const [formData, setFormData] = useState({ customerId: "" });
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState("verify");
@@ -25,7 +25,7 @@ const LoanApplication = () => {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
+          body: JSON.stringify({ customer_id: formData.customerId }), // ✅ fixed
         }
       );
       const data = await res.json();
@@ -48,7 +48,7 @@ const LoanApplication = () => {
     setStatus("");
   };
   const handleReset = () => {
-    setFormData({ kycCode: "" });
+    setFormData({ customerId: "" });
     setStatus("");
     setStep("verify");
     setVerifiedCustomer(null);
@@ -58,7 +58,7 @@ const LoanApplication = () => {
     <div className="container my-5">
       <div className="card shadow-lg border-0 rounded-4">
         <div className="card-body p-4 p-md-5">
-          {/* Header */}
+          {/* Header - unchanged */}
           <div
             className="text-center mb-5 p-4 rounded-4"
             style={{
@@ -84,15 +84,15 @@ const LoanApplication = () => {
             </div>
             <h2
               className="fw-bold mb-2"
-              style={{ 
-                color: "#007bff", // <-- CHANGED TO BLUE
-                letterSpacing: "0.5px" 
+              style={{
+                color: "#007bff",
+                letterSpacing: "0.5px",
               }}
             >
               Loan Application
             </h2>
             <p className="mb-0" style={{ color: "#cbd5e1", fontSize: "15px" }}>
-              Verify your KYC information to continue your loan request.
+              Verify your Customer ID to continue your loan request.
             </p>
           </div>
 
@@ -101,17 +101,17 @@ const LoanApplication = () => {
             <form onSubmit={handleSubmit}>
               <div className="mb-3">
                 <label className="form-label fw-semibold">
-                  Enter Applicant KYC Code
+                  Enter Customer ID
                 </label>
                 <small className="text-muted d-block mb-2">
-                  Please complete your KYC forms to receive your code.
+                  Provide your unique Customer ID to verify your identity.
                 </small>
                 <input
-                  name="kycCode"
+                  name="customerId"
                   className="form-control form-control-lg"
-                  value={formData.kycCode}
+                  value={formData.customerId}
                   onChange={handleInputChange}
-                  placeholder="e.g. kyc00001"
+                  placeholder="e.g. 00001"
                   required
                   disabled={loading}
                 />
@@ -130,7 +130,7 @@ const LoanApplication = () => {
                     </>
                   ) : (
                     <>
-                      <i className="bi bi-shield-check"></i> Verify KYC
+                      <i className="bi bi-shield-check"></i> Verify
                     </>
                   )}
                 </button>
@@ -146,7 +146,7 @@ const LoanApplication = () => {
             </form>
           )}
 
-          {/* VERIFIED SUCCESS */}
+          {/* VERIFIED SUCCESS - unchanged */}
           {step === "verify" && status === "verified" && (
             <div className="text-center">
               <div className="display-4 text-success mb-3">✔</div>
@@ -172,11 +172,11 @@ const LoanApplication = () => {
             </div>
           )}
 
-          {/* ERROR MESSAGE */}
+          {/* ERROR MESSAGE - unchanged */}
           {status && status !== "verified" && (
             <div className="alert alert-danger mt-4 text-center">
               {status === "not-found"
-                ? "Invalid KYC Code"
+                ? "Invalid Customer ID. Please check and try again."
                 : "Server error. Please try again."}
             </div>
           )}
