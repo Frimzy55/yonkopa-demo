@@ -8,8 +8,8 @@ const LoanProductForm = ({
   onCancel,
   isEditing,
   loading,
-  fees = [],               // fee list from parent (fetched from DB)
-  feesLoading = false,     // loading state for fees
+  fees = [],
+  feesLoading = false,
 }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 5;
@@ -25,11 +25,14 @@ const LoanProductForm = ({
     { id: 5, label: 'Loan Penalty Configuration' },
   ];
 
-  const nextStep = () => {
+  // ---------- Navigation with preventDefault ----------
+  const nextStep = (e) => {
+    e.preventDefault();
     if (currentStep < totalSteps) setCurrentStep(currentStep + 1);
   };
 
-  const prevStep = () => {
+  const prevStep = (e) => {
+    e.preventDefault();
     if (currentStep > 1) setCurrentStep(currentStep - 1);
   };
 
@@ -528,7 +531,6 @@ const LoanProductForm = ({
         );
 
       case 4: {
-        // Use the fee list from props (fetched from database)
         const allFees = fees && fees.length ? fees : [];
 
         const indexOfLast = currentPage * rowsPerPage;
@@ -937,28 +939,55 @@ const LoanProductForm = ({
       </div>
 
       <div className="card-body">
-        <form onSubmit={handleSubmit}>
+        {/* 🔥 FIX: Prevent Enter key from submitting on steps 1-4 */}
+        <form
+          onSubmit={handleSubmit}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && currentStep !== totalSteps) {
+              e.preventDefault();
+            }
+          }}
+        >
           <div className="row g-3">
             {renderStepContent()}
 
             <div className="col-12 mt-3 d-flex justify-content-between">
               <div>
                 {currentStep > 1 && (
-                  <button type="button" className="btn btn-secondary" onClick={prevStep} disabled={loading}>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={prevStep}
+                    disabled={loading}
+                  >
                     <i className="bi bi-chevron-left me-1"></i> Previous
                   </button>
                 )}
               </div>
               <div className="d-flex gap-2">
-                <button type="button" className="btn btn-outline-secondary" onClick={onCancel} disabled={loading}>
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary"
+                  onClick={onCancel}
+                  disabled={loading}
+                >
                   Cancel
                 </button>
                 {currentStep === totalSteps ? (
-                  <button type="submit" className="btn btn-success" disabled={loading}>
+                  <button
+                    type="submit"
+                    className="btn btn-success"
+                    disabled={loading}
+                  >
                     <i className="bi bi-check-circle me-1"></i> Finish
                   </button>
                 ) : (
-                  <button type="button" className="btn btn-primary" onClick={nextStep} disabled={loading}>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={nextStep}
+                    disabled={loading}
+                  >
                     Next <i className="bi bi-chevron-right"></i>
                   </button>
                 )}
