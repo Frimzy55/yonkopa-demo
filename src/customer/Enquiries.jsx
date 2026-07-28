@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import ViewEnquiryModal from "./ViewEnquiryModal";
+import EnquiryDetailView from "./ViewEnquiryModal";   // new inline component
 import EditEnquiryModal from "./EditEnquiryModal";
 
 const CustomerEnquiries = () => {
@@ -15,11 +15,9 @@ const CustomerEnquiries = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  // Modals
-  const [showViewModal, setShowViewModal] = useState(false);
+  // Detail view & Edit modal
+  const [selectedEnquiry, setSelectedEnquiry] = useState(null); // for inline view
   const [showEditModal, setShowEditModal] = useState(false);
-  const [selectedEnquiry, setSelectedEnquiry] = useState(null);
-
   const [editFormData, setEditFormData] = useState({
     status: "",
     response: "",
@@ -60,26 +58,30 @@ const CustomerEnquiries = () => {
 
       const data = await res.json();
 
-     const mapped = (data?.data || []).map((loan) => ({
-  id: loan.id,
-  enquiryId: loan.enquiryId,
-  customerId: loan.customerId || "",
-  customerName: loan.customerName || "",
-
-
-  avatar: loan.avatar
-  ? `${process.env.REACT_APP_API_URL}/uploads/${loan.avatar}`
-  : "",
-
-  contactNumber: loan.contactNumber || "",
-  email: loan.email || "",
-  dob: loan.dob || "",
-  gender: loan.gender || "",
-  amountApproved: loan.amountApproved || 0,
-  approvalDate: loan.approvalDate || "",
-  status: loan.status || "pending",
-  response: loan.response || "",
-}));
+      const mapped = (data?.data || []).map((loan) => ({
+        id: loan.id,
+        enquiryId: loan.enquiryId,
+        customerId: loan.customerId || "",
+        customerName: loan.customerName || "",
+        avatar: loan.avatar
+          ? `${process.env.REACT_APP_API_URL}/uploads/${loan.avatar}`
+          : "",
+        contactNumber: loan.contactNumber || "",
+        email: loan.email || "",
+        dob: loan.dob || "",
+        gender: loan.gender || "",
+        amountApproved: loan.amountApproved || 0,
+        approvalDate: loan.approvalDate || "",
+        status: loan.status || "pending",
+        response: loan.response || "",
+        // additional fields that may come from the API for the detail view:
+        brand: loan.brand || "",
+        headOffice: loan.headOffice || "",
+        relationshipOfficer: loan.relationshipOfficer || "",
+        registrationDate: loan.registrationDate || "",
+        accounts: loan.accounts || [],
+        loans: loan.loans || [],
+      }));
 
       setEnquiries(mapped);
     } catch (err) {
@@ -129,8 +131,8 @@ const CustomerEnquiries = () => {
   // HANDLERS
   // =========================================
   const handleView = (item) => {
-    setSelectedEnquiry(item);
-    setShowViewModal(true);
+    // Toggle: click again on the same item to close
+    setSelectedEnquiry((prev) => (prev?.id === item.id ? null : item));
   };
 
   const handleEdit = (item) => {
@@ -144,9 +146,11 @@ const CustomerEnquiries = () => {
 
   const handleUpdateEnquiry = (updatedEnquiry) => {
     setEnquiries((prev) =>
-      prev.map((e) =>
-        e.id === updatedEnquiry.id ? updatedEnquiry : e
-      )
+      prev.map((e) => (e.id === updatedEnquiry.id ? updatedEnquiry : e))
+    );
+    // also update the selected one if it's the same
+    setSelectedEnquiry((prev) =>
+      prev?.id === updatedEnquiry.id ? updatedEnquiry : prev
     );
   };
 
@@ -261,7 +265,6 @@ const CustomerEnquiries = () => {
             <thead className="table-light">
               <tr>
                 <th>#</th>
-                  
                 <th>Customer ID</th>
                 <th>Full Name</th>
                 <th>Phone</th>
@@ -269,7 +272,6 @@ const CustomerEnquiries = () => {
                 <th>DOB</th>
                 <th>Gender</th>
                 <th>Actions</th>
-                
               </tr>
             </thead>
             <tbody>
@@ -277,7 +279,6 @@ const CustomerEnquiries = () => {
                 currentItems.map((item, idx) => (
                   <tr key={item.id}>
                     <td>{start + idx + 1}</td>
-                    
                     <td>
                       <code className="bg-light px-2 py-1 rounded">
                         {item.customerId || "—"}
@@ -334,25 +335,40 @@ const CustomerEnquiries = () => {
                 {filtered.length}
               </small>
               <ul className="pagination pagination-sm mb-0">
-                <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
-                  <button className="page-link" onClick={() => goToPage(currentPage - 1)}>
+                <li
+                  className={`page-item ${currentPage === 1 ? "disabled" : ""}`}
+                >
+                  <button
+                    className="page-link"
+                    onClick={() => goToPage(currentPage - 1)}
+                  >
                     Previous
                   </button>
                 </li>
                 {[...Array(totalPages).keys()].map((page) => (
                   <li
                     key={page}
-                    className={`page-item ${currentPage === page + 1 ? "active" : ""}`}
+                    className={`page-item ${
+                      currentPage === page + 1 ? "active" : ""
+                    }`}
                   >
-                    <button className="page-link" onClick={() => goToPage(page + 1)}>
+                    <button
+                      className="page-link"
+                      onClick={() => goToPage(page + 1)}
+                    >
                       {page + 1}
                     </button>
                   </li>
                 ))}
                 <li
-                  className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}
+                  className={`page-item ${
+                    currentPage === totalPages ? "disabled" : ""
+                  }`}
                 >
-                  <button className="page-link" onClick={() => goToPage(currentPage + 1)}>
+                  <button
+                    className="page-link"
+                    onClick={() => goToPage(currentPage + 1)}
+                  >
                     Next
                   </button>
                 </li>
@@ -362,14 +378,20 @@ const CustomerEnquiries = () => {
         )}
       </div>
 
-      {/* MODALS */}
-      <ViewEnquiryModal
-        show={showViewModal}
-        enquiry={selectedEnquiry}
-        onClose={() => setShowViewModal(false)}
-        getStatusBadge={getStatusBadge}
-      />
+      {/* ============================================ */}
+      {/* INLINE DETAIL VIEW (self‑contained)          */}
+      {/* ============================================ */}
+      {selectedEnquiry && (
+        <div className="mt-4">
+          <EnquiryDetailView
+            enquiry={selectedEnquiry}
+            onClose={() => setSelectedEnquiry(null)}
+            getStatusBadge={getStatusBadge}
+          />
+        </div>
+      )}
 
+      {/* EDIT MODAL (unchanged) */}
       <EditEnquiryModal
         show={showEditModal}
         enquiry={selectedEnquiry}

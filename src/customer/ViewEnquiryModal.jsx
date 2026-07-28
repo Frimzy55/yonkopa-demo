@@ -2,12 +2,12 @@ import React, { useState } from "react";
 import AccountTable from "./AccountTable";
 import LoanStatementTable from "./LoanStatementTable";
 
-const ViewEnquiryModal = ({ show, enquiry, onClose, getStatusBadge }) => {
+const EnquiryDetailView = ({ enquiry, onClose, getStatusBadge }) => {
   const [activeTab, setActiveTab] = useState("accounts");
 
   const IMAGE_BASE_URL = process.env.REACT_APP_API_URL || "";
 
-  if (!show || !enquiry) return null;
+  if (!enquiry) return null;
 
   // ----------------------------
   // FORMAT DATE
@@ -36,38 +36,16 @@ const ViewEnquiryModal = ({ show, enquiry, onClose, getStatusBadge }) => {
   };
 
   // ----------------------------
-  // SAFE IMAGE HANDLER (FIX)
+  // SAFE IMAGE HANDLER
   // ----------------------------
-  /*const getAvatarUrl = (avatar) => {
+  const getAvatarUrl = (avatar) => {
     if (!avatar) return null;
-
-    // already full URL
     if (avatar.startsWith("http://") || avatar.startsWith("https://")) {
       return avatar;
     }
-
-    // backend relative path or filename
-    return `${IMAGE_BASE_URL}/${avatar.replace(/^\/+/, "")}`;
-  };*/
-
-
-  const getAvatarUrl = (avatar) => {
-  if (!avatar) return null;
-
-  if (
-    avatar.startsWith("http://") ||
-    avatar.startsWith("https://")
-  ) {
-    return avatar;
-  }
-
-  const cleanPath = avatar
-    .replace(/\\/g, "/")
-    .replace(/^\/+/, "");
-
-  return `${IMAGE_BASE_URL}/${cleanPath}`;
-};
-  
+    const cleanPath = avatar.replace(/\\/g, "/").replace(/^\/+/, "");
+    return `${IMAGE_BASE_URL}/${cleanPath}`;
+  };
 
   const accountsData = enquiry.accounts || [];
   const loansData = enquiry.loans || [];
@@ -83,173 +61,145 @@ const ViewEnquiryModal = ({ show, enquiry, onClose, getStatusBadge }) => {
   };
 
   return (
-    <div
-      className="modal show d-block"
-      style={{
-        backgroundColor: "rgba(0,0,0,0.6)",
-        backdropFilter: "blur(2px)",
-      }}
-    >
-      <div className="modal-dialog modal-xl modal-dialog-centered">
-        <div className="modal-content border-0 rounded-4 overflow-hidden">
+    <div className="card border-0 shadow-sm rounded-4 overflow-hidden">
+      {/* HEADER with gradient and close button */}
+      <div
+        className="card-header px-4 py-3"
+        style={{
+          background: "linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)",
+          borderBottom: "none",
+        }}
+      >
+        <div className="d-flex justify-content-between align-items-center">
+          <h5 className="text-white fw-semibold fs-4 mb-0">
+            <i className="bi bi-person-badge me-2"></i>
+            Customer Profile
+          </h5>
+          <button
+            className="btn-close btn-close-white"
+            onClick={onClose}
+            aria-label="Close detail view"
+          />
+        </div>
+      </div>
 
-          {/* HEADER */}
-          <div
-            className="modal-header px-4 py-3"
-            style={{
-              background: "linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)",
-              borderBottom: "none",
-            }}
-          >
-            <h5 className="modal-title text-white fw-semibold fs-4">
-              <i className="bi bi-person-badge me-2"></i>
-              Customer Profile
-            </h5>
-            <button className="btn-close btn-close-white" onClick={onClose} />
+      <div className="card-body px-4 py-4">
+        {/* PHOTO + BASIC INFO */}
+        <div className="d-flex flex-column flex-md-row gap-4 mb-4">
+          <div className="text-center text-md-start">
+            <span className="badge bg-light text-dark px-3 py-1 rounded-pill shadow-sm fs-6 mb-2">
+              <i className="bi bi-camera me-1"></i> Customer Photo
+            </span>
+            {getAvatarUrl(enquiry.avatar) ? (
+              <img
+                src={getAvatarUrl(enquiry.avatar)}
+                alt="Customer"
+                className="rounded-circle border border-2 border-white shadow-sm"
+                style={{ width: "100px", height: "100px", objectFit: "cover" }}
+                onError={(e) => {
+                  e.target.style.display = "none";
+                }}
+              />
+            ) : (
+              <div
+                className="rounded-circle bg-light d-flex align-items-center justify-content-center shadow-sm"
+                style={{
+                  width: "100px",
+                  height: "100px",
+                  fontSize: "2.5rem",
+                  fontWeight: 500,
+                  color: "#1e3c72",
+                  backgroundColor: "#eef2ff",
+                }}
+              >
+                {getInitials(enquiry.customerName)}
+              </div>
+            )}
           </div>
 
-          {/* BODY */}
-          <div className="modal-body px-4 py-4">
-
-            {/* PHOTO SECTION */}
-            <div className="d-flex flex-column flex-md-row gap-4 mb-4">
-              <div className="text-center text-md-start">
-
-                <span className="badge bg-light text-dark px-3 py-1 rounded-pill shadow-sm fs-6 mb-2">
-                  <i className="bi bi-camera me-1"></i> Customer Photo
-                </span>
-
-                {getAvatarUrl(enquiry.avatar) ? (
-                  <img
-                    src={getAvatarUrl(enquiry.avatar)}
-                    alt="Customer"
-                    className="rounded-circle border border-2 border-white shadow-sm"
-                    style={{ width: "100px", height: "100px", objectFit: "cover" }}
-                    onError={(e) => {
-                      e.target.style.display = "none";
-                    }}
-                  />
-                ) : (
-                  <div
-                    className="rounded-circle bg-light d-flex align-items-center justify-content-center shadow-sm"
-                    style={{
-                      width: "100px",
-                      height: "100px",
-                      fontSize: "2.5rem",
-                      fontWeight: 500,
-                      color: "#1e3c72",
-                      backgroundColor: "#eef2ff",
-                    }}
-                  >
-                    {getInitials(enquiry.customerName)}
-                  </div>
-                )}
-              </div>
-
-              {/* DETAILS */}
-              <div className="flex-grow-1">
-                <div className="border-bottom pb-2 mb-2">
-                  <small className="text-uppercase text-muted fw-semibold">
-                    Full Name
-                  </small>
-                  <div className="h4 fw-semibold mt-1">
-                    {enquiry.customerName || "—"}
-                  </div>
-                </div>
-
-                <div className="row g-2">
-                  <div className="col-sm-6">
-                    <small className="text-muted">Customer ID</small>
-                    <div className="fw-semibold font-monospace">
-                      {enquiry.customerId || "—"}
-                    </div>
-                  </div>
-
-                  <div className="col-sm-6">
-                    <small className="text-muted">Branch</small>
-                    <div className="fw-semibold">
-                      {enquiry.brand || enquiry.headOffice || "Head Office"}
-                    </div>
-                  </div>
-
-                  <div className="col-sm-6">
-                    <small className="text-muted">Relationship Officer</small>
-                    <div className="fw-semibold">
-                      {enquiry.relationshipOfficer || "—"}
-                    </div>
-                  </div>
-
-                  <div className="col-sm-6">
-                    <small className="text-muted">Registration Date</small>
-                    <div className="fw-semibold">
-                      {formatDate(enquiry.registrationDate)}
-                    </div>
-                  </div>
-                </div>
+          <div className="flex-grow-1">
+            <div className="border-bottom pb-2 mb-2">
+              <small className="text-uppercase text-muted fw-semibold">
+                Full Name
+              </small>
+              <div className="h4 fw-semibold mt-1">
+                {enquiry.customerName || "—"}
               </div>
             </div>
 
-            {/* TABS */}
-            <div className="mt-3">
-
-              <div className="d-flex gap-2 mb-3">
-                <button
-                  className={`btn rounded-pill px-3 ${
-                    activeTab === "accounts"
-                      ? "btn-primary"
-                      : "btn-outline-primary"
-                  }`}
-                  onClick={() => setActiveTab("accounts")}
-                >
-                  Accounts
-                </button>
-
-                <button
-                  className={`btn rounded-pill px-3 ${
-                    activeTab === "loan"
-                      ? "btn-primary"
-                      : "btn-outline-primary"
-                  }`}
-                  onClick={() => setActiveTab("loan")}
-                >
-                  Loan Statement
-                </button>
+            <div className="row g-2">
+              <div className="col-sm-6">
+                <small className="text-muted">Customer ID</small>
+                <div className="fw-semibold font-monospace">
+                  {enquiry.customerId || "—"}
+                </div>
               </div>
-
-              <div className="bg-white border rounded-3 p-3 shadow-sm">
-                {activeTab === "accounts" && (
-                  <AccountTable
-                    accounts={accountsData}
-                    globalOfficer={enquiry.relationshipOfficer}
-                    onAction={handleAccountAction}
-                  />
-                )}
-
-                {activeTab === "loan" && (
-                  <LoanStatementTable
-                    loans={loansData}
-                    onAction={handleLoanAction}
-                  />
-                )}
+              <div className="col-sm-6">
+                <small className="text-muted">Branch</small>
+                <div className="fw-semibold">
+                  {enquiry.brand || enquiry.headOffice || "Head Office"}
+                </div>
               </div>
-
+              <div className="col-sm-6">
+                <small className="text-muted">Relationship Officer</small>
+                <div className="fw-semibold">
+                  {enquiry.relationshipOfficer || "—"}
+                </div>
+              </div>
+              <div className="col-sm-6">
+                <small className="text-muted">Registration Date</small>
+                <div className="fw-semibold">
+                  {formatDate(enquiry.registrationDate)}
+                </div>
+              </div>
             </div>
           </div>
+        </div>
 
-          {/* FOOTER */}
-          <div className="modal-footer border-0 pt-0 pb-4 px-4">
+        {/* TABS */}
+        <div className="mt-3">
+          <div className="d-flex gap-2 mb-3">
             <button
-              className="btn btn-outline-secondary rounded-pill px-4 py-1"
-              onClick={onClose}
+              className={`btn rounded-pill px-3 ${
+                activeTab === "accounts"
+                  ? "btn-primary"
+                  : "btn-outline-primary"
+              }`}
+              onClick={() => setActiveTab("accounts")}
             >
-              <i className="bi bi-x-circle me-2"></i> Close
+              Accounts
+            </button>
+            <button
+              className={`btn rounded-pill px-3 ${
+                activeTab === "loan"
+                  ? "btn-primary"
+                  : "btn-outline-primary"
+              }`}
+              onClick={() => setActiveTab("loan")}
+            >
+              Loan Statement
             </button>
           </div>
 
+          <div className="bg-white border rounded-3 p-3 shadow-sm">
+            {activeTab === "accounts" && (
+              <AccountTable
+                accounts={accountsData}
+                globalOfficer={enquiry.relationshipOfficer}
+                onAction={handleAccountAction}
+              />
+            )}
+            {activeTab === "loan" && (
+              <LoanStatementTable
+                loans={loansData}
+                onAction={handleLoanAction}
+              />
+            )}
+          </div>
         </div>
       </div>
     </div>
   );
 };
 
-export default ViewEnquiryModal;
+export default EnquiryDetailView;

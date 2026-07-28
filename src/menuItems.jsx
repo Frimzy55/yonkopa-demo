@@ -1,4 +1,3 @@
-// menuItems.js
 export const menuItems = [
   { name: 'Dashboard', icon: 'bi-speedometer2' },
   { 
@@ -44,7 +43,7 @@ export const menuItems = [
       },
       { name: 'Till Management', icon: 'bi-calculator',
         nestedMenus: [
-             { name: 'Create Till', icon: 'bi-plus-circle' },   // <-- new entry
+          { name: 'Create Till', icon: 'bi-plus-circle' },
           { name: 'Till Status', icon: 'bi-graph-up' },
           { name: 'Open or Close Till', icon: 'bi-toggle-on' },
           { name: 'Till Transfer', icon: 'bi-arrow-left-right' },
@@ -159,7 +158,6 @@ export const menuItems = [
       { name: 'Loans', icon: 'bi-shield-plus',
         nestedMenus: [
           { name: 'Loans Awaiting Approvals', icon: 'bi-globe' },
-         // { name: 'Approved Loans', icon: 'bi-check-circle-fill' },
           { name: 'Approve New Individual Loan', icon: 'bi-person' },
           { name: 'Approve Corporate Loan', icon: 'bi-building' },
           { name: 'Approve Group Loan', icon: 'bi-people-fill' },
@@ -216,15 +214,14 @@ export const menuItems = [
       { name: 'Loan Reports', icon: 'bi-piggy-bank', reportType: 'Loan Reports',
         reports: [
           { name: 'Loan Portfolio Report', icon: 'bi-bank' },
-           { name: 'Approved Loans Report', icon: 'bi-check-circle-fill' } , // ✅ Added this line
+          { name: 'Approved Loans Report', icon: 'bi-check-circle-fill' },
           { name: 'Loan Disbursement Report', icon: 'bi-cash' },
           { name: 'Loan Repayment Report', icon: 'bi-arrow-return-left' },
           { name: 'Loan Arrears Report', icon: 'bi-exclamation-triangle' },
           { name: 'Portfolio At Risk (PAR) Report', icon: 'bi-graph-up' },
           { name: 'Non-Performing Loans Report', icon: 'bi-flag' },
           { name: 'Loan Aging Analysis Report', icon: 'bi-calendar' },
-          { name: 'Written-Off Loans Report', icon: 'bi-trash' },
-         /// { name: 'Approved Loans Report', icon: 'bi-check-circle-fill' }  // ✅ Added this line
+          { name: 'Written-Off Loans Report', icon: 'bi-trash' }
         ]
       },
       { name: 'Customer Reports', icon: 'bi-people', reportType: 'Customer Reports',
@@ -314,7 +311,13 @@ export const menuItems = [
     name: 'System Settings', icon: 'bi-gear',
     subMenus: [
       { name: 'Branches', icon: 'bi-building' },
-      { name: 'Configurations', icon: 'bi-sliders2' }
+      { 
+        name: 'Configurations', icon: 'bi-sliders2',
+        nestedMenus: [                       // ← New section
+          { name: 'Loan Product', icon: 'bi-credit-card' },
+          { name: 'Loan Fees', icon: 'bi-cash' }
+        ]
+      }
     ]
   }
 ];

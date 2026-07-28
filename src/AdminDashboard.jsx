@@ -147,7 +147,9 @@ import UploadLoans from './batch-upload/UploadLoans';
 
 // System Settings Components
 import Branches from './system-settings/Branches';
-import Configurations from './system-settings/Configurations';
+import Configurations from './system-settings/configurations/Configurations';
+import LoanProduct from './system-settings/configurations/LoanProduct';   // new
+import LoanFees from './system-settings/configurations/LoanFees';        // new
 
 // Report Components
 import LoanReports from './reports/LoanReports';
@@ -853,20 +855,44 @@ const AdminDashboard = () => {
     }
 
     // System Settings Section
-    if (activeMenu === 'System Settings') {
-      const settingsComponents = {
-        'Branches': Branches,
-        'Configurations': Configurations,
-      };
-      if (activeSubMenu && settingsComponents[activeSubMenu]) {
-        const Component = settingsComponents[activeSubMenu];
-        return <Component />;
-      }
-      return <div className="bg-light p-4 rounded-3 text-center">
-        <i className="bi bi-gear fs-1 text-secondary"></i>
-        <p className="mt-2 mb-0">Please select a system settings option from the menu.</p>
-      </div>;
+   // Inside renderContent() - System Settings section
+if (activeMenu === 'System Settings') {
+  // Branches – no nested menus
+  if (activeSubMenu === 'Branches') {
+    return <Branches />;
+  }
+
+  // Configurations – handles nested menus
+  if (activeSubMenu === 'Configurations') {
+    const configNestedComponents = {
+      'Loan Product': LoanProduct,
+      'Loan Fees': LoanFees,
+    };
+
+    if (activeNestedMenu && configNestedComponents[activeNestedMenu]) {
+      const Component = configNestedComponents[activeNestedMenu];
+      return <Component />;
     }
+
+    // Default placeholder when no nested item is selected
+    return (
+      <div className="bg-light p-4 rounded-3 text-center">
+        <i className="bi bi-sliders2 fs-1 text-secondary"></i>
+        <p className="mt-2 mb-0">
+          Please select a configuration option from the menu.
+        </p>
+      </div>
+    );
+  }
+
+  // Fallback if no submenu is selected
+  return (
+    <div className="bg-light p-4 rounded-3 text-center">
+      <i className="bi bi-gear fs-1 text-secondary"></i>
+      <p className="mt-2 mb-0">Please select a system settings option from the menu.</p>
+    </div>
+  );
+}
 
     // Dashboard
     if (activeMenu === 'Dashboard') {
