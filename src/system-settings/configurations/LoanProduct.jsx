@@ -9,14 +9,7 @@ const API_BASE = process.env.REACT_APP_API_URL
 
 // ---------- Fallback fee list (used if API fails) ----------
 const FALLBACK_FEES = [
-  { id: 1, fee_name: 'Processing Fee', fee_type: 'Processing Fee', fee_trend: 'Standard' },
-  { id: 2, fee_name: 'Setup Fee', fee_type: 'Setup', fee_trend: 'Tiered' },
-  { id: 3, fee_name: 'Late Payment Fee', fee_type: 'Penalty', fee_trend: 'Increasing' },
-  { id: 4, fee_name: 'Insurance Fee', fee_type: 'Insurance', fee_trend: 'Standard' },
-  { id: 5, fee_name: 'Documentation Fee', fee_type: 'Documentation', fee_trend: 'Custom' },
-  { id: 6, fee_name: 'Service Fee', fee_type: 'Service', fee_trend: 'Standard' },
-  { id: 7, fee_name: 'Registration Fee', fee_type: 'Registration', fee_trend: 'Fixed' },
-  { id: 8, fee_name: 'Penalty Fee', fee_type: 'Penalty', fee_trend: 'Tiered' },
+  
 ];
 
 const LoanProduct = () => {
