@@ -78,6 +78,20 @@ const ApplicantDetails = ({ formData }) => {
             </div>
           )}
 
+
+
+           {hasValue(formData.customerId) && (
+            <div>
+              <label style={{ fontWeight: "600", fontSize: "0.85rem", color: "#666", display: "block", marginBottom: "4px" }}>
+                Customer ID
+              </label>
+              <div style={{ fontSize: "1rem", padding: "6px 0", borderBottom: "1px solid #f0f0f0" }}>
+                {formData.customerId}
+              </div>
+            </div>
+          )}
+
+
           {/* Phone */}
           {hasValue(formData.phone) && (
             <div>
@@ -137,6 +151,8 @@ const ApplicantDetails = ({ formData }) => {
               </div>
             </div>
           )}
+
+         
 
           {/* Marital Status */}
           {hasValue(formData.maritalstatus) && (
@@ -201,6 +217,8 @@ const ApplicantDetails = ({ formData }) => {
           {/* Hidden fields – always present for form submission */}
           <input type="hidden" name="userId" value={formData.userId} />
           <input type="hidden" name="kycCode" value={formData.kycCode} />
+          {/* If you need to submit customerId as well, uncomment the next line */}
+          {/* <input type="hidden" name="customerId" value={formData.customerId} /> */}
         </div>
       </div>
     </div>

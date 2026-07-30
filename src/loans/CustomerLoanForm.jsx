@@ -1,9 +1,11 @@
 // src/pages/CustomerDashboard/CustomerLoanForm.jsx
 import React, { useState, useEffect } from "react";
 import ApplicantDetails from "./CustomerApplicantDetails";
-import LoanDetails from "./CustomerLoanDetails";
+import ProductInfo from "./CustomerProductInfo";
+import TermFrequency from "./CustomerTermFrequency";
 import GuarantorInfo from "./CustomerGuarantorInfo";
-import CustomerMomoDetails from "./CustomerMomoDetails";
+import DocumentUpload from "./CustomerDocumentUpload";
+import NotificationService from "./CustomerNotificationService";
 import "./LoanForm.css";
 
 // ============= Toast Notification =============
@@ -81,6 +83,7 @@ const CustomerLoanForm = ({ user, handleReset }) => {
   const [successMessage, setSuccessMessage] = useState("");
 
   const [formData, setFormData] = useState({
+    // ---- Applicant Details ----
     userId: "",
     fullName: "",
     phone: "",
@@ -94,9 +97,13 @@ const CustomerLoanForm = ({ user, handleReset }) => {
     residentialAddress: "",
     residentialGPS: "",
     employmentStatus: "",
-    // Loan fields
+    customerId: "",
+
+    // ---- Product Information ----
     loanAmount: "",
     loanPurpose: "",
+
+    // ---- Term and Frequency ----
     loanTerm: "",
     repaymentFrequency: "",
     ratePerAnnum: "",
@@ -105,8 +112,8 @@ const CustomerLoanForm = ({ user, handleReset }) => {
     numberOfPayments: "",
     monthlyPayment: "",
     loanFees: "",
-    // Guarantor
-    guarantorProfilePicture: null,
+
+    // ---- Guarantor Information (text fields) ----
     guarantorName: "",
     guarantorPhone: "",
     guarantorAddress: "",
@@ -117,14 +124,18 @@ const CustomerLoanForm = ({ user, handleReset }) => {
     guarantorWorkLocation: "",
     guarantorNameOfEmployer: "",
     guarantorYearsInService: "",
-    guarantorPayslip: null,
     guarantorBusinessName: "",
     guarantorBusinessLocation: "",
     guarantorYearsInBusiness: "",
+
+    // ---- Document Upload (file fields) ----
+    guarantorProfilePicture: null,
+    guarantorPayslip: null,
     guarantorBusinessPicture: null,
     guarantorGhanaCardFront: null,
     guarantorGhanaCardBack: null,
-    // MOMO
+
+    // ---- Notification Service (MOMO) ----
     momoProvider: "",
     momoNumber: "",
     momoAccountName: "",
@@ -192,6 +203,7 @@ const CustomerLoanForm = ({ user, handleReset }) => {
             dateofbirth: dobFormatted,
             dependents: kyc.dependents || "",
             residentialGPS: kyc.residentialGPS || "",
+            customerId: kyc.customer_id || user.customerId || "",
           }));
         } else {
           // Fallback: use basic user prop if fetch fails
@@ -211,6 +223,7 @@ const CustomerLoanForm = ({ user, handleReset }) => {
             dateofbirth: "",
             dependents: user.dependents || "",
             residentialGPS: user.residentialGPS || "",
+            customerId: user.customerId || "",
           }));
         }
       } catch (err) {
@@ -225,13 +238,17 @@ const CustomerLoanForm = ({ user, handleReset }) => {
   // All validation has been removed – steps proceed unconditionally
   // ============================================================
 
+  // ---------- Step definitions ----------
   const steps = [
-    { number: 1, title: "" },
-    { number: 2, title: "Loan Details" },
-    { number: 3, title: "Guarantor Info" },
-    { number: 4, title: "Momo Details" },
+    { number: 1, title: "Applicant Details" },
+    { number: 2, title: "Product Information" },
+    { number: 3, title: "Term and Frequency" },
+    { number: 4, title: "Guarantor Information" },
+    { number: 5, title: "Document Upload" },
+    { number: 6, title: "Notification Service" },
   ];
 
+  // ---------- Handlers ----------
   const handleInputChange = (e) => {
     const { name, value, files, type, checked } = e.target;
     setFormData((prev) => ({
@@ -250,6 +267,7 @@ const CustomerLoanForm = ({ user, handleReset }) => {
     setCurrentStep(prev => Math.max(prev - 1, 1));
   };
 
+  // ---------- Submit ----------
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -282,29 +300,33 @@ const CustomerLoanForm = ({ user, handleReset }) => {
     }
   };
 
+  // ---------- Progress ----------
   const progressPercentage = ((currentStep - 1) / (steps.length - 1)) * 100;
 
+  // ---------- Render step ----------
   const renderStep = () => {
-    const stepProps = { 
-      formData, 
-      handleInputChange, 
-      // No validation props – pass empty objects to avoid breaking child components
-      errors: {}, 
+    const stepProps = {
+      formData,
+      handleInputChange,
+      errors: {},
       touchedFields: {},
-      handleFieldBlur: () => {} // no-op
+      handleFieldBlur: () => {},
     };
     switch (currentStep) {
       case 1: return <ApplicantDetails {...stepProps} />;
-      case 2: return <LoanDetails {...stepProps} />;
-      case 3: return <GuarantorInfo {...stepProps} />;
-      case 4: return <CustomerMomoDetails {...stepProps} />;
+      case 2: return <ProductInfo {...stepProps} />;
+      case 3: return <TermFrequency {...stepProps} />;
+      case 4: return <GuarantorInfo {...stepProps} />;
+      case 5: return <DocumentUpload {...stepProps} />;
+      case 6: return <NotificationService {...stepProps} />;
       default: return null;
     }
   };
 
+  // ---------- JSX ----------
   return (
     <div className="content-section">
-      <h2>Loan Application</h2>
+      <h2> Individual Loan Application</h2>
 
       {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
       {showSuccessPopup && <SuccessPopup message={successMessage} onClose={handleSuccessPopupClose} onContinue={handleSuccessContinue} />}
@@ -331,10 +353,7 @@ const CustomerLoanForm = ({ user, handleReset }) => {
             </div>
           ))}
         </div>
-        <div className="progress-text">
-          Step {currentStep} of {steps.length}
-          <span className="progress-percentage">{Math.round(progressPercentage)}%</span>
-        </div>
+        
       </div>
 
       <form onSubmit={handleSubmit} className="loan-form">
@@ -351,7 +370,6 @@ const CustomerLoanForm = ({ user, handleReset }) => {
             </button>
           )}
         </div>
-        {/* Error summary removed */}
       </form>
     </div>
   );

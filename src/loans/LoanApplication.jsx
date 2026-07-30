@@ -89,10 +89,10 @@ const LoanApplication = () => {
                 letterSpacing: "0.5px",
               }}
             >
-              Loan Application
+              Individual Loan Application
             </h2>
             <p className="mb-0" style={{ color: "#cbd5e1", fontSize: "15px" }}>
-              Verify your Customer ID to continue your loan request.
+              Verify the Customer ID to continue loan request.
             </p>
           </div>
 
@@ -111,7 +111,7 @@ const LoanApplication = () => {
                   className="form-control form-control-lg"
                   value={formData.customerId}
                   onChange={handleInputChange}
-                  placeholder="e.g. 00001"
+                  placeholder=""
                   required
                   disabled={loading}
                 />

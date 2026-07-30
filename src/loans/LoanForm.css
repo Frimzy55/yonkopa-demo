@@ -1574,3 +1574,37 @@ html, body {
     padding-left: 0.25rem;
   }
 }
+
+
+
+
+
+
+
+
+/* Main loan form container */
+.content-section {
+  transform: scale(0.9);      /* Reduce to 90% */
+  transform-origin: top center;
+  width: 111.11%;             /* Compensates for the scale */
+  margin: 0 auto;
+}
+
+
+/* Force tighter spacing on the heading */
+.content-section .form-step h3,
+.content-section .form-section h3,
+.content-section .step-heading {    /* add any other possible classes */
+  margin-bottom: 0.5rem !important;
+}
+
+/* Reduce the top margin of the step container */
+.content-section .form-step,
+.content-section .step-container {
+  margin-top: 0.25rem !important;
+}
+
+/* Also shrink any padding on the wrapper */
+.content-section .form-step {
+  padding-top: 0 !important;
+}
