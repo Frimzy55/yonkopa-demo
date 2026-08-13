@@ -148,185 +148,220 @@ const LoginPage = ({ onClose, onSwitchToSignUp }) => {
   };
 
   return (
-    <div className="bg-white rounded-4 shadow-lg p-4 p-md-5" style={{ maxWidth: '460px', width: '100%' }}>
-      {/* Header */}
-      <div className="d-flex justify-content-between align-items-center mb-4">
+    <div
+      className="bg-white rounded-4 shadow-lg d-flex flex-column"
+      style={{
+        width: "460px",
+        maxWidth: "100%",
+        maxHeight: "90vh",
+        overflow: "hidden",
+      }}
+    >
+      {/* Header – sticky */}
+      <div className="d-flex justify-content-between align-items-center p-4 pb-3 border-bottom flex-shrink-0">
         <div className="d-flex align-items-center gap-3">
-          <img src={logo} alt="Yonkopa" style={{ height: '44px', objectFit: 'contain' }} />
+          <img src={logo} alt="Yonkopa" style={{ height: "44px", objectFit: "contain" }} />
           <h4 className="m-0 fw-semibold text-primary">
-            {showForgotPassword ? 'Reset Password' : 'Welcome Back'}
+            {showForgotPassword ? "Reset Password" : "Welcome Back"}
           </h4>
         </div>
         <button className="btn-close" onClick={onClose} aria-label="Close"></button>
       </div>
 
-      {!showForgotPassword ? (
-        // LOGIN FORM
-        <>
-          <p className="text-muted mb-4" style={{ fontSize: '0.95rem' }}>
-            Sign in to access your account
-          </p>
+      {/* Scrollable body */}
+      <div className="p-4 pt-0 overflow-y-auto" style={{ flex: "1 1 auto" }}>
+        {!showForgotPassword ? (
+          // LOGIN FORM
+          <>
+            <p className="text-muted mb-4" style={{ fontSize: "0.95rem" }}>
+              Sign in to access your account
+            </p>
 
-          {serverError && (
-            <div className="alert alert-danger py-2 small rounded-3">{serverError}</div>
-          )}
+            {serverError && (
+              <div className="alert alert-danger py-2 small rounded-3">{serverError}</div>
+            )}
 
-          <form onSubmit={handleSubmit} noValidate>
-            {/* Identifier field – label removed */}
-            <div className="mb-3">
-              <div className="input-group">
-                <span className="input-group-text bg-light border-end-0">
-                  <i className="bi bi-envelope text-secondary"></i>
-                </span>
-                <input
-                  type="text"
-                  name="identifier"
-                  className={`form-control border-start-0 ${touched.identifier && errors.identifier ? 'is-invalid' : ''}`}
-                  placeholder="Email or Phone Number"
-                  value={formData.identifier}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  disabled={isSubmitting}
-                />
-                {touched.identifier && errors.identifier && (
-                  <div className="invalid-feedback">{errors.identifier}</div>
-                )}
+            <form onSubmit={handleSubmit} noValidate>
+              {/* Identifier */}
+              <div className="mb-3">
+                <div className="input-group">
+                  <span className="input-group-text bg-light border-end-0">
+                    <i className="bi bi-envelope text-secondary"></i>
+                  </span>
+                  <input
+                    type="text"
+                    name="identifier"
+                    className={`form-control border-start-0 ${touched.identifier && errors.identifier ? "is-invalid" : ""}`}
+                    placeholder="Email or Phone Number"
+                    value={formData.identifier}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    disabled={isSubmitting}
+                  />
+                  {touched.identifier && errors.identifier && (
+                    <div className="invalid-feedback">{errors.identifier}</div>
+                  )}
+                </div>
               </div>
-            </div>
 
-            {/* Password field – label removed */}
-            <div className="mb-3">
-              <div className="input-group">
-                <span className="input-group-text bg-light border-end-0">
-                  <i className="bi bi-lock text-secondary"></i>
-                </span>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  name="password"
-                  className={`form-control border-start-0 ${touched.password && errors.password ? 'is-invalid' : ''}`}
-                  placeholder="Password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  disabled={isSubmitting}
-                />
-                <span
-                  className="input-group-text bg-light border-start-0"
-                  style={{ cursor: "pointer" }}
-                  onClick={() => setShowPassword(!showPassword)}
+              {/* Password */}
+              <div className="mb-3">
+                <div className="input-group">
+                  <span className="input-group-text bg-light border-end-0">
+                    <i className="bi bi-lock text-secondary"></i>
+                  </span>
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    className={`form-control border-start-0 ${touched.password && errors.password ? "is-invalid" : ""}`}
+                    placeholder="Password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    disabled={isSubmitting}
+                  />
+                  <span
+                    className="input-group-text bg-light border-start-0"
+                    style={{ cursor: "pointer" }}
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    <i className={`bi ${showPassword ? "bi-eye-slash" : "bi-eye"} text-secondary`}></i>
+                  </span>
+                  {touched.password && errors.password && (
+                    <div className="invalid-feedback d-block">{errors.password}</div>
+                  )}
+                </div>
+              </div>
+
+              {/* Options */}
+              <div className="d-flex justify-content-between align-items-center mb-4">
+                <div className="form-check">
+                  <input className="form-check-input" type="checkbox" id="rememberMe" disabled={isSubmitting} />
+                  <label className="form-check-label small" htmlFor="rememberMe">Remember me</label>
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-link p-0 text-decoration-none small fw-semibold"
+                  onClick={() => setShowForgotPassword(true)}
+                  style={{ fontSize: "0.875rem", color: "#0d6efd" }}
                 >
-                  <i className={`bi ${showPassword ? "bi-eye-slash" : "bi-eye"} text-secondary`}></i>
-                </span>
-                {touched.password && errors.password && (
-                  <div className="invalid-feedback d-block">{errors.password}</div>
-                )}
+                  Forgot password?
+                </button>
               </div>
-            </div>
 
-            {/* Options row */}
-            <div className="d-flex justify-content-between align-items-center mb-4">
-              <div className="form-check">
-                <input className="form-check-input" type="checkbox" id="rememberMe" disabled={isSubmitting} />
-                <label className="form-check-label small" htmlFor="rememberMe">Remember me</label>
+              <button
+                type="submit"
+                className="btn btn-orange w-100 py-2 fw-semibold rounded-pill"
+                disabled={!canSubmit}
+              >
+                {isSubmitting ? (
+                  <span>
+                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    Logging in...
+                  </span>
+                ) : (
+                  "Sign In"
+                )}
+              </button>
+            </form>
+          </>
+        ) : (
+          // FORGOT PASSWORD FORM
+          <>
+            <p className="text-muted mb-4" style={{ fontSize: "0.95rem" }}>
+              Enter your email or phone number and we'll send you a link to reset your password.
+            </p>
+
+            {forgotError && (
+              <div className="alert alert-danger py-2 small rounded-3">{forgotError}</div>
+            )}
+            {forgotSuccess && (
+              <div className="alert alert-success py-2 small rounded-3">{forgotSuccess}</div>
+            )}
+
+            <form onSubmit={handleForgotSubmit} noValidate>
+              <div className="mb-4">
+                <div className="input-group">
+                  <span className="input-group-text bg-light border-end-0">
+                    <i className="bi bi-envelope text-secondary"></i>
+                  </span>
+                  <input
+                    type="text"
+                    className={`form-control border-start-0 ${forgotTouched && forgotError ? "is-invalid" : ""}`}
+                    placeholder="Email or Phone Number"
+                    value={forgotIdentifier}
+                    onChange={handleForgotIdentifierChange}
+                    onBlur={handleForgotBlur}
+                    disabled={isForgotSubmitting}
+                  />
+                  {forgotTouched && forgotError && (
+                    <div className="invalid-feedback d-block">{forgotError}</div>
+                  )}
+                </div>
               </div>
+
+              <button
+                type="submit"
+                className="btn btn-orange w-100 py-2 fw-semibold rounded-pill mb-3"
+                disabled={isForgotSubmitting || !forgotIdentifier.trim()}
+              >
+                {isForgotSubmitting ? (
+                  <span>
+                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    Sending...
+                  </span>
+                ) : (
+                  "Send Reset Link"
+                )}
+              </button>
+
               <button
                 type="button"
-                className="btn btn-link p-0 text-decoration-none small fw-semibold"
-                onClick={() => setShowForgotPassword(true)}
-                style={{ fontSize: '0.875rem', color: '#0d6efd' }}
+                className="btn btn-outline-secondary w-100 py-2 fw-semibold rounded-pill"
+                onClick={handleBackToLogin}
+                disabled={isForgotSubmitting}
               >
-                Forgot password?
+                Back to Login
               </button>
-            </div>
+            </form>
+          </>
+        )}
+      </div>
 
-            {/* Login button */}
+      {/* Sticky Footer – always visible with dark text */}
+      <div
+        className="border-top p-3 text-center flex-shrink-0"
+        style={{
+          backgroundColor: "#f8f9fa",
+          borderBottomLeftRadius: "1.5rem",
+          borderBottomRightRadius: "1.5rem",
+          color: "#212529",
+        }}
+      >
+        {!showForgotPassword ? (
+          <p className="mb-0 small" style={{ color: "#212529" }}>
+            Don't have an account?{" "}
             <button
-              type="submit"
-              className="btn btn-orange w-100 py-2 fw-semibold rounded-pill"
-              disabled={!canSubmit}
-            >
-              {isSubmitting ? (
-                <span>
-                  <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                  Logging in...
-                </span>
-              ) : (
-                'Sign In'
-              )}
-            </button>
-          </form>
-
-          <p className="text-center mt-4 mb-0 small">
-            Don't have an account?{' '}
-            <button
-              className="btn btn-link p-0 text-primary text-decoration-none fw-semibold"
+              className="btn btn-link p-0 text-primary fw-semibold"
               onClick={onSwitchToSignUp}
+              style={{ fontSize: "inherit", textDecoration: "underline" }}
             >
               Create Account
             </button>
           </p>
-        </>
-      ) : (
-        // FORGOT PASSWORD FORM
-        <>
-          <p className="text-muted mb-4" style={{ fontSize: '0.95rem' }}>
-            Enter your email or phone number and we'll send you a link to reset your password.
-          </p>
-
-          {forgotError && (
-            <div className="alert alert-danger py-2 small rounded-3">{forgotError}</div>
-          )}
-          {forgotSuccess && (
-            <div className="alert alert-success py-2 small rounded-3">{forgotSuccess}</div>
-          )}
-
-          <form onSubmit={handleForgotSubmit} noValidate>
-            <div className="mb-4">
-              <div className="input-group">
-                <span className="input-group-text bg-light border-end-0">
-                  <i className="bi bi-envelope text-secondary"></i>
-                </span>
-                <input
-                  type="text"
-                  className={`form-control border-start-0 ${forgotTouched && forgotError ? 'is-invalid' : ''}`}
-                  placeholder="Email or Phone Number"
-                  value={forgotIdentifier}
-                  onChange={handleForgotIdentifierChange}
-                  onBlur={handleForgotBlur}
-                  disabled={isForgotSubmitting}
-                />
-                {forgotTouched && forgotError && (
-                  <div className="invalid-feedback d-block">{forgotError}</div>
-                )}
-              </div>
-            </div>
-
+        ) : (
+          <p className="mb-0 small" style={{ color: "#212529" }}>
+            Remember your password?{" "}
             <button
-              type="submit"
-              className="btn btn-orange w-100 py-2 fw-semibold rounded-pill mb-3"
-              disabled={isForgotSubmitting || !forgotIdentifier.trim()}
-            >
-              {isForgotSubmitting ? (
-                <span>
-                  <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                  Sending...
-                </span>
-              ) : (
-                'Send Reset Link'
-              )}
-            </button>
-
-            <button
-              type="button"
-              className="btn btn-outline-secondary w-100 py-2 fw-semibold rounded-pill"
+              className="btn btn-link p-0 text-primary fw-semibold"
               onClick={handleBackToLogin}
-              disabled={isForgotSubmitting}
+              style={{ fontSize: "inherit", textDecoration: "underline" }}
             >
               Back to Login
             </button>
-          </form>
-        </>
-      )}
+          </p>
+        )}
+      </div>
     </div>
   );
 };
