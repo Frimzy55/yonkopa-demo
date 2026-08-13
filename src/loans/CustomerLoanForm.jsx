@@ -19,10 +19,12 @@ const Toast = ({ message, type, onClose }) => {
     <div className={`toast-notification toast-${type}`}>
       <div className="toast-content">
         <span className="toast-icon">
-          {type === 'success' ? '✅' : type === 'error' ? '❌' : ''}
+          {type === "success" ? "✅" : type === "error" ? "❌" : ""}
         </span>
         <span className="toast-message">{message}</span>
-        <button className="toast-close" onClick={onClose}>×</button>
+        <button className="toast-close" onClick={onClose}>
+          ×
+        </button>
       </div>
     </div>
   );
@@ -37,7 +39,10 @@ const SuccessPopup = ({ message, onClose, onContinue }) => {
 
   return (
     <div className="success-popup-overlay" onClick={onClose}>
-      <div className="success-popup-content" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="success-popup-content"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="success-animation">
           <div className="success-checkmark">
             <div className="check-icon">
@@ -49,15 +54,22 @@ const SuccessPopup = ({ message, onClose, onContinue }) => {
           </div>
         </div>
         <h3 className="success-title">Application Submitted Successfully!</h3>
-        <p className="success-message">{message || "Your loan application has been received and is being processed."}</p>
+        <p className="success-message">
+          {message ||
+            "Your loan application has been received and is being processed."}
+        </p>
         <div className="success-details">
           <div className="detail-item">
             <span className="detail-icon">📋</span>
-            <span>Application Status: <strong>Under Review</strong></span>
+            <span>
+              Application Status: <strong>Under Review</strong>
+            </span>
           </div>
           <div className="detail-item">
             <span className="detail-icon">⏱️</span>
-            <span>Processing Time: <strong>24-48 hours</strong></span>
+            <span>
+              Processing Time: <strong>24-48 hours</strong>
+            </span>
           </div>
           <div className="detail-item">
             <span className="detail-icon">📧</span>
@@ -65,8 +77,12 @@ const SuccessPopup = ({ message, onClose, onContinue }) => {
           </div>
         </div>
         <div className="success-buttons">
-          <button className="btn-continue" onClick={onContinue}>Continue to Dashboard</button>
-          <button className="btn-close-popup" onClick={onClose}>Close</button>
+          <button className="btn-continue" onClick={onContinue}>
+            Continue to Dashboard
+          </button>
+          <button className="btn-close-popup" onClick={onClose}>
+            Close
+          </button>
         </div>
         <p className="auto-close-text">Redirecting in 5 seconds...</p>
       </div>
@@ -142,7 +158,7 @@ const CustomerLoanForm = ({ user, handleReset }) => {
   });
 
   // ========== Toast helpers ==========
-  const showToast = (message, type = 'error') => {
+  const showToast = (message, type = "error") => {
     setToast({ message, type });
   };
   const hideToast = () => setToast(null);
@@ -165,13 +181,15 @@ const CustomerLoanForm = ({ user, handleReset }) => {
     const fetchKyc = async () => {
       try {
         const res = await fetch(
-          `${process.env.REACT_APP_API_URL}/api/kyc-view/${user.userId}`
+          `${process.env.REACT_APP_API_URL}/api/kyc-view/${user.userId}`,
         );
         const data = await res.json();
 
         if (data.success && data.data) {
           const kyc = data.data;
-          const fullName = kyc.fullName || `${kyc.firstname || ''} ${kyc.lastname || ''}`.trim();
+          const fullName =
+            kyc.fullName ||
+            `${kyc.firstname || ""} ${kyc.lastname || ""}`.trim();
 
           let dobFormatted = "";
           if (kyc.dateofbirth) {
@@ -186,7 +204,8 @@ const CustomerLoanForm = ({ user, handleReset }) => {
 
           const phone = kyc.mobileNumber || kyc.phone || kyc.mobile || "";
           const email = kyc.email || "";
-          const employmentStatus = kyc.employmentStatus || kyc.employment_status || "";
+          const employmentStatus =
+            kyc.employmentStatus || kyc.employment_status || "";
 
           setFormData((prev) => ({
             ...prev,
@@ -199,7 +218,8 @@ const CustomerLoanForm = ({ user, handleReset }) => {
             nationalid: kyc.nationalid || "",
             maritalstatus: kyc.maritalstatus || "",
             employmentStatus,
-            residentialAddress: kyc.residentialAddress || kyc.residentiallocation || "",
+            residentialAddress:
+              kyc.residentialAddress || kyc.residentiallocation || "",
             dateofbirth: dobFormatted,
             dependents: kyc.dependents || "",
             residentialGPS: kyc.residentialGPS || "",
@@ -207,7 +227,9 @@ const CustomerLoanForm = ({ user, handleReset }) => {
           }));
         } else {
           // Fallback: use basic user prop if fetch fails
-          const fullName = user.fullName || `${user.firstname || ''} ${user.lastname || ''}`.trim();
+          const fullName =
+            user.fullName ||
+            `${user.firstname || ""} ${user.lastname || ""}`.trim();
           setFormData((prev) => ({
             ...prev,
             userId: user.userId,
@@ -219,7 +241,8 @@ const CustomerLoanForm = ({ user, handleReset }) => {
             nationalid: user.nationalid || "",
             maritalstatus: user.maritalstatus || "",
             employmentStatus: user.employmentStatus || "",
-            residentialAddress: user.residentialAddress || user.residentiallocation || "",
+            residentialAddress:
+              user.residentialAddress || user.residentiallocation || "",
             dateofbirth: "",
             dependents: user.dependents || "",
             residentialGPS: user.residentialGPS || "",
@@ -259,12 +282,12 @@ const CustomerLoanForm = ({ user, handleReset }) => {
 
   const nextStep = (e) => {
     e?.preventDefault();
-    setCurrentStep(prev => Math.min(prev + 1, steps.length));
+    setCurrentStep((prev) => Math.min(prev + 1, steps.length));
   };
 
   const prevStep = (e) => {
     e?.preventDefault();
-    setCurrentStep(prev => Math.max(prev - 1, 1));
+    setCurrentStep((prev) => Math.max(prev - 1, 1));
   };
 
   // ---------- Submit ----------
@@ -282,11 +305,14 @@ const CustomerLoanForm = ({ user, handleReset }) => {
       });
       const res = await fetch(
         `${process.env.REACT_APP_API_URL}/api/loan/submit-full-application-manual`,
-        { method: "POST", body: formPayload }
+        { method: "POST", body: formPayload },
       );
       const data = await res.json();
       if (data.success) {
-        setSuccessMessage(data.message || "Your loan application has been received and is being processed.");
+        setSuccessMessage(
+          data.message ||
+            "Your loan application has been received and is being processed.",
+        );
         setShowSuccessPopup(true);
         setCurrentStep(1);
       } else {
@@ -313,13 +339,20 @@ const CustomerLoanForm = ({ user, handleReset }) => {
       handleFieldBlur: () => {},
     };
     switch (currentStep) {
-      case 1: return <ApplicantDetails {...stepProps} />;
-      case 2: return <ProductInfo {...stepProps} />;
-      case 3: return <TermFrequency {...stepProps} />;
-      case 4: return <GuarantorInfo {...stepProps} />;
-      case 5: return <DocumentUpload {...stepProps} />;
-      case 6: return <NotificationService {...stepProps} />;
-      default: return null;
+      case 1:
+        return <ApplicantDetails {...stepProps} />;
+      case 2:
+        return <ProductInfo {...stepProps} />;
+      case 3:
+        return <TermFrequency {...stepProps} />;
+      case 4:
+        return <GuarantorInfo {...stepProps} />;
+      case 5:
+        return <DocumentUpload {...stepProps} />;
+      case 6:
+        return <NotificationService {...stepProps} />;
+      default:
+        return null;
     }
   };
 
@@ -328,8 +361,16 @@ const CustomerLoanForm = ({ user, handleReset }) => {
     <div className="content-section">
       <h2> Individual Loan Application</h2>
 
-      {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
-      {showSuccessPopup && <SuccessPopup message={successMessage} onClose={handleSuccessPopupClose} onContinue={handleSuccessContinue} />}
+      {toast && (
+        <Toast message={toast.message} type={toast.type} onClose={hideToast} />
+      )}
+      {showSuccessPopup && (
+        <SuccessPopup
+          message={successMessage}
+          onClose={handleSuccessPopupClose}
+          onContinue={handleSuccessContinue}
+        />
+      )}
 
       {isSubmitting && (
         <div className="modal-overlay">
@@ -343,29 +384,42 @@ const CustomerLoanForm = ({ user, handleReset }) => {
 
       <div className="progress-section">
         <div className="progress-bar-container">
-          <div className="progress-bar-fill" style={{ width: `${progressPercentage}%` }}></div>
+          <div
+            className="progress-bar-fill"
+            style={{ width: `${progressPercentage}%` }}
+          ></div>
         </div>
         <div className="step-indicators">
           {steps.map((step) => (
-            <div key={step.number} className={`step-indicator ${currentStep >= step.number ? "active" : ""} ${currentStep === step.number ? "current" : ""}`}>
+            <div
+              key={step.number}
+              className={`step-indicator ${currentStep >= step.number ? "active" : ""} ${currentStep === step.number ? "current" : ""}`}
+            >
               <div className="step-number">{step.number}</div>
               <div className="step-title">{step.title}</div>
             </div>
           ))}
         </div>
-        
       </div>
 
       <form onSubmit={handleSubmit} className="loan-form">
         {renderStep()}
         <div className="form-navigation">
           {currentStep > 1 && (
-            <button type="button" onClick={prevStep} className="btn-prev">← Previous</button>
+            <button type="button" onClick={prevStep} className="btn-prev">
+              ← Previous
+            </button>
           )}
           {currentStep < steps.length ? (
-            <button type="button" onClick={nextStep} className="btn-next">Next →</button>
+            <button type="button" onClick={nextStep} className="btn-next">
+              Next →
+            </button>
           ) : (
-            <button type="submit" className="btn-submit" disabled={isSubmitting}>
+            <button
+              type="submit"
+              className="btn-submit"
+              disabled={isSubmitting}
+            >
               {isSubmitting ? "Submitting..." : "Submit Application"}
             </button>
           )}

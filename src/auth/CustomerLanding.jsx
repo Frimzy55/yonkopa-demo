@@ -3,19 +3,18 @@ import SignUpPage from './SignUpPage';
 import LoginPage from './LoginPage';
 import { FaBolt, FaChartLine, FaShieldAlt, FaChevronDown } from 'react-icons/fa';
 import logo from '../image/yonko1.jpeg';
-import christmasTree from '../image/hat1.png';   // import Christmas tree image
+import christmasTree from '../image/hat1.png';
 import './CustomerLanding.css';
 
 const CustomerLanding = () => {
   const [showSignUp, setShowSignUp] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [showChristmasTree, setShowChristmasTree] = useState(false);
-  
-  // Refs for smooth scrolling
+
   const featuresRef = useRef(null);
   const homeRef = useRef(null);
 
-  // Show Christmas elements from Dec 24 to Jan 4
+  // Christmas period
   useEffect(() => {
     const today = new Date();
     const month = today.getMonth();
@@ -25,20 +24,6 @@ const CustomerLanding = () => {
     }
   }, []);
 
-  // Prevent background scroll when modal is open
-  useEffect(() => {
-    if (showSignUp || showLogin) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'auto';
-    }
-
-    return () => {
-      document.body.style.overflow = 'auto';
-    };
-  }, [showSignUp, showLogin]);
-
-  // Smooth scroll function
   const smoothScrollTo = (elementRef) => {
     if (elementRef.current) {
       elementRef.current.scrollIntoView({
@@ -48,8 +33,31 @@ const CustomerLanding = () => {
     }
   };
 
-  const handleCloseSignUp = () => setShowSignUp(false);
-  const handleCloseLogin = () => setShowLogin(false);
+  // Updated openSignUp: shows the sign‑up form and scrolls to it
+  const openSignUp = () => {
+    setShowSignUp(true);
+    setShowLogin(false);
+    // Delay scroll slightly to ensure the form renders and the layout is stable
+    setTimeout(() => smoothScrollTo(homeRef), 150);
+  };
+
+  // Open login, close sign‑up
+  const openLogin = () => {
+    setShowLogin(true);
+    setShowSignUp(false);
+    // Optional: also scroll to the login form if desired
+    // setTimeout(() => smoothScrollTo(homeRef), 150);
+  };
+
+  const handleCloseSignUp = () => {
+    setShowSignUp(false);
+    setShowLogin(false);
+  };
+
+  const handleCloseLogin = () => {
+    setShowLogin(false);
+    setShowSignUp(false);
+  };
 
   const handleSwitchToLogin = () => {
     setShowSignUp(false);
@@ -67,46 +75,28 @@ const CustomerLanding = () => {
       <nav className="navbar navbar-light bg-white shadow-sm">
         <div className="container d-flex justify-content-between align-items-center">
           <div className="d-flex align-items-center gap-2" style={{ cursor: 'pointer' }} onClick={() => smoothScrollTo(homeRef)}>
-            <img
-              src={logo}
-              alt="Yonkopa Logo"
-              className="logo-img"
-            />
-            <h3 className="m-0 fw-bold text-primary">
-              Yonkopa Micro Credit
-            </h3>
-            {/* Christmas tree next to logo (optional) */}
+            <img src={logo} alt="Yonkopa Logo" className="logo-img" />
+            <h3 className="m-0 fw-bold text-primary">Yonkopa Micro Credit</h3>
             {showChristmasTree && (
               <img src={christmasTree} alt="Christmas Tree" style={{ width: '35px', marginLeft: '10px' }} />
             )}
           </div>
 
           <div className="d-flex gap-3">
-            <button
-              className="btn btn-link text-decoration-none"
-              onClick={() => smoothScrollTo(homeRef)}
-              style={{ color: '#0d6efd' }}
-            >
+            <button className="btn btn-link text-decoration-none" onClick={() => smoothScrollTo(homeRef)} style={{ color: '#0d6efd' }}>
               Home
             </button>
-            <button
-              className="btn btn-link text-decoration-none"
-              onClick={() => smoothScrollTo(featuresRef)}
-              style={{ color: '#0d6efd' }}
-            >
+            <button className="btn btn-link text-decoration-none" onClick={() => smoothScrollTo(featuresRef)} style={{ color: '#0d6efd' }}>
               Features
             </button>
-            <button
-              className="btn btn-primary rounded-pill px-4"
-              onClick={() => setShowLogin(true)}
-            >
+            <button className="btn btn-orange rounded-pill px-4" onClick={openLogin}>
               Login
             </button>
           </div>
         </div>
       </nav>
 
-      {/* Christmas greeting banner (appears below header if active) */}
+      {/* Christmas banner */}
       {showChristmasTree && (
         <div className="christmas-greeting-banner">
           <span className="greeting-icon">🎄</span>
@@ -117,32 +107,55 @@ const CustomerLanding = () => {
 
       {/* HERO SECTION */}
       <section ref={homeRef} className="hero-section">
-        <div className="container p-0 m-0">
-          <h2 className="display-5 fw-bold">
-            Get the Loan You Need
-          </h2>
+        <div className="container">
+          <div className="row align-items-center min-vh-80">
+            {/* Left column */}
+            <div className={`col-lg-6 text-center text-lg-start ${(showSignUp || showLogin) ? 'col-lg-6' : 'col-lg-12'}`}>
+              <h2 className="display-5 fw-bold">Get the Loan You Need</h2>
+              <p className="lead mb-4">Simple, fast, and transparent loan process</p>
+              <div className="d-flex justify-content-center justify-content-lg-start gap-3 flex-wrap align-items-center">
+                <button className="btn btn-light text-primary px-4 rounded-pill" onClick={openSignUp}>
+                  Create Account
+                </button>
+                <button className="btn btn-outline-light px-4 rounded-pill" onClick={openLogin}>
+                  Login
+                </button>
+                {/* Enlarged second logo */}
+                <img
+                  src={logo}
+                  alt="Yonkopa Logo"
+                  className="d-none d-sm-inline-block"
+                  style={{
+                    width: '80px',
+                    height: '80px',
+                    borderRadius: '50%',
+                    objectFit: 'cover',
+                    marginLeft: '20px',
+                  }}
+                />
+              </div>
+            </div>
 
-          <p className="lead mb-4">
-            Simple, fast, and transparent loan process
-          </p>
-
-          <div className="d-flex justify-content-center gap-3 flex-wrap">
-            <button
-              className="btn btn-light text-primary px-4 rounded-pill"
-              onClick={() => setShowSignUp(true)}
-            >
-              Create Account
-            </button>
-
-            <button
-              className="btn btn-outline-light px-4 rounded-pill"
-              onClick={() => setShowLogin(true)}
-            >
-              Login
-            </button>
+            {/* Right column – form appears here when active */}
+            {(showSignUp || showLogin) && (
+              <div className="col-lg-6 mt-4 mt-lg-0 d-flex justify-content-center">
+                {showSignUp && (
+                  <SignUpPage
+                    onClose={handleCloseSignUp}
+                    onSwitchToLogin={handleSwitchToLogin}
+                  />
+                )}
+                {showLogin && (
+                  <LoginPage
+                    onClose={handleCloseLogin}
+                    onSwitchToSignUp={handleSwitchToSignUp}
+                  />
+                )}
+              </div>
+            )}
           </div>
 
-          {/* Scroll down indicator */}
+          {/* Scroll indicator */}
           <div className="scroll-indicator" onClick={() => smoothScrollTo(featuresRef)}>
             <span>Scroll Down</span>
             <FaChevronDown className="scroll-arrow" />
@@ -150,7 +163,7 @@ const CustomerLanding = () => {
         </div>
       </section>
 
-      {/* FEATURES */}
+      {/* FEATURES SECTION */}
       <section ref={featuresRef} className="features-section">
         <div className="container">
           <h2 className="text-center mb-5" style={{ color: '#0d6efd' }}>Why Choose Yonkopa?</h2>
@@ -162,7 +175,6 @@ const CustomerLanding = () => {
                 <p>Get decisions within 24 hours</p>
               </div>
             </div>
-
             <div className="col-md-4">
               <div className="card shadow-sm h-100 text-center p-3 rounded-4 feature-card">
                 <FaChartLine className="feature-icon" />
@@ -170,7 +182,6 @@ const CustomerLanding = () => {
                 <p>Affordable and flexible repayment plans</p>
               </div>
             </div>
-
             <div className="col-md-4">
               <div className="card shadow-sm h-100 text-center p-3 rounded-4 feature-card">
                 <FaShieldAlt className="feature-icon" />
@@ -182,15 +193,12 @@ const CustomerLanding = () => {
         </div>
       </section>
 
-      {/* CTA SECTION */}
+      {/* CTA SECTION – the "Sign Up Now" button now scrolls to the form */}
       <section className="cta-section">
         <div className="container text-center">
           <h3 className="mb-3">Ready to Get Started?</h3>
           <p className="mb-4">Join thousands of satisfied customers who trust Yonkopa</p>
-          <button
-            className="btn btn-primary btn-lg rounded-pill px-5"
-            onClick={() => setShowSignUp(true)}
-          >
+          <button className="btn btn-orange btn-lg rounded-pill px-5" onClick={openSignUp}>
             Sign Up Now
           </button>
         </div>
@@ -199,35 +207,9 @@ const CustomerLanding = () => {
       {/* FOOTER */}
       <footer className="custom-footer">
         <div className="container">
-          <p className="m-0">
-            &copy; 2026 Yonkopa. All rights reserved.
-          </p>
+          <p className="m-0">&copy; 2026 Yonkopa. All rights reserved.</p>
         </div>
       </footer>
-
-      {/* SIGN UP MODAL */}
-      {showSignUp && (
-        <div className="modal-overlay">
-          <div className="modal-container">
-            <SignUpPage
-              onClose={handleCloseSignUp}
-              onSwitchToLogin={handleSwitchToLogin}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* LOGIN MODAL */}
-      {showLogin && (
-        <div className="modal-overlay">
-          <div className="modal-container">
-            <LoginPage
-              onClose={handleCloseLogin}
-              onSwitchToSignUp={handleSwitchToSignUp}
-            />
-          </div>
-        </div>
-      )}
     </div>
   );
 };

@@ -29,7 +29,7 @@ body {
 /* MODERN PROFESSIONAL TOP BAR                  */
 /* ============================================ */
 .top-bar {
-  background: linear-gradient(135deg, #1989df 0%, #1d81fc 100%);
+  background: linear-gradient(135deg, #024a81 0%, #073063 100%);
   padding: 0 2rem;
   display: flex;
   justify-content: space-between;
@@ -272,7 +272,7 @@ body {
   width: 42px;
   height: 42px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #7f0da1, #a520d3);
+  background: linear-gradient(135deg, #18055c, #02283f);
   color: white;
   display: flex;
   align-items: center;

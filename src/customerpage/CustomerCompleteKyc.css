@@ -1,4 +1,4 @@
-/* CustomerCompleteKyc.css - Professional Gradient Top Bar */
+/* CustomerCompleteKyc.css - Soft, Light Orange Theme (Low Intensity) */
 
 * {
   box-sizing: border-box;
@@ -17,21 +17,18 @@
 }
 
 /* ========================= */
-/* PROFESSIONAL GRADIENT TOP BAR (Heading + Step Cards) */
+/* TOP BAR – Soft orange heading, lightest warm background */
 /* ========================= */
 .content-section h2 {
   font-size: 1.5rem;
   margin-bottom: 20px;
-  background: linear-gradient(135deg, #1e2a5e 0%, #3b4b8a 100%);
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent;
+  color: #c97d00; /* muted orange */
   font-weight: 700;
   letter-spacing: -0.3px;
   flex-shrink: 0;
 }
 
-/* Step Cards Container - Gradient background */
+/* Step Cards Container – very light warm background */
 .step-cards-container {
   display: flex;
   gap: 8px;
@@ -40,44 +37,44 @@
   padding: 12px 16px;
   -webkit-overflow-scrolling: touch;
   flex-shrink: 0;
-  background: linear-gradient(105deg, #f9faff 0%, #eef2ff 100%);
+  background: #faf6f0; /* lightest warm off-white */
   border-radius: 20px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03), inset 0 1px 0 rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+  border: 1px solid #f0e8de;
 }
 
 /* Individual Step Cards */
 .step-card {
   flex: 1;
   min-width: 70px;
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(4px);
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(2px);
   padding: 10px 5px;
   text-align: center;
   border-radius: 14px;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
-  border: 1px solid rgba(102, 126, 234, 0.2);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(200, 160, 120, 0.15);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.01);
 }
 
 .step-card:hover {
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.9);
   transform: translateY(-2px);
-  border-color: rgba(102, 126, 234, 0.5);
+  border-color: rgba(200, 160, 120, 0.3);
 }
 
 .step-card.active {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #fad59e; /* softer orange */
   color: white;
   border: none;
-  box-shadow: 0 6px 14px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 12px rgba(230, 138, 0, 0.2);
 }
 
 .step-card.completed {
-  background: #e3f2fd;
-  color: #1976d2;
-  border-color: #90caf9;
+  background: #f5ede4;
+  color: #a0672e;
+  border-color: #e0d0c0;
 }
 
 .step-number {
@@ -90,13 +87,11 @@
   margin-top: 4px;
 }
 
-/* Rest of the CSS remains unchanged from your original, 
-   but kept here for completeness */
 /* Form Container */
 .kyc-form {
   background: white;
   border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
   overflow: hidden;
   flex: 1;
   display: flex;
@@ -115,23 +110,23 @@
 }
 
 .form-step::-webkit-scrollbar {
-  width: 6px;
+  width: 5px;
 }
 
 .form-step::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: #f7f2ec;
 }
 
 .form-step::-webkit-scrollbar-thumb {
-  background: #888;
-  border-radius: 3px;
+  background: #d9c8b8;
+  border-radius: 10px;
 }
 
 .form-step h3 {
   font-size: 18px;
   margin-bottom: 16px;
-  color: #667eea;
-  border-bottom: 2px solid #667eea;
+  color: #b87333;
+  border-bottom: 1px solid #eddcc8;
   padding-bottom: 8px;
 }
 
@@ -146,7 +141,7 @@
   margin-bottom: 6px;
   font-weight: 600;
   font-size: 13px;
-  color: #333;
+  color: #555;
 }
 
 .form-group input,
@@ -154,18 +149,19 @@
 .form-group textarea {
   width: 100%;
   padding: 10px 12px;
-  border: 1px solid #ddd;
+  border: 1px solid #e0d8d0;
   border-radius: 8px;
   font-size: 14px;
   transition: border-color 0.2s;
+  background: #fcfaf7;
 }
 
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+  border-color: #d49c5c;
+  box-shadow: 0 0 0 3px rgba(212, 156, 92, 0.1);
 }
 
 /* Form Grid */
@@ -189,6 +185,7 @@
   font-weight: 600;
   margin-bottom: 12px;
   font-size: 14px;
+  color: #555;
 }
 
 .avatar-upload-wrapper {
@@ -203,7 +200,7 @@
   height: 100%;
   object-fit: cover;
   border-radius: 50%;
-  border: 3px solid #667eea;
+  border: 2px solid #d49c5c;
 }
 
 .avatar-overlay {
@@ -211,7 +208,7 @@
   bottom: 0;
   left: 0;
   right: 0;
-  background: rgba(0,0,0,0.7);
+  background: rgba(0,0,0,0.5);
   color: white;
   text-align: center;
   font-size: 10px;
@@ -234,8 +231,8 @@
 }
 
 .doc-card {
-  background: #f9f9f9;
-  border: 2px dashed #667eea;
+  background: #fcfaf7;
+  border: 1px dashed #d4b89c;
   border-radius: 12px;
   padding: 16px;
   text-align: center;
@@ -244,8 +241,8 @@
 }
 
 .doc-card:hover {
-  background: #f0f1ff;
-  border-color: #764ba2;
+  background: #f7f0e8;
+  border-color: #c4a080;
 }
 
 .doc-card img {
@@ -262,36 +259,37 @@
 
 .pdf-placeholder i {
   font-size: 48px;
-  color: #667eea;
+  color: #d49c5c;
 }
 
 .pdf-placeholder span {
   font-size: 11px;
   font-weight: 600;
+  color: #8a7a6a;
 }
 
 .doc-card small {
   font-size: 10px;
-  color: #666;
+  color: #999;
   display: block;
   margin-top: 8px;
 }
 
 /* Error Styles */
 .error-message {
-  color: #dc3545;
+  color: #c0392b;
   font-size: 11px;
   margin-top: 4px;
   display: block;
 }
 
 .error-input {
-  border-color: #dc3545 !important;
-  background-color: #fff8f8 !important;
+  border-color: #c0392b !important;
+  background-color: #fdf2f0 !important;
 }
 
 .error-summary {
-  background: #f8d7da;
+  background: #fdf2f0;
   border: 1px solid #f5c6cb;
   border-radius: 8px;
   padding: 12px;
@@ -315,13 +313,13 @@
   margin-bottom: 4px;
 }
 
-/* Navigation Buttons - Fixed at bottom, ALWAYS VISIBLE */
+/* Navigation Buttons */
 .form-navigation {
   display: flex;
   gap: 10px;
   padding: 16px 20px;
   background: white;
-  border-top: 1px solid #e0e0e0;
+  border-top: 1px solid #ece6de;
   flex-shrink: 0;
   position: relative;
   bottom: 0;
@@ -340,36 +338,38 @@
 }
 
 .btn-secondary {
-  background: #6c757d;
-  color: white;
+  background: #d0c8be;
+  color: #444;
 }
 
 .btn-secondary:hover {
-  background: #5a6268;
+  background: #c0b8ae;
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #e68a00;
   color: white;
 }
 
 .btn-primary:hover:not(:disabled) {
+  background: #cc7a00;
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 2px 8px rgba(230, 138, 0, 0.2);
 }
 
 .btn-success {
-  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-  color: #155724;
+  background: #e68a00;
+  color: white;
 }
 
 .btn-success:hover:not(:disabled) {
+  background: #cc7a00;
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(67, 233, 123, 0.3);
+  box-shadow: 0 2px 8px rgba(230, 138, 0, 0.2);
 }
 
 .form-navigation button:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
@@ -382,15 +382,15 @@
 }
 
 .alert-success {
-  background: #d4edda;
-  color: #155724;
-  border: 1px solid #c3e6cb;
+  background: #eaf5ea;
+  color: #2d6a2d;
+  border: 1px solid #c8e0c8;
 }
 
 .alert-danger {
-  background: #f8d7da;
-  color: #721c24;
-  border: 1px solid #f5c6cb;
+  background: #fdf0ee;
+  color: #8a2e2e;
+  border: 1px solid #f0cdc8;
 }
 
 /* Preview Card */
@@ -398,11 +398,11 @@
   background: white;
   border-radius: 12px;
   padding: 20px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
 }
 
 .kyc-title {
-  color: #667eea;
+  color: #b87333;
   text-align: center;
   margin-bottom: 20px;
 }
@@ -415,15 +415,16 @@
 }
 
 .kyc-item {
-  background: #f8f9fa;
+  background: #faf6f0;
   padding: 12px;
   border-radius: 8px;
+  border: 1px solid #f0e8de;
 }
 
 .kyc-label {
   font-size: 11px;
   font-weight: bold;
-  color: #666;
+  color: #8a7a6a;
   text-transform: uppercase;
   display: block;
   margin-bottom: 4px;
@@ -431,27 +432,28 @@
 
 .kyc-value {
   font-size: 14px;
-  color: #333;
+  color: #444;
   word-break: break-word;
 }
 
 /* National ID Checking */
 .national-id-checking {
-  background: #e3f2fd;
+  background: #faf6f0;
   padding: 8px 12px;
   border-radius: 8px;
   margin-bottom: 16px;
   font-size: 13px;
-  color: #1976d2;
+  color: #a0672e;
   display: flex;
   align-items: center;
   gap: 8px;
+  border: 1px solid #f0e8de;
 }
 
 .spinner-small {
   width: 16px;
   height: 16px;
-  border: 2px solid #1976d2;
+  border: 2px solid #d49c5c;
   border-top-color: transparent;
   border-radius: 50%;
   animation: spin 0.6s linear infinite;
@@ -463,7 +465,7 @@
 }
 
 /* ============================================ */
-/* MOBILE STYLES - BUTTONS ALWAYS VISIBLE */
+/* MOBILE STYLES */
 /* ============================================ */
 @media (max-width: 768px) {
   .content-section {
@@ -492,12 +494,6 @@
   
   .form-navigation {
     padding: 12px 16px;
-    background: white;
-    border-top: 1px solid #e0e0e0;
-    position: relative;
-    bottom: 0;
-    left: 0;
-    right: 0;
   }
   
   .form-navigation button {
@@ -527,7 +523,6 @@
   }
 }
 
-/* Small phones */
 @media (max-width: 480px) {
   .content-section {
     padding: 8px;
@@ -651,25 +646,13 @@
   }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-/* Professional KYC Code Box */
+/* KYC Code Box – very light */
 .kyc-code-box.professional {
-  background: linear-gradient(135deg, #f8f9ff 0%, #f0f2f8 100%);
+  background: #faf6f0;
   border-radius: 20px;
   padding: 1.5rem 2rem;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  border: 1px solid #f0e8de;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
 }
 
 .kyc-code-value-wrapper {
@@ -689,18 +672,18 @@
   background: white;
   padding: 0.4rem 1rem;
   border-radius: 12px;
-  color: #1e3a8a;
-  border: 1px solid #e2e8f0;
+  color: #b87333;
+  border: 1px solid #e8ddd0;
   display: inline-block;
   word-break: break-all;
 }
 
 .copy-code-btn {
-  background: #1e3a8a;
-  border: none;
+  background: #f5ede4;
+  border: 1px solid #e0d0c0;
   padding: 0.5rem 1.2rem;
   border-radius: 40px;
-  color: white;
+  color: #8a6a4a;
   font-size: 0.85rem;
   font-weight: 500;
   cursor: pointer;
@@ -708,15 +691,13 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .copy-code-btn:hover {
-  background: #0f2b6d;
+  background: #ede0d0;
   transform: scale(0.98);
 }
 
-/* Responsive */
 @media (max-width: 640px) {
   .kyc-code-value {
     font-size: 1.2rem;
@@ -727,15 +708,8 @@
   }
 }
 
-
-
-
-
-
-
-
 /* ============================================
-   CRAZY PROFESSIONAL BUTTONS (compact & elegant)
+   CRAZY BUTTONS – Soft, light orange
    ============================================ */
 .btn-crazy {
   display: inline-flex;
@@ -746,70 +720,64 @@
   font-weight: 600;
   font-size: 0.9rem;
   border: none;
-  border-radius: 60px;   /* pill shape – modern */
+  border-radius: 60px;
   transition: all 0.25s cubic-bezier(0.2, 0.9, 0.4, 1.1);
   cursor: pointer;
-  background: #f0f0f0;
-  color: #1e2a5e;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+  background: #f0ece6;
+  color: #5a4a3a;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
-/* Primary crazy button (dark blue gradient) */
 .btn-crazy-primary {
-  background: linear-gradient(105deg, #6176d3 0%, #4a5c96 100%);
+  background: #e68a00;
   color: white;
-  box-shadow: 0 6px 14px rgba(30, 42, 94, 0.25);
+  box-shadow: 0 4px 12px rgba(230, 138, 0, 0.15);
 }
 .btn-crazy-primary:hover {
+  background: #cc7a00;
   transform: translateY(-2px);
-  box-shadow: 0 12px 20px rgba(30, 42, 94, 0.35);
-  background: linear-gradient(105deg, #2b3b6e 0%, #1e2a5e 100%);
+  box-shadow: 0 8px 18px rgba(230, 138, 0, 0.2);
 }
 
-/* Success crazy button (green gradient) */
 .btn-crazy-success {
-  background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+  background: #e68a00;
   color: white;
-  box-shadow: 0 6px 14px rgba(46, 204, 113, 0.3);
+  box-shadow: 0 4px 12px rgba(230, 138, 0, 0.15);
 }
 .btn-crazy-success:hover {
+  background: #cc7a00;
   transform: translateY(-2px);
-  box-shadow: 0 12px 20px rgba(46, 204, 113, 0.4);
+  box-shadow: 0 8px 18px rgba(230, 138, 0, 0.2);
 }
 
-/* Outline crazy button */
 .btn-crazy-outline {
   background: transparent;
-  border: 2px solid #1e2a5e;
-  color: #1e2a5e;
+  border: 1px solid #d4b89c;
+  color: #8a6a4a;
   box-shadow: none;
 }
 .btn-crazy-outline:hover {
-  background: #1e2a5e;
-  color: white;
+  background: #f5ede4;
   transform: translateY(-2px);
 }
 
-/* Secondary crazy button (gray) */
 .btn-crazy-secondary {
-  background: #6c757d;
-  color: white;
-  box-shadow: 0 4px 10px rgba(108, 117, 125, 0.2);
+  background: #d0c8be;
+  color: #444;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
 }
 .btn-crazy-secondary:hover {
-  background: #5a6268;
+  background: #c0b8ae;
   transform: translateY(-2px);
 }
 
-/* Disabled state */
 .btn-crazy:disabled,
 .btn-crazy.disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   transform: none;
   cursor: not-allowed;
 }
 
-/* Mobile friendly */
 @media (max-width: 576px) {
   .btn-crazy {
     padding: 0.5rem 1.2rem;
@@ -817,19 +785,13 @@
   }
 }
 
-
-
-
-
-
-
-
+/* Additional soft orange elements */
 .kyc-card {
   color: #e5e7eb;
 }
 
 .kyc-header h3 {
-  color: #2563eb;
+  color: #b87333;
 }
 
 .kyc-subtitle {
@@ -841,12 +803,12 @@
 }
 
 .kyc-label {
-  color: #64748b;
+  color: #8a7a6a;
   font-weight: 600;
 }
 
 .kyc-value {
-  color: #1e293b;
+  color: #333;
   font-weight: 500;
 }
 
@@ -855,18 +817,18 @@
 }
 
 .kyc-code-value {
-  color: #2563eb;
+  color: #b87333;
   font-weight: 700;
   letter-spacing: 1px;
 }
 
 .copy-code-btn {
-  background: #eff6ff;
-  color: #2563eb;
-  border: 1px solid #bfdbfe;
+  background: #f5ede4;
+  color: #8a6a4a;
+  border: 1px solid #e0d0c0;
 }
 
 .copy-code-btn:hover {
-  background: #dbeafe;
-  color: #1d4ed8;
+  background: #ede0d0;
+  color: #6a4a2a;
 }

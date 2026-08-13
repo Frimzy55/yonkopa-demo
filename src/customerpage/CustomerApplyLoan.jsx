@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import LoanForm from "./CutomerLoanForm";
-//import { useLocation } from "react-router-dom"; // <-- ADD
 import "bootstrap/dist/css/bootstrap.min.css";
 
 const CustomerApplyLoan = ({ user }) => {
@@ -12,73 +11,48 @@ const CustomerApplyLoan = ({ user }) => {
   const [alreadyApplied, setAlreadyApplied] = useState(false);
   const [checking, setChecking] = useState(true);
 
-
-  //const location = useLocation();
-  // Use user from navigation state if available, otherwise from props
-  //const user = location.state?.user || propUser;
-
   useEffect(() => {
     if (user?.userId) {
       setFormData((prev) => ({ ...prev, userId: user.userId }));
     }
   }, [user]);
 
-
-
   useEffect(() => {
-  const checkLoan = async () => {
-    if (!user?.userId) return;
+    const checkLoan = async () => {
+      if (!user?.userId) return;
+      try {
+        setChecking(true);
+        const res1 = await fetch(
+          `${process.env.REACT_APP_API_URL}/loan-check/${user.userId}`
+        );
+        const active = await res1.json();
 
-    try {
-      setChecking(true);
+        const res2 = await fetch(
+          `${process.env.REACT_APP_API_URL}/loan-rejected-check/${user.userId}`
+        );
+        const rejected = await res2.json();
 
-      // ACTIVE/PENDING CHECK
-      const res1 = await fetch(
-        `${process.env.REACT_APP_API_URL}/loan-check/${user.userId}`
-      );
-      const active = await res1.json();
+        const res3 = await fetch(
+          `${process.env.REACT_APP_API_URL}/loan-approved-check/${user.userId}`
+        );
+        const approved = await res3.json();
 
-      // REJECTED CHECK
-      const res2 = await fetch(
-        `${process.env.REACT_APP_API_URL}/loan-rejected-check/${user.userId}`
-      );
-      const rejected = await res2.json();
-
-      // APPROVED CHECK
-      const res3 = await fetch(
-        `${process.env.REACT_APP_API_URL}/loan-approved-check/${user.userId}`
-      );
-      const approved = await res3.json();
-
-      /*
-        ALLOW:
-        - rejected
-        - approved
-
-        BLOCK:
-        - pending
-        - under review
-      */
-
-      if (rejected.rejected || approved.approved) {
+        if (rejected.rejected || approved.approved) {
+          setAlreadyApplied(false);
+        } else if (active.exists) {
+          setAlreadyApplied(true);
+        } else {
+          setAlreadyApplied(false);
+        }
+      } catch (err) {
+        console.error(err);
         setAlreadyApplied(false);
-      } else if (active.exists) {
-        setAlreadyApplied(true);
-      } else {
-        setAlreadyApplied(false);
+      } finally {
+        setChecking(false);
       }
-
-    } catch (err) {
-      console.error(err);
-      setAlreadyApplied(false);
-    } finally {
-      setChecking(false);
-    }
-  };
-
-  checkLoan();
-}, [user?.userId]);
-
+    };
+    checkLoan();
+  }, [user?.userId]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -128,8 +102,15 @@ const CustomerApplyLoan = ({ user }) => {
     return (
       <div className="container my-5 text-center">
         <div className="card shadow-sm p-5">
-          <div className="spinner-border text-primary mb-3" />
-          <h5>Checking eligibility...</h5>
+          {/* Replace Bootstrap text-primary with custom orange */}
+          <div
+            className="spinner-border"
+            style={{ color: "#f5a037" }}
+            role="status"
+          >
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <h5 className="mt-3">Checking eligibility...</h5>
         </div>
       </div>
     );
@@ -139,25 +120,23 @@ const CustomerApplyLoan = ({ user }) => {
     return (
       <div className="container my-5">
         <div className="card shadow-sm border-0 p-5 text-center">
-          <h3 className="text-danger mb-2">You cannot apply at this time – Loan under review</h3>
-          <p className="text-muted">You already have a pending loan application.</p>
-
-
+          <h3 className="text-danger mb-2">
+            You cannot apply at this time – Loan under review
+          </h3>
+          <p className="text-muted">
+            You already have a pending loan application.
+          </p>
           <div className="d-flex justify-content-center mt-3">
-  <button
-    type="button"
-    className="btn btn-outline-primary btn-sm"
-    onClick={handleReset}
-    style={{
-      width: "fit-content",
-      padding: "6px 14px",
-    }}
-  >
-    <i className="bi bi-arrow-repeat me-1"></i>
-    Refresh
-  </button>
-</div>
-
+            <button
+              type="button"
+              className="btn btn-outline-secondary btn-sm"
+              onClick={handleReset}
+              style={{ width: "fit-content", padding: "6px 14px" }}
+            >
+              <i className="bi bi-arrow-repeat me-1"></i>
+              Refresh
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -167,63 +146,56 @@ const CustomerApplyLoan = ({ user }) => {
     <div className="container my-5">
       <div className="card shadow-lg border-0 rounded-4">
         <div className="card-body p-4 p-md-5">
+          {/* HEADER – solid orange background (no gradient) */}
           <div
-  className="text-center mb-5 p-4 rounded-4"
-  style={{
-    background: "linear-gradient(135deg, #4279fc, #7a889e)",
-    color: "#fff",
-    border: "1px solid rgba(255, 255, 255, 0.77)",
-    boxShadow: "0 10px 30px rgba(133, 131, 131, 0.08)",
-  }}
->
-  <div
-    className="mx-auto mb-3 d-flex align-items-center justify-content-center"
-    style={{
-      width: 75,
-      height: 75,
-      borderRadius: "50%",
-      background: "rgba(218, 183, 183, 0.53)",
-      backdropFilter: "blur(10px)",
-    }}
-  >
-    <i
-      className="bi bi-cash-stack"
-      style={{
-        fontSize: "32px",
-        color: "#38bdf8",
-      }}
-    ></i>
-  </div>
-
-  <h2
-    className="fw-bold mb-2"
-    style={{
-      color: "#f8fafc",
-      letterSpacing: "0.5px",
-    }}
-  >
-    Loan Application
-  </h2>
-
-  <p
-    className="mb-0"
-    style={{
-      color: "#cbd5e1",
-      fontSize: "15px",
-    }}
-  >
-    Verify your KYC information to continue your loan request.
-  </p>
-</div>
+            className="text-center mb-5 p-4 rounded-4"
+            style={{
+              background: "#fce4d1", // solid orange
+              color: "#fff",
+              border: "1px solid rgba(255,255,255,0.2)",
+              boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
+            }}
+          >
+            <div
+              className="mx-auto mb-3 d-flex align-items-center justify-content-center"
+              style={{
+                width: 75,
+                height: 75,
+                borderRadius: "50%",
+                background: "rgba(255,255,255,0.2)",
+                backdropFilter: "blur(10px)",
+              }}
+            >
+              <i
+                className="bi bi-cash-stack"
+                style={{ fontSize: "32px", color: "#0f479c" }}
+              ></i>
+            </div>
+            <h2
+              className="fw-bold mb-2"
+              style={{ color: "#0f6ece", letterSpacing: "0.5px" }}
+            >
+              Loan Application
+            </h2>
+            <p
+              className="mb-0"
+              style={{ color: "#2d0fd8", fontSize: "15px" }}
+            >
+              Verify your KYC information to continue your loan request.
+            </p>
+          </div>
 
           {/* VERIFY FORM */}
           {step === "verify" && status !== "verified" && (
             <form onSubmit={handleSubmit}>
               <input name="userId" value={formData.userId} hidden readOnly />
               <div className="mb-3">
-                <label className="form-label fw-semibold">Enter Your KYC Code</label>
+                <label className="form-label fw-semibold">
+                  Enter Your KYC Code
+                </label>
                 <small className="text-muted d-block mb-2">
-                  Please complete your KYC forms to enable notifications via the bell icon and receive your code.
+                  Please complete your KYC forms to enable notifications via
+                  the bell icon and receive your code.
                 </small>
                 <input
                   name="kycCode"
@@ -244,7 +216,10 @@ const CustomerApplyLoan = ({ user }) => {
                 >
                   {loading ? (
                     <>
-                      <span className="spinner-border spinner-border-sm" />
+                      <span
+                        className="spinner-border spinner-border-sm"
+                        style={{ color: "#ff8c00" }}
+                      />
                       Verifying...
                     </>
                   ) : (
@@ -270,13 +245,21 @@ const CustomerApplyLoan = ({ user }) => {
             <div className="text-center">
               <div className="display-4 text-success mb-3">✔</div>
               <h4 className="text-success">Verification Successful</h4>
-              <p className="text-muted">You can now proceed with your loan application.</p>
+              <p className="text-muted">
+                You can now proceed with your loan application.
+              </p>
 
               <div className="d-flex flex-wrap gap-3 justify-content-center mt-4">
-                <button className="btn-crazy btn-crazy-success" onClick={handleProceed}>
+                <button
+                  className="btn-crazy btn-crazy-success"
+                  onClick={handleProceed}
+                >
                   <i className="bi bi-arrow-right-circle"></i> Proceed
                 </button>
-                <button className="btn-crazy btn-crazy-secondary" onClick={handleBack}>
+                <button
+                  className="btn-crazy btn-crazy-secondary"
+                  onClick={handleBack}
+                >
                   <i className="bi bi-arrow-left-circle"></i> Back
                 </button>
               </div>

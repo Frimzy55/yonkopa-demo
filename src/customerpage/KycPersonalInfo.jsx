@@ -37,6 +37,9 @@ const PersonalInfo = ({
     });
   };
 
+  // Get today's date in YYYY-MM-DD format to restrict future dates
+  const today = new Date().toISOString().split('T')[0];
+
   return (
     <div className="form-step">
       <p className="welcome-text">
@@ -141,32 +144,23 @@ const PersonalInfo = ({
           </div>
         </div>
 
-        {/* Date of Birth */}
-       {/* Date of Birth */}
-<div className="form-group">
-  <label>Date of Birth (yyyy-mm-dd) *</label>
-
-  <input
-    type="text"
-    name="dateOfBirth"
-    value={formData?.dateOfBirth || ""}
-    onChange={handleInputChange}
-    placeholder="e.g., 1990-05-30"
-    required
-    pattern="\d{4}-\d{2}-\d{2}"
-    className={
-      formErrors?.dateOfBirth
-        ? "error-input"
-        : ""
-    }
-  />
-
-  {formErrors?.dateOfBirth && (
-    <span className="error-message">
-      {formErrors.dateOfBirth}
-    </span>
-  )}
-</div>
+        {/* Date of Birth - NOW A DATE PICKER */}
+        <div className="form-group">
+          <label>Date of Birth *</label>
+          <input
+            type="date"
+            name="dateOfBirth"
+            value={formData?.dateOfBirth || ""}
+            onChange={handleInputChange}
+            className={formErrors?.dateOfBirth ? "error-input" : ""}
+            max={today}  // Prevents future dates
+          />
+          {formErrors?.dateOfBirth && (
+            <span className="error-message">
+              {formErrors.dateOfBirth}
+            </span>
+          )}
+        </div>
 
         {/* Gender */}
         <div className="form-group">
@@ -188,7 +182,7 @@ const PersonalInfo = ({
           )}
         </div>
 
-        {/* Marital Status - REQUIRED with error display */}
+        {/* Marital Status */}
         <div className="form-group">
           <label>Marital Status *</label>
           <select
@@ -289,7 +283,5 @@ const PersonalInfo = ({
     </div>
   );
 };
-
-
 
 export default PersonalInfo;

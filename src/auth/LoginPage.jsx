@@ -7,18 +7,13 @@ import "bootstrap-icons/font/bootstrap-icons.css";
 const LoginPage = ({ onClose, onSwitchToSignUp }) => {
   const navigate = useNavigate();
 
-  // Login form state
-  const [formData, setFormData] = useState({
-    identifier: '',
-    password: ''
-  });
+  const [formData, setFormData] = useState({ identifier: '', password: '' });
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
   const [serverError, setServerError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // Forgot password state
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [forgotIdentifier, setForgotIdentifier] = useState('');
   const [forgotError, setForgotError] = useState('');
@@ -26,25 +21,23 @@ const LoginPage = ({ onClose, onSwitchToSignUp }) => {
   const [isForgotSubmitting, setIsForgotSubmitting] = useState(false);
   const [forgotTouched, setForgotTouched] = useState(false);
 
-  // Validation helpers
+  // Validation helpers (unchanged)
   const validateIdentifier = (value) => {
     const trimmed = value.trim();
     const digits = trimmed.replace(/\D/g, '');
     const isValidPhone = digits.length === 10 || (digits.length === 12 && digits.startsWith('233'));
     const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
-
     if (!trimmed) return 'Email or phone number is required';
     if (!isValidEmail && !isValidPhone) return 'Enter a valid email or 10-digit phone number';
     return '';
   };
 
-  // Login validation
   const validateField = (name, value) => {
     const newErrors = { ...errors };
     switch (name) {
       case 'identifier':
-        const identifierError = validateIdentifier(value);
-        if (identifierError) newErrors.identifier = identifierError;
+        const err = validateIdentifier(value);
+        if (err) newErrors.identifier = err;
         else delete newErrors.identifier;
         break;
       case 'password':
@@ -83,23 +76,15 @@ const LoginPage = ({ onClose, onSwitchToSignUp }) => {
     e.preventDefault();
     setServerError('');
     setIsSubmitting(true);
-
-    if (!validateForm()) {
-      setIsSubmitting(false);
-      return;
-    }
-
+    if (!validateForm()) { setIsSubmitting(false); return; }
     try {
       const response = await axios.post(`${process.env.REACT_APP_API_URL}/login`, formData);
       const { token, user } = response.data;
-
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
-
       if (user.role === "admin") navigate("/admin-dashboard");
       else if (user.role === "loan_officer") navigate("/loan-officer-dashboard");
       else navigate("/customer-page");
-
       onClose && onClose();
     } catch (err) {
       const errorMessage = err.response?.data?.message || "Login failed. Please check your credentials.";
@@ -134,19 +119,15 @@ const LoginPage = ({ onClose, onSwitchToSignUp }) => {
     e.preventDefault();
     setForgotError('');
     setForgotSuccess('');
-    
     const error = validateIdentifier(forgotIdentifier);
     if (error) {
       setForgotError(error);
       setForgotTouched(true);
       return;
     }
-
     setIsForgotSubmitting(true);
     try {
-      await axios.post(`${process.env.REACT_APP_API_URL}/forgot-password`, { 
-        identifier: forgotIdentifier.trim() 
-      });
+      await axios.post(`${process.env.REACT_APP_API_URL}/forgot-password`, { identifier: forgotIdentifier.trim() });
       setForgotSuccess('Password reset link sent! Check your email or SMS.');
       setForgotIdentifier('');
       setForgotTouched(false);
@@ -167,12 +148,12 @@ const LoginPage = ({ onClose, onSwitchToSignUp }) => {
   };
 
   return (
-    <div className="bg-white rounded-4 shadow-lg p-4" style={{ maxWidth: '440px', width: '100%' }}>
+    <div className="bg-white rounded-4 shadow-lg p-4 p-md-5" style={{ maxWidth: '460px', width: '100%' }}>
       {/* Header */}
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <div className="d-flex align-items-center gap-2">
-          <img src={logo} alt="Yonkopa" style={{ height: '40px', objectFit: 'contain' }} />
-          <h4 className="m-0 fw-semibold">
+        <div className="d-flex align-items-center gap-3">
+          <img src={logo} alt="Yonkopa" style={{ height: '44px', objectFit: 'contain' }} />
+          <h4 className="m-0 fw-semibold text-primary">
             {showForgotPassword ? 'Reset Password' : 'Welcome Back'}
           </h4>
         </div>
@@ -182,59 +163,67 @@ const LoginPage = ({ onClose, onSwitchToSignUp }) => {
       {!showForgotPassword ? (
         // LOGIN FORM
         <>
-          <p className="text-muted mb-4">Sign in to access your account</p>
+          <p className="text-muted mb-4" style={{ fontSize: '0.95rem' }}>
+            Sign in to access your account
+          </p>
 
           {serverError && (
-            <div className="alert alert-danger py-2 small">{serverError}</div>
+            <div className="alert alert-danger py-2 small rounded-3">{serverError}</div>
           )}
 
           <form onSubmit={handleSubmit} noValidate>
-            {/* Email or Phone */}
+            {/* Identifier field – label removed */}
             <div className="mb-3">
-              <label className="form-label fw-medium">Email or Phone Number</label>
-              <input 
-                type="text" 
-                name="identifier"
-                className={`form-control ${touched.identifier && errors.identifier ? 'is-invalid' : ''}`}
-                placeholder="Enter your email or phone number"
-                value={formData.identifier}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                disabled={isSubmitting}
-              />
-              {touched.identifier && errors.identifier && (
-                <div className="invalid-feedback">{errors.identifier}</div>
-              )}
+              <div className="input-group">
+                <span className="input-group-text bg-light border-end-0">
+                  <i className="bi bi-envelope text-secondary"></i>
+                </span>
+                <input
+                  type="text"
+                  name="identifier"
+                  className={`form-control border-start-0 ${touched.identifier && errors.identifier ? 'is-invalid' : ''}`}
+                  placeholder="Email or Phone Number"
+                  value={formData.identifier}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  disabled={isSubmitting}
+                />
+                {touched.identifier && errors.identifier && (
+                  <div className="invalid-feedback">{errors.identifier}</div>
+                )}
+              </div>
             </div>
 
-            {/* Password */}
+            {/* Password field – label removed */}
             <div className="mb-3">
-              <label className="form-label fw-medium">Password</label>
               <div className="input-group">
+                <span className="input-group-text bg-light border-end-0">
+                  <i className="bi bi-lock text-secondary"></i>
+                </span>
                 <input
                   type={showPassword ? "text" : "password"}
                   name="password"
-                  className={`form-control ${touched.password && errors.password ? 'is-invalid' : ''}`}
-                  placeholder="Enter your password"
+                  className={`form-control border-start-0 ${touched.password && errors.password ? 'is-invalid' : ''}`}
+                  placeholder="Password"
                   value={formData.password}
                   onChange={handleChange}
                   onBlur={handleBlur}
                   disabled={isSubmitting}
                 />
                 <span
-                  className="input-group-text bg-white border-start-0"
+                  className="input-group-text bg-light border-start-0"
                   style={{ cursor: "pointer" }}
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   <i className={`bi ${showPassword ? "bi-eye-slash" : "bi-eye"} text-secondary`}></i>
                 </span>
+                {touched.password && errors.password && (
+                  <div className="invalid-feedback d-block">{errors.password}</div>
+                )}
               </div>
-              {touched.password && errors.password && (
-                <div className="invalid-feedback d-block">{errors.password}</div>
-              )}
             </div>
 
-            {/* Options */}
+            {/* Options row */}
             <div className="d-flex justify-content-between align-items-center mb-4">
               <div className="form-check">
                 <input className="form-check-input" type="checkbox" id="rememberMe" disabled={isSubmitting} />
@@ -242,18 +231,18 @@ const LoginPage = ({ onClose, onSwitchToSignUp }) => {
               </div>
               <button
                 type="button"
-                className="btn btn-link p-0 text-decoration-none small"
+                className="btn btn-link p-0 text-decoration-none small fw-semibold"
                 onClick={() => setShowForgotPassword(true)}
-                style={{ fontSize: '0.875rem' }}
+                style={{ fontSize: '0.875rem', color: '#0d6efd' }}
               >
                 Forgot password?
               </button>
             </div>
 
-            {/* Login Button */}
-            <button 
+            {/* Login button */}
+            <button
               type="submit"
-              className="btn btn-primary w-100 py-2 fw-semibold rounded-pill"
+              className="btn btn-orange w-100 py-2 fw-semibold rounded-pill"
               disabled={!canSubmit}
             >
               {isSubmitting ? (
@@ -267,11 +256,10 @@ const LoginPage = ({ onClose, onSwitchToSignUp }) => {
             </button>
           </form>
 
-          {/* Sign Up Link */}
-          <p className="text-center mt-4 mb-0">
+          <p className="text-center mt-4 mb-0 small">
             Don't have an account?{' '}
-            <button 
-              className="btn btn-link p-0 text-primary text-decoration-none"
+            <button
+              className="btn btn-link p-0 text-primary text-decoration-none fw-semibold"
               onClick={onSwitchToSignUp}
             >
               Create Account
@@ -281,37 +269,41 @@ const LoginPage = ({ onClose, onSwitchToSignUp }) => {
       ) : (
         // FORGOT PASSWORD FORM
         <>
-          <p className="text-muted mb-4">
+          <p className="text-muted mb-4" style={{ fontSize: '0.95rem' }}>
             Enter your email or phone number and we'll send you a link to reset your password.
           </p>
 
           {forgotError && (
-            <div className="alert alert-danger py-2 small">{forgotError}</div>
+            <div className="alert alert-danger py-2 small rounded-3">{forgotError}</div>
           )}
           {forgotSuccess && (
-            <div className="alert alert-success py-2 small">{forgotSuccess}</div>
+            <div className="alert alert-success py-2 small rounded-3">{forgotSuccess}</div>
           )}
 
           <form onSubmit={handleForgotSubmit} noValidate>
             <div className="mb-4">
-              <label className="form-label fw-medium">Email or Phone Number</label>
-              <input
-                type="text"
-                className={`form-control ${forgotTouched && forgotError ? 'is-invalid' : ''}`}
-                placeholder="Enter your email or phone number"
-                value={forgotIdentifier}
-                onChange={handleForgotIdentifierChange}
-                onBlur={handleForgotBlur}
-                disabled={isForgotSubmitting}
-              />
-              {forgotTouched && forgotError && (
-                <div className="invalid-feedback d-block">{forgotError}</div>
-              )}
+              <div className="input-group">
+                <span className="input-group-text bg-light border-end-0">
+                  <i className="bi bi-envelope text-secondary"></i>
+                </span>
+                <input
+                  type="text"
+                  className={`form-control border-start-0 ${forgotTouched && forgotError ? 'is-invalid' : ''}`}
+                  placeholder="Email or Phone Number"
+                  value={forgotIdentifier}
+                  onChange={handleForgotIdentifierChange}
+                  onBlur={handleForgotBlur}
+                  disabled={isForgotSubmitting}
+                />
+                {forgotTouched && forgotError && (
+                  <div className="invalid-feedback d-block">{forgotError}</div>
+                )}
+              </div>
             </div>
 
             <button
               type="submit"
-              className="btn btn-primary w-100 py-2 fw-semibold rounded-pill mb-3"
+              className="btn btn-orange w-100 py-2 fw-semibold rounded-pill mb-3"
               disabled={isForgotSubmitting || !forgotIdentifier.trim()}
             >
               {isForgotSubmitting ? (

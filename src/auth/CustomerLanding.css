@@ -193,11 +193,6 @@ html {
   }
 }
 
-
-
-
-
-
 /* Christmas greeting banner */
 .christmas-greeting-banner {
   text-align: center;
@@ -252,4 +247,28 @@ html {
   .navbar .d-flex img:last-child {
     width: 25px;
   }
+}
+
+
+/* Reusable orange button – used in Login, SignUp, and Landing */
+.btn-orange {
+  background-color: #ff8c00;
+  border-color: #ff8c00;
+  color: #fff;
+}
+
+.btn-orange:hover {
+  background-color: #e67e00;
+  border-color: #e67e00;
+  color: #fff;
+}
+
+.btn-orange:focus {
+  box-shadow: 0 0 0 0.2rem rgba(255, 140, 0, 0.5);
+}
+
+.btn-orange:disabled {
+  background-color: #cc7a00;
+  border-color: #cc7a00;
+  opacity: 0.65;
 }
