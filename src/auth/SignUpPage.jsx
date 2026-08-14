@@ -363,14 +363,14 @@ const SignUpPage = ({ onClose, onSwitchToLogin }) => {
           </form>
         </div>
 
-        {/* Sticky Footer – fixed text color to be visible */}
+        {/* Sticky Footer */}
         <div
           className="border-top p-3 text-center flex-shrink-0"
           style={{
             backgroundColor: "#f8f9fa",
             borderBottomLeftRadius: "1.5rem",
             borderBottomRightRadius: "1.5rem",
-            color: "#212529", // dark text
+            color: "#212529",
           }}
         >
           <p className="mb-0 small" style={{ color: "#212529" }}>
@@ -386,7 +386,9 @@ const SignUpPage = ({ onClose, onSwitchToLogin }) => {
         </div>
       </div>
 
-      {/* Success Popup Modal */}
+      {/* ============================================================
+          SUCCESS POPUP – Enhanced with Bold & Professional Design
+          ============================================================ */}
       {showSuccessPopup && (
         <div
           className="position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 d-flex justify-content-center align-items-center"
@@ -394,23 +396,45 @@ const SignUpPage = ({ onClose, onSwitchToLogin }) => {
         >
           <div
             className="bg-white rounded-4 shadow-lg p-4 text-center"
-            style={{ width: "400px", maxWidth: "90%", animation: "slideIn 0.3s ease-out" }}
+            style={{
+              width: "420px",
+              maxWidth: "90%",
+              animation: "slideIn 0.3s ease-out",
+            }}
           >
+            {/* Success Icon */}
             <div className="mb-3">
               <div className="bg-success bg-opacity-10 rounded-circle d-inline-flex p-3">
                 <i className="bi bi-check-circle-fill text-success" style={{ fontSize: "3rem" }}></i>
               </div>
             </div>
-            <h4 className="fw-bold mb-2">Welcome, {successData.name?.split(" ")[0]}!</h4>
-            <p className="text-muted mb-3">{successData.message}</p>
-            <div className="alert alert-success bg-light border-0">
-              <i className="bi bi-envelope-fill me-2"></i>
-              <small>Verification link sent to {successData.email}</small>
+
+            {/* Bold Professional Heading */}
+            <h3 className="fw-bold text-success mb-1">
+              Account Created Successfully!
+            </h3>
+
+            {/* Personalized Welcome */}
+            <p className="fs-5 fw-semibold text-dark mb-3">
+              Welcome, {successData.name?.split(" ")[0]}!
+            </p>
+
+            {/* Verification Info */}
+            <div className="alert alert-success bg-light border-0 text-start">
+              <i className="bi bi-envelope-fill me-2 text-primary"></i>
+              <small>
+                A verification link has been sent to{" "}
+                <span className="fw-bold">{successData.email}</span>. Please check your inbox.
+              </small>
             </div>
-            <div className="spinner-border spinner-border-sm text-success" role="status">
-              <span className="visually-hidden">Loading...</span>
+
+            {/* Auto‑redirect indicator */}
+            <div className="mt-3">
+              <div className="spinner-border spinner-border-sm text-success" role="status">
+                <span className="visually-hidden">Loading...</span>
+              </div>
+              <p className="text-muted small mt-2">Redirecting to login in a few seconds...</p>
             </div>
-            <p className="text-muted small mt-2">Redirecting to login...</p>
           </div>
         </div>
       )}

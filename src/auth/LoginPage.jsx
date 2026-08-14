@@ -116,28 +116,48 @@ const LoginPage = ({ onClose, onSwitchToSignUp }) => {
   };
 
   const handleForgotSubmit = async (e) => {
-    e.preventDefault();
-    setForgotError('');
-    setForgotSuccess('');
-    const error = validateIdentifier(forgotIdentifier);
-    if (error) {
-      setForgotError(error);
-      setForgotTouched(true);
-      return;
-    }
-    setIsForgotSubmitting(true);
-    try {
-      await axios.post(`${process.env.REACT_APP_API_URL}/forgot-password`, { identifier: forgotIdentifier.trim() });
-      setForgotSuccess('Password reset link sent! Check your email or SMS.');
-      setForgotIdentifier('');
-      setForgotTouched(false);
-    } catch (err) {
-      const message = err.response?.data?.message || 'Failed to send reset link. Please try again.';
-      setForgotError(message);
-    } finally {
-      setIsForgotSubmitting(false);
-    }
-  };
+  e.preventDefault();
+
+  setForgotError('');
+  setForgotSuccess('');
+
+  const error = validateIdentifier(forgotIdentifier);
+
+  if (error) {
+    setForgotError(error);
+    setForgotTouched(true);
+    return;
+  }
+
+  setIsForgotSubmitting(true);
+
+  try {
+    const response = await axios.post(
+      `${process.env.REACT_APP_API_URL}/forgot-password`,
+      {
+        identifier: forgotIdentifier.trim(),
+      }
+    );
+
+    setForgotSuccess(
+      response.data?.message ||
+      'If an account exists with that email or phone number, reset instructions will be sent shortly.'
+    );
+
+    setForgotIdentifier('');
+    setForgotTouched(false);
+
+  } catch (err) {
+    const message =
+      err.response?.data?.message ||
+      'Unable to process your password reset request. Please try again.';
+
+    setForgotError(message);
+
+  } finally {
+    setIsForgotSubmitting(false);
+  }
+};
 
   const handleBackToLogin = () => {
     setShowForgotPassword(false);

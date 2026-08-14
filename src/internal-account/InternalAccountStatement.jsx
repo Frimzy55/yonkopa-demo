@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import Select from 'react-select';
-import { FaPrint, FaFileExcel } from 'react-icons/fa';
+import { FaPrint, FaFileExcel, FaTimes, FaSpinner } from 'react-icons/fa';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -29,6 +29,12 @@ const InternalAccountStatement = () => {
   const [selectedEntity, setSelectedEntity] = useState(null);
   const [hasTransactions, setHasTransactions] = useState(false);
   const [debugInfo, setDebugInfo] = useState({ rawResponse: null, extractedCount: 0, entityId: null });
+
+  // --- Modal state ---
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [selectedTransactionDetails, setSelectedTransactionDetails] = useState(null); // now holds an array
+  const [modalLoading, setModalLoading] = useState(false);
+
   const tableRef = useRef(null);
 
   // Fetch GL accounts
@@ -215,8 +221,7 @@ const InternalAccountStatement = () => {
       if (form.reportMode === 'teller') {
         url = `${API_BASE_URL}/api/teller-statement`;
         params = {
-          //tellerId: selectedEntity.id,
-          accountName: selectedEntity.name, // send the account name
+          accountName: selectedEntity.name,
           fromDate: fromDateTime,
           toDate: toDateTime,
         };
@@ -245,6 +250,7 @@ const InternalAccountStatement = () => {
       setClosingBalance(info.closingBalance);
       if (info.tellerName) setSelectedTellerName(info.tellerName);
 
+      // Map transactions – keep _raw and all necessary fields
       const mappedTransactions = transactions.map((item) => ({
         transactionDate: item.transactionDate || item.transaction_date || item.date || '',
         transactionDateTime: item.transactionDateTime || item.created_at || item.transaction_date || item.date || '',
@@ -253,7 +259,17 @@ const InternalAccountStatement = () => {
         debit: parseFloat(item.debit) || parseFloat(item.Debit) || parseFloat(item.debitAmount) || 0,
         credit: parseFloat(item.credit) || parseFloat(item.Credit) || parseFloat(item.creditAmount) || 0,
         balance: parseFloat(item.balance) || parseFloat(item.Balance) || parseFloat(item.balanceAmount) || 0,
-        _raw: item,
+        // Keep reference and raw data
+        reference: item.reference || item.transactionReference || item.ref || '',
+        accountName: item.accountName || item.account_name || '',
+        accountCode: item.accountCode || item.account_code || '',
+        narration: item.narration || '',
+        currency: item.currency || '',
+        createdBy: item.createdBy || item.created_by || '',
+        createdAt: item.createdAt || item.created_at || '',
+        updatedAt: item.updatedAt || item.updated_at || '',
+        transferId: item.transferId || item.transfer_id || null,
+        _raw: item,  // keep full raw for fallback
       }));
 
       const hasRealTransactions = mappedTransactions.length > 0;
@@ -311,6 +327,69 @@ const InternalAccountStatement = () => {
       toast.error(error.response?.data?.message || 'Failed to generate statement.');
     } finally {
       setLoadingStatement(false);
+    }
+  };
+
+  // --- Fetch full transaction details (now returns an array) ---
+  const fetchTransactionDetails = async (identifier, idType = 'transferId') => {
+    if (!identifier) {
+      toast.warn('No identifier available.');
+      return;
+    }
+
+    setModalLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      let url;
+      if (idType === 'transferId') {
+        url = `${API_BASE_URL}/api/transaction/transfer/${encodeURIComponent(identifier)}`;
+      } else {
+        // Fallback: fetch by reference (returns array as well)
+        url = `${API_BASE_URL}/api/transaction?reference=${encodeURIComponent(identifier)}`;
+      }
+      console.log(`🔍 Fetching transfer by ${idType}:`, identifier);
+      const response = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
+      console.log('✅ API Response:', response.data);
+      // Expecting an array in response.data.data
+      const transactions = response.data?.data || [];
+      if (!Array.isArray(transactions) || transactions.length === 0) {
+        toast.warn('No transactions found for this transfer.');
+        setSelectedTransactionDetails([]);
+        setShowDetailsModal(true); // still show empty state
+        return;
+      }
+      setSelectedTransactionDetails(transactions);
+      setShowDetailsModal(true);
+    } catch (error) {
+      console.error('❌ Error fetching transfer details:', error);
+      toast.error('Failed to load transfer details.');
+    } finally {
+      setModalLoading(false);
+    }
+  };
+
+  // --- Handler for clicking on description ---
+  const handleDescriptionClick = (row) => {
+    console.log('🖱️ Clicked row:', row);
+    if (row.isOpening || row.isClosing || row.isNoData) return;
+
+    // Prefer transfer_id, then reference, then id
+    let identifier = row.transferId || row._raw?.transfer_id;
+    let idType = 'transferId';
+    if (!identifier) {
+      identifier = row.reference || row._raw?.reference;
+      idType = 'reference';
+    }
+    if (!identifier) {
+      identifier = row._raw?.id || row.id;
+      idType = 'id';
+    }
+
+    if (identifier) {
+      fetchTransactionDetails(identifier, idType);
+    } else {
+      toast.warn('No identifier found for this transaction.');
+      console.warn('⚠️ Transaction row missing identifier:', row);
     }
   };
 
@@ -429,6 +508,7 @@ const InternalAccountStatement = () => {
     }),
   };
 
+  // ---------- RENDER ----------
   return (
     <div
       style={{
@@ -618,17 +698,17 @@ const InternalAccountStatement = () => {
               </div>
             </div>
 
-            <div ref={tableRef} style={{ overflowX: 'auto', borderRadius: '12px', border: '1px solid #e5e9f0' }}>
+            <div ref={tableRef} style={{ overflowX: 'auto', borderRadius: '12px', border: '1px solid #a2c3f8' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem', fontFamily: "'Inter', sans-serif", tableLayout: 'fixed' }}>
                 <thead>
-                  <tr style={{ backgroundColor: '#1e4f8a' }}>
-                    <th style={{ ...thStyle, width: '6%', textAlign: 'center', padding: '14px 8px', color: '#fff' }}>#</th>
-                    <th style={{ ...thStyle, width: '18%', padding: '14px 8px', color: '#fff' }}>Transaction Date</th>
-                    <th style={{ ...thStyle, width: '16%', padding: '14px 8px', color: '#fff' }}>Value Date</th>
-                    <th style={{ ...thStyle, width: '28%', maxWidth: '200px', padding: '14px 8px', wordBreak: 'break-word', color: '#fff' }}>Description</th>
-                    <th style={{ ...thStyle, width: '12%', textAlign: 'right', padding: '14px 8px', color: '#fff' }}>Debit (₵)</th>
-                    <th style={{ ...thStyle, width: '12%', textAlign: 'right', padding: '14px 8px', color: '#fff' }}>Credit (₵)</th>
-                    <th style={{ ...thStyle, width: '12%', textAlign: 'right', padding: '14px 8px', color: '#fff' }}>Balance (₵)</th>
+                  <tr style={{ backgroundColor: '#c5dffd' }}>
+                    <th style={{ ...thStyle, width: '6%', textAlign: 'center', padding: '14px 8px', color: '#e46767' }}>#</th>
+                    <th style={{ ...thStyle, width: '18%', padding: '14px 8px', color: '#1627c4' }}>Transaction Date</th>
+                    <th style={{ ...thStyle, width: '16%', padding: '14px 8px', color: '#1627c4' }}>Value Date</th>
+                    <th style={{ ...thStyle, width: '28%', maxWidth: '200px', padding: '14px 8px', wordBreak: 'break-word', color: '#1627c4' }}>Description</th>
+                    <th style={{ ...thStyle, width: '12%', textAlign: 'right', padding: '14px 8px', color: '#1627c4' }}>Debit (₵)</th>
+                    <th style={{ ...thStyle, width: '12%', textAlign: 'right', padding: '14px 8px', color: '#1627c4' }}>Credit (₵)</th>
+                    <th style={{ ...thStyle, width: '12%', textAlign: 'right', padding: '14px 8px', color: '#1627c4' }}>Balance (₵)</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -677,10 +757,23 @@ const InternalAccountStatement = () => {
                             <td style={{ ...tdStyle, fontWeight: isSpecial ? 700 : 400, padding: '8px 6px' }}>
                               {isSpecial ? '' : formatDate(row.valueDate)}
                             </td>
-                            <td style={{ ...tdStyle, fontWeight: isSpecial ? 700 : 400, fontStyle: isSpecial ? 'italic' : 'normal', padding: '8px 6px', wordBreak: 'break-word' }}>
+                            {/* Clickable Description */}
+                            <td
+                              style={{
+                                ...tdStyle,
+                                fontWeight: isSpecial ? 700 : 400,
+                                fontStyle: isSpecial ? 'italic' : 'normal',
+                                padding: '8px 6px',
+                                wordBreak: 'break-word',
+                                cursor: isSpecial ? 'default' : 'pointer',
+                                color: isSpecial ? 'inherit' : '#1e4f8a',
+                                textDecoration: isSpecial ? 'none' : 'underline',
+                              }}
+                              onClick={() => handleDescriptionClick(row)}
+                              title={isSpecial ? '' : 'Click to view full transaction details'}
+                            >
                               {row.description}
                             </td>
-                            {/* Changed debit and credit columns: show "0.00" instead of "—" for regular rows */}
                             <td style={{ ...tdStyle, textAlign: 'right', fontWeight: isSpecial ? 700 : 400, padding: '8px 6px' }}>
                               {isSpecial ? '' : (row.debit > 0 ? formatCurrency(row.debit) : '0.00')}
                             </td>
@@ -733,6 +826,161 @@ const InternalAccountStatement = () => {
         )}
       </div>
 
+      {/* --- Transaction Details Modal --- */}
+      {showDetailsModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 9999,
+            padding: '20px',
+          }}
+          onClick={() => setShowDetailsModal(false)}
+        >
+          <div
+            style={{
+              backgroundColor: '#fff',
+              borderRadius: '20px',
+              maxWidth: '800px',
+              width: '100%',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              padding: '28px 32px',
+              boxShadow: '0 25px 60px rgba(0,0,0,0.3)',
+              position: 'relative',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowDetailsModal(false)}
+              style={{
+                position: 'absolute',
+                top: '16px',
+                right: '20px',
+                background: 'none',
+                border: 'none',
+                fontSize: '1.5rem',
+                cursor: 'pointer',
+                color: '#4a5a6e',
+                transition: 'color 0.2s',
+              }}
+              onMouseEnter={(e) => (e.target.style.color = '#1e4f8a')}
+              onMouseLeave={(e) => (e.target.style.color = '#4a5a6e')}
+            >
+              <FaTimes />
+            </button>
+
+            <h3 style={{ marginTop: 0, marginBottom: '20px', color: '#0b1a33', fontSize: '1.4rem', borderBottom: '2px solid #eef2f6', paddingBottom: '12px' }}>
+              Transfer Details
+              <span style={{ fontSize: '0.8rem', fontWeight: 400, color: '#6b7a8a', marginLeft: '12px' }}>
+                (Sender & Receiver)
+              </span>
+            </h3>
+
+            {modalLoading ? (
+              <div style={{ display: 'flex', justifyContent: 'center', padding: '40px 0' }}>
+                <FaSpinner className="spinner" size={40} color="#1e4f8a" />
+              </div>
+            ) : selectedTransactionDetails && selectedTransactionDetails.length > 0 ? (
+              <div>
+                <div style={{ marginBottom: '16px', fontWeight: 500, color: '#0b1a33' }}>
+                  Transfer ID: <strong>{selectedTransactionDetails[0]?.transfer_id || 'N/A'}</strong>
+                  &nbsp;|&nbsp; Reference: <strong>{selectedTransactionDetails[0]?.reference || 'N/A'}</strong>
+                  &nbsp;|&nbsp; Date: <strong>{formatDateTime(selectedTransactionDetails[0]?.transaction_date)}</strong>
+                </div>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+                  <thead>
+                    <tr style={{ backgroundColor: '#f1f5f9' }}>
+                      <th style={{ ...thStyle, textAlign: 'left' }}>Side</th>
+                      <th style={{ ...thStyle, textAlign: 'left' }}>Account Code</th>
+                      <th style={{ ...thStyle, textAlign: 'left' }}>Account Name</th>
+                      <th style={{ ...thStyle, textAlign: 'right' }}>Debit</th>
+                      <th style={{ ...thStyle, textAlign: 'right' }}>Credit</th>
+                      <th style={{ ...thStyle, textAlign: 'right' }}>Balance</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {selectedTransactionDetails.map((tx, idx) => {
+                      const isSender = parseFloat(tx.debit) > 0;
+                      const isReceiver = parseFloat(tx.credit) > 0;
+                      let side = '';
+                      let badgeStyle = {};
+                      if (isSender) {
+                        side = ' (Debit)';
+                        badgeStyle = { backgroundColor: '#fee2e2', color: '#991b1b' };
+                      } else if (isReceiver) {
+                        side = ' (Credit)';
+                        badgeStyle = { backgroundColor: '#dcfce7', color: '#166534' };
+                      } else {
+                        side = 'Unknown';
+                        badgeStyle = { backgroundColor: '#f3f4f6', color: '#4b5563' };
+                      }
+                      return (
+                        <tr key={idx} style={{ backgroundColor: idx % 2 === 0 ? '#ffffff' : '#f9fbfd' }}>
+                          <td style={{ ...tdStyle }}>
+                            <span
+                              style={{
+                                ...badgeStyle,
+                                padding: '2px 10px',
+                                borderRadius: '12px',
+                                fontSize: '0.75rem',
+                                fontWeight: 600,
+                                display: 'inline-block',
+                              }}
+                            >
+                              {side}
+                            </span>
+                          </td>
+                          <td style={{ ...tdStyle }}>{tx.account_code || '-'}</td>
+                          <td style={{ ...tdStyle }}>{tx.account_name || '-'}</td>
+                          <td style={{ ...tdStyle, textAlign: 'right' }}>{formatCurrency(tx.debit)}</td>
+                          <td style={{ ...tdStyle, textAlign: 'right' }}>{formatCurrency(tx.credit)}</td>
+                          <td style={{ ...tdStyle, textAlign: 'right' }}>{formatCurrency(tx.balance)}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+                <div style={{ marginTop: '12px', fontSize: '0.85rem', color: '#4a5a6e' }}>
+                  <strong>Narration:</strong> {selectedTransactionDetails[0]?.narration || '-'}
+                  &nbsp;|&nbsp; <strong>Description:</strong> {selectedTransactionDetails[0]?.description || '-'}
+                </div>
+              </div>
+            ) : (
+              <p style={{ textAlign: 'center', color: '#6b7a8a' }}>No transaction data available.</p>
+            )}
+
+            <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setShowDetailsModal(false)}
+                style={{
+                  padding: '8px 28px',
+                  borderRadius: '30px',
+                  border: 'none',
+                  backgroundColor: '#1e4f8a',
+                  color: '#fff',
+                  fontWeight: 500,
+                  fontSize: '0.9rem',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.2s',
+                }}
+                onMouseEnter={(e) => (e.target.style.backgroundColor = '#163d6b')}
+                onMouseLeave={(e) => (e.target.style.backgroundColor = '#1e4f8a')}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <style>{`
         @media print {
           body * { visibility: hidden; }
@@ -746,11 +994,27 @@ const InternalAccountStatement = () => {
           }
           .no-print { display: none !important; }
         }
+        .spinner {
+          animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
       `}</style>
     </div>
   );
 };
 
+// --- Helper component (kept for compatibility, but not used in new modal) ---
+const DetailItem = ({ label, value }) => (
+  <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '6px' }}>
+    <span style={{ fontSize: '0.75rem', fontWeight: 500, color: '#6b7a8a', letterSpacing: '0.3px' }}>{label}</span>
+    <span style={{ fontSize: '0.95rem', color: '#0b1a33', wordBreak: 'break-word' }}>{value}</span>
+  </div>
+);
+
+// --- Styles ---
 const labelStyle = {
   display: 'block',
   fontSize: '0.8rem',
