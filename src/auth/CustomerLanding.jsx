@@ -4,6 +4,7 @@ import LoginPage from './LoginPage';
 import { FaBolt, FaChartLine, FaShieldAlt, FaChevronDown } from 'react-icons/fa';
 import logo from '../image/yonko1.jpeg';
 import christmasTree from '../image/hat1.png';
+import defaultHeroImage from '../image/lady1.png';
 import './CustomerLanding.css';
 
 const CustomerLanding = () => {
@@ -14,7 +15,6 @@ const CustomerLanding = () => {
   const featuresRef = useRef(null);
   const homeRef = useRef(null);
 
-  // Christmas period
   useEffect(() => {
     const today = new Date();
     const month = today.getMonth();
@@ -33,20 +33,15 @@ const CustomerLanding = () => {
     }
   };
 
-  // Updated openSignUp: shows the sign‑up form and scrolls to it
   const openSignUp = () => {
     setShowSignUp(true);
     setShowLogin(false);
-    // Delay scroll slightly to ensure the form renders and the layout is stable
     setTimeout(() => smoothScrollTo(homeRef), 150);
   };
 
-  // Open login, close sign‑up
   const openLogin = () => {
     setShowLogin(true);
     setShowSignUp(false);
-    // Optional: also scroll to the login form if desired
-    // setTimeout(() => smoothScrollTo(homeRef), 150);
   };
 
   const handleCloseSignUp = () => {
@@ -71,6 +66,58 @@ const CustomerLanding = () => {
 
   return (
     <div className="customer-landing">
+      {/* --- Animation styles (can be moved to CSS) --- */}
+      <style>{`
+        .fade-in-content {
+          animation: fadeIn 0.5s ease forwards;
+        }
+        @keyframes fadeIn {
+          0% { opacity: 0; transform: translateY(10px); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
+
+        .scroll-arrow {
+          animation: bounce 2s infinite;
+        }
+        @keyframes bounce {
+          0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+          40% { transform: translateY(-10px); }
+          60% { transform: translateY(-5px); }
+        }
+
+        .feature-card {
+          transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .feature-card:hover {
+          transform: scale(1.03);
+          box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+        }
+
+        .hero-title {
+          animation: slideUp 0.8s ease forwards;
+        }
+        .hero-subtitle {
+          animation: slideUp 0.8s ease 0.2s forwards;
+          opacity: 0;
+        }
+        .hero-buttons {
+          animation: slideUp 0.8s ease 0.4s forwards;
+          opacity: 0;
+        }
+        @keyframes slideUp {
+          0% { opacity: 0; transform: translateY(20px); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
+
+        .btn-orange {
+          transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn-orange:hover {
+          transform: scale(1.05);
+          box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+        }
+      `}</style>
+
       {/* HEADER */}
       <nav className="navbar navbar-light bg-white shadow-sm">
         <div className="container d-flex justify-content-between align-items-center">
@@ -110,17 +157,16 @@ const CustomerLanding = () => {
         <div className="container">
           <div className="row align-items-center min-vh-80">
             {/* Left column */}
-            <div className={`col-lg-6 text-center text-lg-start ${(showSignUp || showLogin) ? 'col-lg-6' : 'col-lg-12'}`}>
-              <h2 className="display-5 fw-bold">Get the Loan You Need</h2>
-              <p className="lead mb-4">Simple, fast, and transparent loan process</p>
-              <div className="d-flex justify-content-center justify-content-lg-start gap-3 flex-wrap align-items-center">
+            <div className="col-lg-6 text-center text-lg-start">
+              <h2 className="display-5 fw-bold hero-title">Get the Loan You Need</h2>
+              <p className="lead mb-4 hero-subtitle">Simple, fast, and transparent loan process</p>
+              <div className="d-flex justify-content-center justify-content-lg-start gap-3 flex-wrap align-items-center hero-buttons">
                 <button className="btn btn-light text-primary px-4 rounded-pill" onClick={openSignUp}>
                   Create Account
                 </button>
                 <button className="btn btn-outline-light px-4 rounded-pill" onClick={openLogin}>
                   Login
                 </button>
-                {/* Enlarged second logo */}
                 <img
                   src={logo}
                   alt="Yonkopa Logo"
@@ -136,9 +182,12 @@ const CustomerLanding = () => {
               </div>
             </div>
 
-            {/* Right column – form appears here when active */}
-            {(showSignUp || showLogin) && (
-              <div className="col-lg-6 mt-4 mt-lg-0 d-flex justify-content-center">
+            {/* Right column – animated content with a dynamic key */}
+            <div className="col-lg-6 mt-4 mt-lg-0 d-flex justify-content-center align-items-center">
+              <div
+                key={showSignUp ? 'signup' : showLogin ? 'login' : 'default'}
+                className="fade-in-content w-100 d-flex justify-content-center"
+              >
                 {showSignUp && (
                   <SignUpPage
                     onClose={handleCloseSignUp}
@@ -151,8 +200,16 @@ const CustomerLanding = () => {
                     onSwitchToSignUp={handleSwitchToSignUp}
                   />
                 )}
+                {!showSignUp && !showLogin && (
+                  <img
+                    src={defaultHeroImage}
+                    alt="Loans illustration"
+                    className="img-fluid"
+                    style={{ maxWidth: '100%', height: 'auto' }}
+                  />
+                )}
               </div>
-            )}
+            </div>
           </div>
 
           {/* Scroll indicator */}
@@ -193,7 +250,7 @@ const CustomerLanding = () => {
         </div>
       </section>
 
-      {/* CTA SECTION – the "Sign Up Now" button now scrolls to the form */}
+      {/* CTA SECTION */}
       <section className="cta-section">
         <div className="container text-center">
           <h3 className="mb-3">Ready to Get Started?</h3>
