@@ -1,5 +1,5 @@
-import React from "react";
-import { Modal, Button, Row, Col, Tab, Nav, Card, Table } from "react-bootstrap";
+import React, { useState, useEffect } from "react";
+import { Modal, Button, Row, Col, Tab, Nav, Card, Table, Form } from "react-bootstrap";
 import { 
   FaFileInvoice, 
   FaUser, 
@@ -13,28 +13,46 @@ import {
   FaCommentDots 
 } from "react-icons/fa";
 
-const LoanDetailsModal = ({ show, handleClose, loan }) => {
+const LoanDetailsModal = ({ 
+  show, 
+  handleClose, 
+  loan,
+  onUpdateSupervisorRecommendation,  // expects (approvedAmount) => {}
+  imageBaseUrl = "/uploads/"
+}) => {
+  // State for the approved amount input
+  const [approvedAmount, setApprovedAmount] = useState("");
+  // UI states for saving feedback
+  const [saving, setSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState({ text: '', type: '' });
+
+  useEffect(() => {
+    if (loan) {
+      // Load existing approved amount if any
+      const existing = loan.approved_amount || loan.supervisorRecommendation || loan.supervisor_recommendation || "";
+      setApprovedAmount(existing);
+      // Clear any old messages when modal opens with a new loan
+      setSaveMessage({ text: '', type: '' });
+    }
+  }, [loan, show]);
+
   if (!loan) return null;
 
-  // Helper function to format currency
+  // ---------- Helpers ----------
   const formatCurrency = (value) => {
     if (!value && value !== 0) return null;
     return `₵${parseFloat(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
-  // Helper function to format date
   const formatDate = (date) => {
     if (!date) return null;
     return new Date(date).toLocaleDateString();
   };
 
-
-  // Helper function to check if a value is empty/N/A
   const isEmpty = (value) => {
     return value === null || value === undefined || value === "" || value === "N/A";
   };
 
-  // Helper function to conditionally render a field
   const renderField = (label, value, formatter = null) => {
     const displayValue = formatter ? formatter(value) : value;
     if (isEmpty(displayValue)) return null;
@@ -45,13 +63,102 @@ const LoanDetailsModal = ({ show, handleClose, loan }) => {
     );
   };
 
-  // Get employment status (case insensitive comparison)
+  const renderImageField = (label, imageData) => {
+    if (!imageData || typeof imageData !== "string") {
+      return (
+        <div className="mb-2">
+          <strong>{label}:</strong>
+          <div className="mt-1 text-muted" style={{ fontSize: "0.9rem" }}>
+            No image provided
+          </div>
+        </div>
+      );
+    }
+
+    let src = imageData.replace(/\\/g, "/").trim();
+
+    if (src.startsWith("http://") || src.startsWith("https://")) {
+      // keep as is
+    } else {
+      const cleanSrc = src.replace(/^\/+/, '').replace(/^uploads\//, '');
+      const base = imageBaseUrl.replace(/\/+$/, '');
+      src = `${base}/${cleanSrc}`;
+    }
+
+    src = src.replace(/([^:])\/+/g, '$1/');
+
+    return (
+      <div className="mb-2">
+        <strong>{label}:</strong>
+        <div className="mt-1">
+          <img
+            src={src}
+            alt={label}
+            style={{ maxWidth: "150px", maxHeight: "150px", borderRadius: "4px", border: "1px solid #ddd" }}
+            className="img-thumbnail"
+            onError={(e) => {
+              e.target.onerror = null;
+              console.error(`Failed to load image: ${src}`);
+              e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 24 24' fill='none' stroke='%23ccc' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='18' height='18' rx='2' ry='2'%3E%3C/rect%3E%3Ccircle cx='8.5' cy='8.5' r='1.5'%3E%3C/circle%3E%3Cpolyline points='21 15 16 10 5 21'%3E%3C/polyline%3E%3C/svg%3E";
+              e.target.style.border = "1px dashed #ccc";
+              e.target.style.padding = "4px";
+              e.target.title = `Failed to load: ${imageData}`;
+            }}
+          />
+        </div>
+      </div>
+    );
+  };
+
   const employmentStatus = (loan.applicant_employmentStatus || loan.employmentStatus || "").toLowerCase();
-  const isSalariedWorker = employmentStatus === "salaried" || employmentStatus === "salary-worker" || employmentStatus === "employed";
-  const isSelfEmployed = employmentStatus === "self employed" || employmentStatus === "self-employed" || employmentStatus === "business";
+  const isSalariedWorker = ["salaried", "salary-worker", "employed"].includes(employmentStatus);
+  const isSelfEmployed = ["self employed", "self-employed", "business"].includes(employmentStatus);
+
+  // ---------- Updated save handler with API call using environment variable ----------
+  const handleSaveRecommendation = async () => {
+    const amount = parseFloat(approvedAmount);
+    if (isNaN(amount) || amount < 0) {
+      setSaveMessage({ text: 'Please enter a valid positive number.', type: 'danger' });
+      return;
+    }
+
+    setSaving(true);
+    setSaveMessage({ text: '', type: '' });
+
+    try {
+      // ✅ Use environment variable for the API base URL
+      const apiBase = process.env.REACT_APP_API_URL || '';
+      const url = `${apiBase}/api/loans/${loan.loan_id}/update-approved-amount`;
+
+      const response = await fetch(url, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ approved_amount: amount }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update approved amount');
+      }
+
+      const data = await response.json();
+
+      // Notify parent (if callback provided)
+      if (onUpdateSupervisorRecommendation) {
+        onUpdateSupervisorRecommendation(amount);
+      }
+
+      setSaveMessage({ text: 'Approved amount saved successfully!', type: 'success' });
+    } catch (error) {
+      console.error('Error saving approved amount:', error);
+      setSaveMessage({ text: error.message || 'An error occurred. Please try again.', type: 'danger' });
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
-    <Modal show={show} onHide={handleClose} size="xl" scrollable dialogClassName="modal-xl">
+    <Modal show={show} onHide={handleClose} size="xl" fullscreen="lg-down" scrollable>
       <Modal.Header closeButton>
         <Modal.Title>
           <h4>Loan Application Details - {loan.loan_id}</h4>
@@ -62,63 +169,25 @@ const LoanDetailsModal = ({ show, handleClose, loan }) => {
       <Modal.Body>
         <Tab.Container defaultActiveKey="loan-info">
           <Row>
-            <Col md={3}>
+            {/* Narrower sidebar */}
+            <Col md={2}>
               <Nav variant="pills" className="flex-column">
-                <Nav.Item>
-                  <Nav.Link eventKey="loan-info">
-                    <FaFileInvoice className="me-2" /> Loan Information
-                  </Nav.Link>
-                </Nav.Item>
-                <Nav.Item>
-                  <Nav.Link eventKey="applicant-info">
-                    <FaUser className="me-2" /> Applicant Information
-                  </Nav.Link>
-                </Nav.Item>
-                <Nav.Item>
-                  <Nav.Link eventKey="employment-info">
-                    <FaBriefcase className="me-2" /> Employment Details
-                  </Nav.Link>
-                </Nav.Item>
-                <Nav.Item>
-                  <Nav.Link eventKey="financial-assessment">
-                    <FaChartLine className="me-2" /> Financial Assessment
-                  </Nav.Link>
-                </Nav.Item>
-                <Nav.Item>
-                  <Nav.Link eventKey="evaluation">
-                    <FaEnvelope className="me-2" /> Contact Information
-                  </Nav.Link>
-                </Nav.Item>
-                <Nav.Item>
-                  <Nav.Link eventKey="references">
-                    <FaUsers className="me-2" /> References
-                  </Nav.Link>
-                </Nav.Item>
-                <Nav.Item>
-                  <Nav.Link eventKey="guarantor">
-                    <FaShieldAlt className="me-2" /> Guarantor Information
-                  </Nav.Link>
-                </Nav.Item>
-                <Nav.Item>
-                  <Nav.Link eventKey="collateral">
-                    <FaBuilding className="me-2" /> Collateral Details
-                  </Nav.Link>
-                </Nav.Item>
-                <Nav.Item>
-                  <Nav.Link eventKey="momo">
-                    <FaMobileAlt className="me-2" /> Mobile Money
-                  </Nav.Link>
-                </Nav.Item>
-                <Nav.Item>
-                  <Nav.Link eventKey="documents">
-                    <FaCommentDots className="me-2" /> Comments
-                  </Nav.Link>
-                </Nav.Item>
+                <Nav.Item><Nav.Link eventKey="loan-info"><FaFileInvoice className="me-2" /> Loan Information</Nav.Link></Nav.Item>
+                <Nav.Item><Nav.Link eventKey="applicant-info"><FaUser className="me-2" /> Applicant Information</Nav.Link></Nav.Item>
+                <Nav.Item><Nav.Link eventKey="employment-info"><FaBriefcase className="me-2" /> Employment Details</Nav.Link></Nav.Item>
+                <Nav.Item><Nav.Link eventKey="financial-assessment"><FaChartLine className="me-2" /> Financial Assessment</Nav.Link></Nav.Item>
+                <Nav.Item><Nav.Link eventKey="evaluation"><FaEnvelope className="me-2" /> Contact Information</Nav.Link></Nav.Item>
+                <Nav.Item><Nav.Link eventKey="references"><FaUsers className="me-2" /> References</Nav.Link></Nav.Item>
+                <Nav.Item><Nav.Link eventKey="guarantor"><FaShieldAlt className="me-2" /> Guarantor Information</Nav.Link></Nav.Item>
+                <Nav.Item><Nav.Link eventKey="collateral"><FaBuilding className="me-2" /> Collateral Details</Nav.Link></Nav.Item>
+                <Nav.Item><Nav.Link eventKey="momo"><FaMobileAlt className="me-2" /> Mobile Money</Nav.Link></Nav.Item>
+                <Nav.Item><Nav.Link eventKey="documents"><FaCommentDots className="me-2" /> Comments</Nav.Link></Nav.Item>
               </Nav>
             </Col>
-            <Col md={9}>
+            {/* Expanded content area */}
+            <Col md={10}>
               <Tab.Content>
-                {/* Loan Information Tab */}
+                {/* ====== LOAN INFORMATION ====== */}
                 <Tab.Pane eventKey="loan-info">
                   <Card>
                     <Card.Header as="h5">Loan Information</Card.Header>
@@ -128,6 +197,7 @@ const LoanDetailsModal = ({ show, handleClose, loan }) => {
                           {renderField("Loan ID", loan.loan_id)}
                           {renderField("Customer Code", loan.kyc_code)}
                           {renderField("Loan Amount", loan.kyc_loan_amount, formatCurrency)}
+                          {renderField("Approved Amount", loan.approved_amount, formatCurrency)}
                           {renderField("Loan Purpose", loan.kyc_loan_purpose)}
                           {renderField("Loan Term", loan.loanTerm, (v) => `${v} months`)}
                           {renderField("Repayment Frequency", loan.repaymentFrequency)}
@@ -143,11 +213,13 @@ const LoanDetailsModal = ({ show, handleClose, loan }) => {
                           {renderField("Loan Status", loan.momo_loan_status)}
                         </Col>
                       </Row>
+                      <hr />
+                      
                     </Card.Body>
                   </Card>
                 </Tab.Pane>
 
-                {/* Applicant Information Tab */}
+                {/* ====== APPLICANT INFORMATION ====== */}
                 <Tab.Pane eventKey="applicant-info">
                   <Card>
                     <Card.Header as="h5">Personal Information</Card.Header>
@@ -159,11 +231,7 @@ const LoanDetailsModal = ({ show, handleClose, loan }) => {
                           {renderField("Middle Name", loan.middlename)}
                           {renderField("Last Name", loan.lastname)}
                           {renderField("Full Name", loan.applicant_fullName)}
-                        {renderField(
-                  "Date of Birth",
-                     loan.applicant_dob || loan.dateofbirth,
-                    formatDate
-                         )}
+                          {renderField("Date of Birth", loan.applicant_dob || loan.dateofbirth, formatDate)}
                           {renderField("Gender", loan.applicant_gender || loan.personal_gender)}
                           {renderField("Marital Status", loan.applicant_maritalStatus || loan.personal_maritalstatus)}
                           {renderField("National ID", loan.applicant_nationalid || loan.personal_nationalid)}
@@ -188,7 +256,7 @@ const LoanDetailsModal = ({ show, handleClose, loan }) => {
                   </Card>
                 </Tab.Pane>
 
-                {/* Employment Details Tab - Conditional rendering based on employment status */}
+                {/* ====== EMPLOYMENT DETAILS ====== */}
                 <Tab.Pane eventKey="employment-info">
                   <Card>
                     <Card.Header as="h5">
@@ -202,7 +270,6 @@ const LoanDetailsModal = ({ show, handleClose, loan }) => {
                     <Card.Body>
                       {renderField("Employment Status", loan.applicant_employmentStatus || loan.employmentStatus)}
                       
-                      {/* Salaried Worker Section */}
                       {isSalariedWorker && (
                         <>
                           <hr />
@@ -216,26 +283,24 @@ const LoanDetailsModal = ({ show, handleClose, loan }) => {
                             </Col>
                             <Col md={6}>
                               {renderField("Work Location", loan.workPlaceLocation)}
-                              {renderField("Employment ID", loan.employmentId)}
                               {renderField("Created At", loan.employment_created_at, formatDate)}
                               {renderField("Updated At", loan.employment_updated_at, formatDate)}
                             </Col>
                           </Row>
-                          
                           <h6 className="text-primary mt-3">📄 Salaried Worker Documents</h6>
                           <Row>
                             <Col md={6}>
-                              {loan.payslip && <p><strong>Payslip:</strong> 📄 Uploaded</p>}
+                              {renderImageField("Payslip", loan.payslip)}
+                              {renderImageField("Employment ID", loan.employmentId)}
                             </Col>
                             <Col md={6}>
-                              {loan.ghanaCardFront && <p><strong>Ghana Card Front:</strong> 📄 Uploaded</p>}
-                              {loan.ghanaCardBack && <p><strong>Ghana Card Back:</strong> 📄 Uploaded</p>}
+                              {renderImageField("Ghana Card Front", loan.ghanaCardFront)}
+                              {renderImageField("Ghana Card Back", loan.ghanaCardBack)}
                             </Col>
                           </Row>
                         </>
                       )}
                       
-                      {/* Self Employed Section */}
                       {isSelfEmployed && (
                         <>
                           <hr />
@@ -256,22 +321,14 @@ const LoanDetailsModal = ({ show, handleClose, loan }) => {
                               {renderField("Updated At", loan.employment_updated_at, formatDate)}
                             </Col>
                           </Row>
-                          
-                          {loan.businessPicture && (
-                            <h6 className="text-success mt-3">📷 Business Documents</h6>
-                          )}
-                          <Row>
-                            <Col md={6}>
-                              {loan.businessPicture && <p><strong>Business Picture:</strong> 📷 Uploaded</p>}
-                            </Col>
-                          </Row>
+                          {renderImageField("Business Picture", loan.businessPicture)}
                         </>
                       )}
                     </Card.Body>
                   </Card>
                 </Tab.Pane>
 
-                {/* Financial Assessment Tab */}
+                {/* ====== FINANCIAL ASSESSMENT ====== */}
                 <Tab.Pane eventKey="financial-assessment">
                   <Card>
                     <Card.Header as="h5">Financial Assessment</Card.Header>
@@ -314,7 +371,7 @@ const LoanDetailsModal = ({ show, handleClose, loan }) => {
                   </Card>
                 </Tab.Pane>
 
-                {/* Contact Information Tab */}
+                {/* ====== CONTACT INFORMATION ====== */}
                 <Tab.Pane eventKey="evaluation">
                   <Card>
                     <Card.Header as="h5">Contact Information</Card.Header>
@@ -337,7 +394,7 @@ const LoanDetailsModal = ({ show, handleClose, loan }) => {
                   </Card>
                 </Tab.Pane>
 
-                {/* References Tab */}
+                {/* ====== REFERENCES ====== */}
                 <Tab.Pane eventKey="references">
                   <Card>
                     <Card.Header as="h5">References</Card.Header>
@@ -364,7 +421,7 @@ const LoanDetailsModal = ({ show, handleClose, loan }) => {
                   </Card>
                 </Tab.Pane>
 
-                {/* Guarantor Tab */}
+                {/* ====== GUARANTOR ====== */}
                 <Tab.Pane eventKey="guarantor">
                   <Card>
                     <Card.Header as="h5">Guarantor Information</Card.Header>
@@ -380,7 +437,6 @@ const LoanDetailsModal = ({ show, handleClose, loan }) => {
                         </Col>
                       </Row>
 
-                      {/* ================= SALARY WORKER ================= */}
                       {loan.guarantorEmployeeType === "salary worker" && (
                         <Row>
                           <Col md={6}>
@@ -390,14 +446,13 @@ const LoanDetailsModal = ({ show, handleClose, loan }) => {
                             {renderField("Years in Service", loan.guarantorYearsInService)}
                           </Col>
                           <Col md={6}>
-                            {loan.guarantorPayslip && <p><strong>Payslip:</strong> 📄 Uploaded</p>}
-                            {loan.guarantorGhanaCardFront && <p><strong>Ghana Card Front:</strong> 📄 Uploaded</p>}
-                            {loan.guarantorGhanaCardBack && <p><strong>Ghana Card Back:</strong> 📄 Uploaded</p>}
+                            {renderImageField("Guarantor Payslip", loan.guarantorPayslip)}
+                            {renderImageField("Guarantor Ghana Card Front", loan.guarantorGhanaCardFront)}
+                            {renderImageField("Guarantor Ghana Card Back", loan.guarantorGhanaCardBack)}
                           </Col>
                         </Row>
                       )}
 
-                      {/* ================= SELF EMPLOYED ================= */}
                       {loan.guarantorEmployeeType === "self employed" && (
                         <Row>
                           <Col md={6}>
@@ -406,8 +461,8 @@ const LoanDetailsModal = ({ show, handleClose, loan }) => {
                             {renderField("Years in Business", loan.guarantorYearsInBusiness)}
                           </Col>
                           <Col md={6}>
-                            {loan.guarantorProfilePicture && <p><strong>Profile Picture:</strong> 📷 Uploaded</p>}
-                            {loan.guarantorBusinessPicture && <p><strong>Business Picture:</strong> 📷 Uploaded</p>}
+                            {renderImageField("Guarantor Profile Picture", loan.guarantorProfilePicture)}
+                            {renderImageField("Guarantor Business Picture", loan.guarantorBusinessPicture)}
                           </Col>
                         </Row>
                       )}
@@ -415,20 +470,17 @@ const LoanDetailsModal = ({ show, handleClose, loan }) => {
                   </Card>
                 </Tab.Pane>
 
-                {/* Collateral Tab */}
+                {/* ====== COLLATERAL ====== */}
                 <Tab.Pane eventKey="collateral">
                   <Card>
                     <Card.Header as="h5">Collateral Information</Card.Header>
                     <Card.Body>
                       <Row>
                         <Col md={6}>
-                         
                           {renderField("Lending Type", loan.lending_type)}
                           {renderField("Collateral Type", loan.collateral_type)}
                         </Col>
-                        
                       </Row>
-
                       {loan.collateral_data && (
                         <>
                           <hr />
@@ -441,22 +493,21 @@ const LoanDetailsModal = ({ show, handleClose, loan }) => {
                                     const data = typeof loan.collateral_data === "string"
                                       ? JSON.parse(loan.collateral_data)
                                       : loan.collateral_data;
-                                    
                                     return Object.entries(data).map(([key, value]) => {
                                       if (isEmpty(value)) return null;
                                       return (
                                         <tr key={key}>
                                           <td style={{ width: "40%" }}>
                                             <strong>{key.replace(/_/g, " ").replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</strong>
-                                           </td>
-                                           <td>
+                                          </td>
+                                          <td>
                                             {typeof value === "object"
                                               ? Array.isArray(value)
                                                 ? value.join(", ")
                                                 : JSON.stringify(value)
                                               : value.toString()}
-                                           </td>
-                                         </tr>
+                                          </td>
+                                        </tr>
                                       );
                                     }).filter(Boolean);
                                   })()}
@@ -470,7 +521,7 @@ const LoanDetailsModal = ({ show, handleClose, loan }) => {
                   </Card>
                 </Tab.Pane>
 
-                {/* Mobile Money Tab */}
+                {/* ====== MOBILE MONEY ====== */}
                 <Tab.Pane eventKey="momo">
                   <Card>
                     <Card.Header as="h5">Mobile Money Information</Card.Header>
@@ -483,7 +534,7 @@ const LoanDetailsModal = ({ show, handleClose, loan }) => {
                   </Card>
                 </Tab.Pane>
 
-                {/* Documents Tab */}
+                {/* ====== COMMENTS ====== */}
                 <Tab.Pane eventKey="documents">
                   <Card>
                     <Card.Header as="h5">Loan Final Decision</Card.Header>
@@ -492,11 +543,8 @@ const LoanDetailsModal = ({ show, handleClose, loan }) => {
                         <Col md={12}>
                           <h6>Decision Information</h6>
                           {!isEmpty(loan.comments) && (
-                            <p>
-                              <strong>Comments:</strong> {loan.comments}
-                            </p>
+                            <p><strong>Comments:</strong> {loan.comments}</p>
                           )}
-                         
                           {!isEmpty(loan.decision_date) && renderField("Decision Date", loan.decision_date, formatDate)}
                         </Col>
                       </Row>
