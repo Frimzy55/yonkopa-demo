@@ -114,7 +114,7 @@ const LoanDetailsModal = ({
   const isSalariedWorker = ["salaried", "salary-worker", "employed"].includes(employmentStatus);
   const isSelfEmployed = ["self employed", "self-employed", "business"].includes(employmentStatus);
 
-  // ---------- Updated save handler with API call using environment variable ----------
+  // ---------- Save handler (now used!) ----------
   const handleSaveRecommendation = async () => {
     const amount = parseFloat(approvedAmount);
     if (isNaN(amount) || amount < 0) {
@@ -126,7 +126,6 @@ const LoanDetailsModal = ({
     setSaveMessage({ text: '', type: '' });
 
     try {
-      // ✅ Use environment variable for the API base URL
       const apiBase = process.env.REACT_APP_API_URL || '';
       const url = `${apiBase}/api/loans/${loan.loan_id}/update-approved-amount`;
 
@@ -136,12 +135,12 @@ const LoanDetailsModal = ({
         body: JSON.stringify({ approved_amount: amount }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to update approved amount');
-      }
+      // Parse response regardless of status to get error message
+      const result = await response.json();
 
-      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(result.message || 'Failed to update approved amount');
+      }
 
       // Notify parent (if callback provided)
       if (onUpdateSupervisorRecommendation) {
@@ -215,6 +214,39 @@ const LoanDetailsModal = ({
                       </Row>
                       <hr />
                       
+                      {/* ─── Supervisor Recommendation / Approved Amount Input ─── */}
+                      <Row className="mt-3">
+                        <Col md={6}>
+                          <Form.Group>
+                            <Form.Label><strong>Supervisor Recommended Amount</strong></Form.Label>
+                            <Form.Control
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              placeholder="Enter approved amount"
+                              value={approvedAmount}
+                              onChange={(e) => setApprovedAmount(e.target.value)}
+                              disabled={saving}
+                            />
+                          </Form.Group>
+                        </Col>
+                        <Col md={6} className="d-flex align-items-end">
+                          <Button
+                            variant="primary"
+                            onClick={handleSaveRecommendation}
+                            disabled={saving}
+                            className="w-100"
+                          >
+                            {saving ? 'Saving...' : 'Save Recommendation'}
+                          </Button>
+                        </Col>
+                      </Row>
+                      {saveMessage.text && (
+                        <div className={`mt-2 alert alert-${saveMessage.type} alert-dismissible fade show`} role="alert">
+                          {saveMessage.text}
+                          <button type="button" className="btn-close" onClick={() => setSaveMessage({ text: '', type: '' })}></button>
+                        </div>
+                      )}
                     </Card.Body>
                   </Card>
                 </Tab.Pane>

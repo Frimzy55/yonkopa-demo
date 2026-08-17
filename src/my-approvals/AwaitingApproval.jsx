@@ -193,7 +193,7 @@ const AwaitingApproval = () => {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [entries, setEntries] = useState(10);
-  const [highlightedRowId, setHighlightedRowId] = useState(null);
+  const [highlightedRowId, ] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [selectedLoan, setSelectedLoan] = useState(null);
 
