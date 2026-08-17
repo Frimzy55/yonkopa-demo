@@ -1,4 +1,4 @@
-// ApprovedLoans.jsx - Added Customer ID column
+// ApprovedLoansReport.jsx – fully updated for approved_date
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { format } from 'date-fns';
@@ -30,6 +30,7 @@ const ApprovedLoansReport = () => {
       const response = await axios.get(
         `${process.env.REACT_APP_API_URL}/api/admin/approved-loan`
       );
+      console.log('Sample approved loan:', response.data[0]); // Debug
       setApprovedLoans(response.data);
       setError(null);
     } catch (err) {
@@ -47,24 +48,41 @@ const ApprovedLoansReport = () => {
     setShowFilters(false);
   };
 
-  const hasFilter = searchTerm || fromDate || toDate;
+  const isValidDateString = (str) => {
+    if (!str) return false;
+    const regex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!regex.test(str)) return false;
+    const d = new Date(str);
+    return !isNaN(d.getTime());
+  };
 
+  const hasFilter = searchTerm || (fromDate && isValidDateString(fromDate)) || (toDate && isValidDateString(toDate));
+
+  // ── FILTER LOGIC (simplified using approved_date) ──
   const filteredLoans = approvedLoans.filter((loan) => {
-    const nameMatch = loan.applicant_fullName
-      ?.toLowerCase()
-      .includes(searchTerm.toLowerCase());
+    // 1. Name search
+    const nameMatch = searchTerm
+      ? (loan.applicant_fullName || "")
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase())
+      : true;
 
-    const loanDate = loan.approved_date
-      ? new Date(loan.approved_date)
-      : null;
+    // 2. Extract loan date from approved_date
+    let loanDate = "";
+    if (loan.approved_date) {
+      loanDate = String(loan.approved_date).substring(0, 10);
+    }
 
-    const from = fromDate ? new Date(fromDate) : null;
-    const to = toDate ? new Date(toDate) : null;
+    // 3. Date range filtering
+    let dateMatch = true;
+    const from = fromDate ? String(fromDate).substring(0, 10) : "";
+    const to = toDate ? String(toDate).substring(0, 10) : "";
 
-    const fromMatch = from ? loanDate && loanDate >= from : true;
-    const toMatch = to ? loanDate && loanDate <= to : true;
+    if (from && loanDate && loanDate < from) dateMatch = false;
+    if (to && loanDate && loanDate > to) dateMatch = false;
+    if ((from || to) && !loanDate) dateMatch = false;
 
-    return nameMatch && fromMatch && toMatch;
+    return nameMatch && dateMatch;
   });
 
   const dataToShow = hasFilter ? filteredLoans : [];
@@ -74,18 +92,17 @@ const ApprovedLoansReport = () => {
   const currentItems = dataToShow.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 
-  // Helper function to safely extract loan amount
+  // ── Helper: get loan amount ──
   const getLoanAmount = (loan) => {
-    const amount = loan.kyc_loan_amount || 
+    const amount = loan.approved_amount || 
                    loan.loan_amount || 
                    loan.amount || 
-                   loan.approved_amount ||
                    0;
     const numAmount = parseFloat(amount);
     return isNaN(numAmount) ? 0 : numAmount;
   };
 
-  // Calculate Statistics (unchanged)
+  // ── Statistics calculation ──
   const calculateStatistics = (loans) => {
     if (!loans || loans.length === 0) {
       return {
@@ -148,7 +165,7 @@ const ApprovedLoansReport = () => {
     const weeklyBreakdown = Array.from(weeklyMap.entries())
       .map(([period, data]) => ({ period, ...data }));
 
-    // Top customers by loan amount
+    // Top customers
     const customerMap = new Map();
     loans.forEach(loan => {
       const name = loan.applicant_fullName || 'Unknown';
@@ -172,7 +189,6 @@ const ApprovedLoansReport = () => {
       '10001-50000': 0,
       '50000+': 0
     };
-    
     amounts.forEach(amount => {
       if (amount <= 1000) amountRanges['0-1000']++;
       else if (amount <= 5000) amountRanges['1001-5000']++;
@@ -205,24 +221,25 @@ const ApprovedLoansReport = () => {
     }).format(numAmount);
   };
 
+  // ── Improved date formatter ──
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
-    try {
-      return format(new Date(dateString), "dd/MM/yyyy");
-    } catch (error) {
-      return "Invalid Date";
-    }
+    const str = String(dateString);
+    // MySQL DATETIME => "YYYY-MM-DD HH:MM:SS" -> take first 10 chars
+    const datePart = str.substring(0, 10);
+    if (!datePart || datePart.length < 10) return "N/A";
+    const [year, month, day] = datePart.split("-");
+    if (!year || !month || !day) return "N/A";
+    return `${day}/${month}/${year}`;
   };
 
-  const getStatusBadge = () => {
-    return (
-      <span className="badge bg-success">
-        <i className="bi bi-check-circle me-1"></i>Approved
-      </span>
-    );
-  };
+  const getStatusBadge = () => (
+    <span className="badge bg-success">
+      <i className="bi bi-check-circle me-1"></i>Approved
+    </span>
+  );
 
-  // Statistics Cards Component (unchanged)
+  // ── Statistics Cards Component ──
   const StatisticsCards = ({ stats, title }) => (
     <div className="stats-section mb-4">
       <div className="d-flex justify-content-between align-items-center mb-3">
@@ -236,24 +253,17 @@ const ApprovedLoansReport = () => {
       <div className="row g-3 mb-4">
         <div className="col-md-4">
           <div className="stats-card bg-primary bg-gradient text-white">
-            <div className="stats-card-icon">
-              <i className="bi bi-cash-stack"></i>
-            </div>
+            <div className="stats-card-icon"><i className="bi bi-cash-stack"></i></div>
             <div className="stats-card-content">
               <h6 className="stats-label">Total Approved Amount</h6>
               <h3 className="stats-value">{formatCurrency(stats.totalAmount)}</h3>
-              <small className="stats-sub">
-                {stats.totalCount} Loan(s)
-              </small>
+              <small className="stats-sub">{stats.totalCount} Loan(s)</small>
             </div>
           </div>
         </div>
-        
         <div className="col-md-4">
           <div className="stats-card bg-primary bg-gradient text-white">
-            <div className="stats-card-icon">
-              <i className="bi bi-trophy"></i>
-            </div>
+            <div className="stats-card-icon"><i className="bi bi-trophy"></i></div>
             <div className="stats-card-content">
               <h6 className="stats-label">Highest Loan</h6>
               <h3 className="stats-value">{formatCurrency(stats.highestAmount)}</h3>
@@ -261,12 +271,9 @@ const ApprovedLoansReport = () => {
             </div>
           </div>
         </div>
-        
         <div className="col-md-4">
           <div className="stats-card bg-primary bg-gradient text-white">
-            <div className="stats-card-icon">
-              <i className="bi bi-arrow-down-short"></i>
-            </div>
+            <div className="stats-card-icon"><i className="bi bi-arrow-down-short"></i></div>
             <div className="stats-card-content">
               <h6 className="stats-label">Lowest Loan</h6>
               <h3 className="stats-value">{formatCurrency(stats.lowestAmount)}</h3>
@@ -278,15 +285,11 @@ const ApprovedLoansReport = () => {
 
       {stats.totalCount > 0 && (
         <div className="detailed-stats">
-          {/* ... rest of detailed stats (unchanged) ... */}
           <div className="row g-3">
             <div className="col-md-6">
               <div className="card h-100 border-0 shadow-sm">
                 <div className="card-body">
-                  <h6 className="card-title fw-semibold mb-3">
-                    <i className="bi bi-pie-chart me-2"></i>
-                    Loan Amount Distribution
-                  </h6>
+                  <h6 className="card-title fw-semibold mb-3"><i className="bi bi-pie-chart me-2"></i>Loan Amount Distribution</h6>
                   <div className="amount-ranges">
                     {Object.entries(stats.amountRanges).map(([range, count]) => (
                       <div key={range} className="mb-2">
@@ -295,10 +298,7 @@ const ApprovedLoansReport = () => {
                           <span className="fw-semibold">{count} loans</span>
                         </div>
                         <div className="progress" style={{ height: '8px' }}>
-                          <div 
-                            className="progress-bar bg-primary"
-                            style={{ width: stats.totalCount > 0 ? `${(count / stats.totalCount) * 100}%` : '0%' }}
-                          ></div>
+                          <div className="progress-bar bg-primary" style={{ width: stats.totalCount > 0 ? `${(count / stats.totalCount) * 100}%` : '0%' }}></div>
                         </div>
                       </div>
                     ))}
@@ -306,57 +306,34 @@ const ApprovedLoansReport = () => {
                 </div>
               </div>
             </div>
-
             <div className="col-md-6">
               <div className="card h-100 border-0 shadow-sm">
                 <div className="card-body">
-                  <h6 className="card-title fw-semibold mb-3">
-                    <i className="bi bi-calendar-week me-2"></i>
-                    Recent Weekly Activity
-                  </h6>
+                  <h6 className="card-title fw-semibold mb-3"><i className="bi bi-calendar-week me-2"></i>Recent Weekly Activity</h6>
                   {stats.weeklyBreakdown.length > 0 ? (
-                    <div className="weekly-stats">
-                      {stats.weeklyBreakdown.map((week) => (
-                        <div key={week.period} className="mb-3">
-                          <div className="d-flex justify-content-between align-items-center mb-1">
-                            <span className="small fw-semibold">{week.period}</span>
-                            <span className="small text-muted">
-                              {week.count} loan(s) | {formatCurrency(week.amount)}
-                            </span>
-                          </div>
-                          <div className="progress" style={{ height: '6px' }}>
-                            <div 
-                              className="progress-bar bg-primary"
-                              style={{ width: stats.totalAmount > 0 ? `${(week.amount / stats.totalAmount) * 100}%` : '0%' }}
-                            ></div>
-                          </div>
+                    stats.weeklyBreakdown.map((week) => (
+                      <div key={week.period} className="mb-3">
+                        <div className="d-flex justify-content-between align-items-center mb-1">
+                          <span className="small fw-semibold">{week.period}</span>
+                          <span className="small text-muted">{week.count} loan(s) | {formatCurrency(week.amount)}</span>
                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-muted small mb-0">No recent activity</p>
-                  )}
+                        <div className="progress" style={{ height: '6px' }}>
+                          <div className="progress-bar bg-primary" style={{ width: stats.totalAmount > 0 ? `${(week.amount / stats.totalAmount) * 100}%` : '0%' }}></div>
+                        </div>
+                      </div>
+                    ))
+                  ) : <p className="text-muted small mb-0">No recent activity</p>}
                 </div>
               </div>
             </div>
-
             <div className="col-md-12">
               <div className="card border-0 shadow-sm">
                 <div className="card-body">
-                  <h6 className="card-title fw-semibold mb-3">
-                    <i className="bi bi-trophy me-2"></i>
-                    Top 5 Customers by Total Loan Amount
-                  </h6>
+                  <h6 className="card-title fw-semibold mb-3"><i className="bi bi-trophy me-2"></i>Top 5 Customers by Total Loan Amount</h6>
                   <div className="table-responsive">
                     <table className="table table-sm table-hover mb-0">
                       <thead className="table-light">
-                        <tr>
-                          <th>#</th>
-                          <th>Customer Name</th>
-                          <th>Contact</th>
-                          <th>Total Amount</th>
-                          <th>Number of Loans</th>
-                        </tr>
+                        <tr><th>#</th><th>Customer Name</th><th>Contact</th><th>Total Amount</th><th>Number of Loans</th></tr>
                       </thead>
                       <tbody>
                         {stats.topCustomers.map((customer, idx) => (
@@ -364,14 +341,8 @@ const ApprovedLoansReport = () => {
                             <td className="fw-semibold">{idx + 1}</td>
                             <td>{customer.name}</td>
                             <td>{customer.phone || 'N/A'}</td>
-                            <td className="text-primary fw-semibold">
-                              {formatCurrency(customer.amount)}
-                            </td>
-                            <td>
-                              <span className="badge bg-secondary">
-                                {customer.count} loan(s)
-                              </span>
-                            </td>
+                            <td className="text-primary fw-semibold">{formatCurrency(customer.amount)}</td>
+                            <td><span className="badge bg-secondary">{customer.count} loan(s)</span></td>
                           </tr>
                         ))}
                       </tbody>
@@ -380,26 +351,18 @@ const ApprovedLoansReport = () => {
                 </div>
               </div>
             </div>
-
             {stats.monthlyBreakdown.length > 0 && (
               <div className="col-md-12">
                 <div className="card border-0 shadow-sm">
                   <div className="card-body">
-                    <h6 className="card-title fw-semibold mb-3">
-                      <i className="bi bi-calendar-month me-2"></i>
-                      Monthly Breakdown
-                    </h6>
+                    <h6 className="card-title fw-semibold mb-3"><i className="bi bi-calendar-month me-2"></i>Monthly Breakdown</h6>
                     <div className="row">
                       {stats.monthlyBreakdown.map((month) => (
                         <div key={month.month} className="col-md-3 mb-3">
                           <div className="border rounded p-2 text-center">
                             <div className="fw-semibold small">{month.month}</div>
-                            <div className="text-primary fw-bold">
-                              {formatCurrency(month.amount)}
-                            </div>
-                            <div className="text-muted small">
-                              {month.count} loan(s)
-                            </div>
+                            <div className="text-primary fw-bold">{formatCurrency(month.amount)}</div>
+                            <div className="text-muted small">{month.count} loan(s)</div>
                           </div>
                         </div>
                       ))}
@@ -414,6 +377,7 @@ const ApprovedLoansReport = () => {
     </div>
   );
 
+  // ── Loading state ──
   if (loading) {
     return (
       <div className="professional-loading">
@@ -425,6 +389,7 @@ const ApprovedLoansReport = () => {
     );
   }
 
+  // ── Error state ──
   if (error) {
     return (
       <div className="alert alert-danger alert-dismissible fade show m-3" role="alert">
@@ -435,88 +400,47 @@ const ApprovedLoansReport = () => {
     );
   }
 
+  // ── Main Render ──
   return (
     <div className="approved-loans-container">
-      {/* Header Section */}
       <div className="card shadow-sm mb-4 border-0">
         <div className="card-body">
           <div className="d-flex justify-content-between align-items-center flex-wrap gap-3">
             <div>
               <h4 className="mb-1 fw-bold">Approved Loans</h4>
-              <p className="text-muted mb-0">
-                Manage and track all approved loan applications
-              </p>
+              <p className="text-muted mb-0">Manage and track all approved loan applications</p>
             </div>
             <div className="d-flex gap-2">
-              <button
-                className="btn btn-outline-secondary"
-                onClick={() => setShowFilters(!showFilters)}
-              >
-                <i className="bi bi-funnel me-2"></i>
-                {showFilters ? 'Hide Filters' : 'Show Filters'}
+              <button className="btn btn-outline-secondary" onClick={() => setShowFilters(!showFilters)}>
+                <i className="bi bi-funnel me-2"></i>{showFilters ? 'Hide Filters' : 'Show Filters'}
               </button>
-              <button
-                className="btn btn-outline-info"
-                onClick={() => setStatsView(statsView === 'cards' ? 'detailed' : 'cards')}
-              >
-                <i className="bi bi-graph-up me-2"></i>
-                {statsView === 'cards' ? 'Detailed Stats' : 'Simple View'}
+              <button className="btn btn-outline-info" onClick={() => setStatsView(statsView === 'cards' ? 'detailed' : 'cards')}>
+                <i className="bi bi-graph-up me-2"></i>{statsView === 'cards' ? 'Detailed Stats' : 'Simple View'}
               </button>
-              <button
-                className="btn btn-primary"
-                onClick={fetchApprovedLoans}
-              >
-                <i className="bi bi-arrow-repeat me-2"></i>
-                Refresh
+              <button className="btn btn-primary" onClick={fetchApprovedLoans}>
+                <i className="bi bi-arrow-repeat me-2"></i>Refresh
               </button>
             </div>
           </div>
 
-          {/* Filter Section */}
           {showFilters && (
             <div className="filter-section mt-4 pt-3 border-top">
               <div className="row g-3">
                 <div className="col-md-4">
-                  <label className="form-label fw-semibold">
-                    <i className="bi bi-search me-1"></i>Customer Name
-                  </label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="Search by name..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
+                  <label className="form-label fw-semibold"><i className="bi bi-search me-1"></i>Customer Name</label>
+                  <input type="text" className="form-control" placeholder="Search by name..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                 </div>
                 <div className="col-md-3">
-                  <label className="form-label fw-semibold">
-                    <i className="bi bi-calendar me-1"></i>From Date
-                  </label>
-                  <input
-                    type="date"
-                    className="form-control"
-                    value={fromDate}
-                    onChange={(e) => setFromDate(e.target.value)}
-                  />
+                  <label className="form-label fw-semibold"><i className="bi bi-calendar me-1"></i>From Date</label>
+                  <input type="date" className="form-control" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
                 </div>
                 <div className="col-md-3">
-                  <label className="form-label fw-semibold">
-                    <i className="bi bi-calendar me-1"></i>To Date
-                  </label>
-                  <input
-                    type="date"
-                    className="form-control"
-                    value={toDate}
-                    onChange={(e) => setToDate(e.target.value)}
-                  />
+                  <label className="form-label fw-semibold"><i className="bi bi-calendar me-1"></i>To Date</label>
+                  <input type="date" className="form-control" value={toDate} onChange={(e) => setToDate(e.target.value)} />
                 </div>
                 <div className="col-md-2 d-flex align-items-end">
-                  <button
-                    className="btn btn-outline-danger w-100"
-                    onClick={clearFilters}
-                  >
-                    <i className="bi bi-trash me-2"></i>
-                    Clear All
+                  <button className="btn btn-outline-danger w-100" onClick={clearFilters}>
+                    <i className="bi bi-trash me-2"></i>Clear All
                   </button>
                 </div>
               </div>
@@ -525,44 +449,23 @@ const ApprovedLoansReport = () => {
         </div>
       </div>
 
-      {/* Overall Statistics (All Time) */}
-      {!hasFilter && statsView === 'detailed' && (
-        <StatisticsCards stats={allStats} title="Overall Statistics (All Time)" />
-      )}
+      {!hasFilter && statsView === 'detailed' && <StatisticsCards stats={allStats} title="Overall Statistics (All Time)" />}
+      {hasFilter && statsView === 'detailed' && <StatisticsCards stats={stats} title="Filtered Results Statistics" />}
 
-      {/* Filtered Statistics */}
-      {hasFilter && statsView === 'detailed' && (
-        <StatisticsCards stats={stats} title=" Filtered Results Statistics" />
-      )}
-
-      {/* Simple Stats Summary */}
       {statsView === 'cards' && hasFilter && totalItems > 0 && (
         <div className="row g-3 mb-4">
-          <div className="col-md-6">
-            <div className="alert alert-success mb-0">
-              <i className="bi bi-currency-dollar me-2"></i>
-              Total: {formatCurrency(stats.totalAmount)}
-            </div>
-          </div>
-          <div className="col-md-6">
-            <div className="alert alert-warning mb-0">
-              <i className="bi bi-grid me-2"></i>
-              Count: {stats.totalCount} loan(s)
-            </div>
-          </div>
+          <div className="col-md-6"><div className="alert alert-success mb-0"><i className="bi bi-currency-dollar me-2"></i>Total: {formatCurrency(stats.totalAmount)}</div></div>
+          <div className="col-md-6"><div className="alert alert-warning mb-0"><i className="bi bi-grid me-2"></i>Count: {stats.totalCount} loan(s)</div></div>
         </div>
       )}
 
-      {/* Info Alert */}
       {hasFilter && totalItems > 0 && statsView === 'cards' && (
         <div className="alert alert-info alert-dismissible fade show mb-3" role="alert">
-          <i className="bi bi-info-circle-fill me-2"></i>
-          Found <strong>{totalItems}</strong> approved loan(s) matching your criteria
+          <i className="bi bi-info-circle-fill me-2"></i>Found <strong>{totalItems}</strong> approved loan(s) matching your criteria
           <button type="button" className="btn-close" data-bs-dismiss="alert"></button>
         </div>
       )}
 
-      {/* Table Section - UPDATED with Customer ID column */}
       <div className="card shadow-sm border-0">
         <div className="card-body p-0">
           <div className="table-responsive">
@@ -570,7 +473,7 @@ const ApprovedLoansReport = () => {
               <thead>
                 <tr>
                   <th>#</th>
-                  <th><i className="bi bi-upc-scan me-2"></i>Customer ID</th>   {/* NEW COLUMN */}
+                  <th><i className="bi bi-upc-scan me-2"></i>Customer ID</th>
                   <th><i className="bi bi-person me-2"></i>Customer Name</th>
                   <th><i className="bi bi-telephone me-2"></i>Contact Number</th>
                   <th><i className="bi bi-cash-stack me-2"></i>Amount Approved</th>
@@ -581,36 +484,24 @@ const ApprovedLoansReport = () => {
               <tbody>
                 {!hasFilter ? (
                   <tr>
-                    <td colSpan="7" className="text-center py-5">   {/* colSpan increased to 7 */}
+                    <td colSpan="7" className="text-center py-5">
                       <div className="empty-state">
                         <i className="bi bi-funnel fs-1 text-muted"></i>
-                        <p className="text-muted mt-3 mb-0">
-                          Apply filters to view approved loans
-                        </p>
-                        <button
-                          className="btn btn-sm btn-primary mt-3"
-                          onClick={() => setShowFilters(true)}
-                        >
-                          <i className="bi bi-funnel me-2"></i>
-                          Show Filters
+                        <p className="text-muted mt-3 mb-0">Apply filters to view approved loans</p>
+                        <button className="btn btn-sm btn-primary mt-3" onClick={() => setShowFilters(true)}>
+                          <i className="bi bi-funnel me-2"></i>Show Filters
                         </button>
                       </div>
                     </td>
                   </tr>
                 ) : currentItems.length === 0 ? (
                   <tr>
-                    <td colSpan="7" className="text-center py-5">   {/* colSpan increased to 7 */}
+                    <td colSpan="7" className="text-center py-5">
                       <div className="empty-state">
                         <i className="bi bi-inbox fs-1 text-muted"></i>
-                        <p className="text-muted mt-3 mb-0">
-                          No approved loans found matching your criteria
-                        </p>
-                        <button
-                          className="btn btn-sm btn-outline-primary mt-3"
-                          onClick={clearFilters}
-                        >
-                          <i className="bi bi-eraser me-2"></i>
-                          Clear Filters
+                        <p className="text-muted mt-3 mb-0">No approved loans found matching your criteria</p>
+                        <button className="btn btn-sm btn-outline-primary mt-3" onClick={clearFilters}>
+                          <i className="bi bi-eraser me-2"></i>Clear Filters
                         </button>
                       </div>
                     </td>
@@ -618,19 +509,11 @@ const ApprovedLoansReport = () => {
                 ) : (
                   currentItems.map((loan, index) => (
                     <tr key={index}>
-                      <td className="fw-semibold">
-                        {indexOfFirstItem + index + 1}
-                      </td>
-                      <td className="text-muted">
-                        {loan.customer_id || "N/A"}   {/* NEW COLUMN DATA */}
-                      </td>
-                      <td className="fw-semibold">
-                        {loan.applicant_fullName || "N/A"}
-                      </td>
+                      <td className="fw-semibold">{indexOfFirstItem + index + 1}</td>
+                      <td className="text-muted">{loan.customer_id || "N/A"}</td>
+                      <td className="fw-semibold">{loan.applicant_fullName || "N/A"}</td>
                       <td>{loan.mobileNumber || loan.applicant_phone || "N/A"}</td>
-                      <td className="fw-bold text-primary">
-                        {formatCurrency(getLoanAmount(loan))}
-                      </td>
+                      <td className="fw-bold text-primary">{formatCurrency(getLoanAmount(loan))}</td>
                       <td>{formatDate(loan.approved_date)}</td>
                       <td>{getStatusBadge()}</td>
                     </tr>
@@ -640,62 +523,34 @@ const ApprovedLoansReport = () => {
             </table>
           </div>
 
-          {/* Pagination */}
           {hasFilter && totalPages > 1 && (
             <div className="pagination-wrapper border-top">
               <div className="d-flex justify-content-between align-items-center p-3">
                 <div className="text-muted small">
-                  Showing {indexOfFirstItem + 1} to{' '}
-                  {Math.min(indexOfLastItem, totalItems)} of {totalItems} entries
+                  Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, totalItems)} of {totalItems} entries
                 </div>
                 <nav>
                   <ul className="pagination mb-0">
-                    {/* ... pagination logic unchanged ... */}
                     <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
-                      <button
-                        className="page-link"
-                        onClick={() => setCurrentPage(prev => prev - 1)}
-                      >
+                      <button className="page-link" onClick={() => setCurrentPage(prev => prev - 1)}>
                         <i className="bi bi-chevron-left"></i>
                       </button>
                     </li>
-                    
-                    {[...Array(totalPages)].map((_, index) => {
-                      const pageNum = index + 1;
-                      if (
-                        pageNum === 1 ||
-                        pageNum === totalPages ||
-                        (pageNum >= currentPage - 2 && pageNum <= currentPage + 2)
-                      ) {
+                    {[...Array(totalPages)].map((_, i) => {
+                      const pageNum = i + 1;
+                      if (pageNum === 1 || pageNum === totalPages || (pageNum >= currentPage - 2 && pageNum <= currentPage + 2)) {
                         return (
-                          <li
-                            key={index}
-                            className={`page-item ${
-                              currentPage === pageNum ? "active" : ""
-                            }`}
-                          >
-                            <button
-                              className="page-link"
-                              onClick={() => setCurrentPage(pageNum)}
-                            >
-                              {pageNum}
-                            </button>
+                          <li key={i} className={`page-item ${currentPage === pageNum ? "active" : ""}`}>
+                            <button className="page-link" onClick={() => setCurrentPage(pageNum)}>{pageNum}</button>
                           </li>
                         );
-                      } else if (
-                        pageNum === currentPage - 3 ||
-                        pageNum === currentPage + 3
-                      ) {
-                        return <li key={index} className="page-item disabled"><span className="page-link">...</span></li>;
+                      } else if (pageNum === currentPage - 3 || pageNum === currentPage + 3) {
+                        return <li key={i} className="page-item disabled"><span className="page-link">…</span></li>;
                       }
                       return null;
                     })}
-                    
                     <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
-                      <button
-                        className="page-link"
-                        onClick={() => setCurrentPage(prev => prev + 1)}
-                      >
+                      <button className="page-link" onClick={() => setCurrentPage(prev => prev + 1)}>
                         <i className="bi bi-chevron-right"></i>
                       </button>
                     </li>
