@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { MdArrowBack, MdClose, MdPerson } from "react-icons/md";
 
 const KYCForm = ({
@@ -9,12 +9,47 @@ const KYCForm = ({
   onFileChange,
   photoPreview,
 }) => {
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const isMobile = windowWidth < 768;
+
+  // Reusable styles
+  const inputStyle = {
+    width: "100%",
+    padding: "10px 12px",
+    border: "1px solid #e2e8f0",
+    borderRadius: "8px",
+    fontSize: "14px",
+    outline: "none",
+    boxSizing: "border-box",
+  };
+
+  const selectStyle = {
+    width: "100%",
+    padding: "10px 12px",
+    border: "1px solid #e2e8f0",
+    borderRadius: "8px",
+    fontSize: "14px",
+    outline: "none",
+    background: "#fff",
+    boxSizing: "border-box",
+  };
+
+  const focusStyle = (e) => (e.target.style.borderColor = "#818cf8");
+  const blurStyle = (e) => (e.target.style.borderColor = "#e2e8f0");
+
   return (
     <div
       style={{
         background: "#ffffff",
         borderRadius: "12px",
-        padding: "32px",
+        padding: isMobile ? "20px" : "32px",
         border: "1px solid #f1f5f9",
         boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
       }}
@@ -149,7 +184,7 @@ const KYCForm = ({
           </div>
         </div>
 
-        {/* --- PERSONAL INFORMATION SECTION --- */}
+        {/* --- PERSONAL INFORMATION --- */}
         <h3
           style={{
             fontSize: "18px",
@@ -164,7 +199,13 @@ const KYCForm = ({
           Personal Information
         </h3>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
+            gap: "16px",
+          }}
+        >
           {/* Full Name */}
           <div>
             <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
@@ -338,7 +379,7 @@ const KYCForm = ({
           </div>
         </div>
 
-        {/* Family Details – two columns */}
+        {/* --- FAMILY INFORMATION --- */}
         <h4
           style={{
             fontSize: "16px",
@@ -350,7 +391,13 @@ const KYCForm = ({
         >
           Family Information
         </h4>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
+            gap: "16px",
+          }}
+        >
           {/* Father's Name */}
           <div>
             <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
@@ -464,7 +511,7 @@ const KYCForm = ({
           </div>
         </div>
 
-        {/* Residential & Dependents */}
+        {/* --- RESIDENTIAL & DEPENDENTS --- */}
         <h4
           style={{
             fontSize: "16px",
@@ -476,7 +523,13 @@ const KYCForm = ({
         >
           Residential & Dependents
         </h4>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
+            gap: "16px",
+          }}
+        >
           {/* Residential Location */}
           <div>
             <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
@@ -613,7 +666,7 @@ const KYCForm = ({
           </div>
         </div>
 
-        {/* Religion & Church */}
+        {/* --- RELIGIOUS INFORMATION --- */}
         <h4
           style={{
             fontSize: "16px",
@@ -625,7 +678,13 @@ const KYCForm = ({
         >
           Religious Information
         </h4>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
+            gap: "16px",
+          }}
+        >
           {/* Religion */}
           <div>
             <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
@@ -707,7 +766,7 @@ const KYCForm = ({
           </div>
         </div>
 
-        {/* --- Submit and Cancel buttons --- */}
+        {/* --- Submit and Cancel --- */}
         <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end", marginTop: "32px" }}>
           <button
             type="button"
@@ -743,30 +802,5 @@ const KYCForm = ({
     </div>
   );
 };
-
-// Reusable styles to avoid repetition
-const inputStyle = {
-  width: "100%",
-  padding: "10px 12px",
-  border: "1px solid #e2e8f0",
-  borderRadius: "8px",
-  fontSize: "14px",
-  outline: "none",
-  boxSizing: "border-box",
-};
-
-const selectStyle = {
-  width: "100%",
-  padding: "10px 12px",
-  border: "1px solid #e2e8f0",
-  borderRadius: "8px",
-  fontSize: "14px",
-  outline: "none",
-  background: "#fff",
-  boxSizing: "border-box",
-};
-
-const focusStyle = (e) => (e.target.style.borderColor = "#818cf8");
-const blurStyle = (e) => (e.target.style.borderColor = "#e2e8f0");
 
 export default KYCForm;
