@@ -1,9 +1,15 @@
 import React, { useEffect } from "react";
-import { HashRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import {
+  HashRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 
 import CustomerLanding from "./auth/CustomerLanding";
 import LoginPage from "./auth/StaffLoginPage";
 import DefaultSuper from "./auth/DefaultSuper";
+import OfficerAccess from "./auth/OfficerAccess";
 
 import Customerview from "./customerpage/CustomerPage";
 import AdminDashboard from "./AdminDashboard";
@@ -12,6 +18,8 @@ import ManagerDashboard from "./managerpage/ManagerDashboard";
 import LoanOfficerDashboard from "./loanofficerpage/LoanOfficerDashboard";
 import LoanSupervisorDashboard from "./supervisorpage/LoanSupervisorDashboard";
 import TellerDashboard from "./tellerpage/TellerDashboard";
+
+import Officerdasboard from "./officer/Officerdasboard"; // component named "Officer"
 
 import ProtectedRoute from "./ProtectedRoute";
 import AutoLogout from "./components/AutoLogout";
@@ -60,12 +68,12 @@ function App() {
   }, []);
 
   return (
-    <Router>   {/* ✅ basename prop removed – no more "/yonkopa-demo" */}
+    <Router>
+      {" "}
+      {/* ✅ basename prop removed – no more "/yonkopa-demo" */}
       <AutoLogout />
-
       <div className="App">
         <Routes>
-
           {/* DEFAULT ROUTE */}
           <Route path="/" element={<Navigate to="/demo" replace />} />
 
@@ -73,6 +81,7 @@ function App() {
           <Route path="/apply" element={<CustomerLanding />} />
           <Route path="/demo" element={<LoginPage />} />
           <Route path="/signup" element={<DefaultSuper />} />
+          <Route path="/officer-access" element={<OfficerAccess />} />
 
           {/* CUSTOMER */}
           <Route
@@ -114,6 +123,14 @@ function App() {
             }
           />
 
+          <Route
+            path="/officer-dashboard"
+            element={
+              <ProtectedRoute allowedRoles={["loan_officer"]}>
+                <Officerdasboard />
+              </ProtectedRoute>
+            }
+          />
           {/* SUPERVISOR */}
           <Route
             path="/loan-supervisor"
@@ -124,20 +141,18 @@ function App() {
             }
           />
 
-
           {/* TELLER */}
           <Route
-           path="/teller-dashboard"
-           element={
-          <ProtectedRoute allowedRoles={["teller"]}>
-           <TellerDashboard />
-           </ProtectedRoute>
-           }
-           />
+            path="/teller-dashboard"
+            element={
+              <ProtectedRoute allowedRoles={["teller"]}>
+                <TellerDashboard />
+              </ProtectedRoute>
+            }
+          />
 
           {/* CATCH ALL */}
           <Route path="*" element={<Navigate to="/demo" replace />} />
-
         </Routes>
       </div>
     </Router>

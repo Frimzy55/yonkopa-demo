@@ -1,7 +1,9 @@
-// ApprovedLoansReport.jsx – fully updated for approved_date
+// ApprovedLoansReport.jsx – with View Details action
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { format } from 'date-fns';
+import { Button } from 'react-bootstrap';                // added for the View button
+import LoanDetailsModal from './AwaitLoanDetailsModal';  // reuse existing modal
 import './ApprovedLoans.css';
 
 const ApprovedLoansReport = () => {
@@ -15,6 +17,10 @@ const ApprovedLoansReport = () => {
   const [itemsPerPage] = useState(10);
   const [showFilters, setShowFilters] = useState(false);
   const [statsView, setStatsView] = useState('cards');
+
+  // ── Modal state ──
+  const [showModal, setShowModal] = useState(false);
+  const [selectedLoan, setSelectedLoan] = useState(null);
 
   useEffect(() => {
     fetchApprovedLoans();
@@ -60,20 +66,17 @@ const ApprovedLoansReport = () => {
 
   // ── FILTER LOGIC (simplified using approved_date) ──
   const filteredLoans = approvedLoans.filter((loan) => {
-    // 1. Name search
     const nameMatch = searchTerm
       ? (loan.applicant_fullName || "")
           .toLowerCase()
           .includes(searchTerm.toLowerCase())
       : true;
 
-    // 2. Extract loan date from approved_date
     let loanDate = "";
     if (loan.approved_date) {
       loanDate = String(loan.approved_date).substring(0, 10);
     }
 
-    // 3. Date range filtering
     let dateMatch = true;
     const from = fromDate ? String(fromDate).substring(0, 10) : "";
     const to = toDate ? String(toDate).substring(0, 10) : "";
@@ -102,7 +105,7 @@ const ApprovedLoansReport = () => {
     return isNaN(numAmount) ? 0 : numAmount;
   };
 
-  // ── Statistics calculation ──
+  // ── Statistics calculation (unchanged) ──
   const calculateStatistics = (loans) => {
     if (!loans || loans.length === 0) {
       return {
@@ -128,7 +131,6 @@ const ApprovedLoansReport = () => {
     const highestAmount = amounts.length > 0 ? Math.max(...amounts) : 0;
     const lowestAmount = amounts.length > 0 ? Math.min(...amounts) : 0;
 
-    // Monthly breakdown
     const monthlyMap = new Map();
     loans.forEach(loan => {
       if (loan.approved_date) {
@@ -145,7 +147,6 @@ const ApprovedLoansReport = () => {
       .map(([month, data]) => ({ month, ...data }))
       .sort((a, b) => new Date(a.month) - new Date(b.month));
 
-    // Weekly breakdown (last 4 weeks)
     const weeklyMap = new Map();
     const now = new Date();
     loans.forEach(loan => {
@@ -165,7 +166,6 @@ const ApprovedLoansReport = () => {
     const weeklyBreakdown = Array.from(weeklyMap.entries())
       .map(([period, data]) => ({ period, ...data }));
 
-    // Top customers
     const customerMap = new Map();
     loans.forEach(loan => {
       const name = loan.applicant_fullName || 'Unknown';
@@ -181,7 +181,6 @@ const ApprovedLoansReport = () => {
       .sort((a, b) => b.amount - a.amount)
       .slice(0, 5);
 
-    // Amount ranges
     const amountRanges = {
       '0-1000': 0,
       '1001-5000': 0,
@@ -221,11 +220,9 @@ const ApprovedLoansReport = () => {
     }).format(numAmount);
   };
 
-  // ── Improved date formatter ──
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
     const str = String(dateString);
-    // MySQL DATETIME => "YYYY-MM-DD HH:MM:SS" -> take first 10 chars
     const datePart = str.substring(0, 10);
     if (!datePart || datePart.length < 10) return "N/A";
     const [year, month, day] = datePart.split("-");
@@ -239,7 +236,13 @@ const ApprovedLoansReport = () => {
     </span>
   );
 
-  // ── Statistics Cards Component ──
+  // ── View handler ──
+  const handleView = (loan) => {
+    setSelectedLoan(loan);
+    setShowModal(true);
+  };
+
+  // ── Statistics Cards Component (unchanged) ──
   const StatisticsCards = ({ stats, title }) => (
     <div className="stats-section mb-4">
       <div className="d-flex justify-content-between align-items-center mb-3">
@@ -479,12 +482,13 @@ const ApprovedLoansReport = () => {
                   <th><i className="bi bi-cash-stack me-2"></i>Amount Approved</th>
                   <th><i className="bi bi-calendar-check me-2"></i>Approval Date</th>
                   <th><i className="bi bi-check-circle me-2"></i>Status</th>
+                  <th><i className="bi bi-gear me-2"></i>Actions</th>   {/* NEW */}
                 </tr>
               </thead>
               <tbody>
                 {!hasFilter ? (
                   <tr>
-                    <td colSpan="7" className="text-center py-5">
+                    <td colSpan="8" className="text-center py-5">    {/* colSpan increased */}
                       <div className="empty-state">
                         <i className="bi bi-funnel fs-1 text-muted"></i>
                         <p className="text-muted mt-3 mb-0">Apply filters to view approved loans</p>
@@ -496,7 +500,7 @@ const ApprovedLoansReport = () => {
                   </tr>
                 ) : currentItems.length === 0 ? (
                   <tr>
-                    <td colSpan="7" className="text-center py-5">
+                    <td colSpan="8" className="text-center py-5">    {/* colSpan increased */}
                       <div className="empty-state">
                         <i className="bi bi-inbox fs-1 text-muted"></i>
                         <p className="text-muted mt-3 mb-0">No approved loans found matching your criteria</p>
@@ -516,6 +520,15 @@ const ApprovedLoansReport = () => {
                       <td className="fw-bold text-primary">{formatCurrency(getLoanAmount(loan))}</td>
                       <td>{formatDate(loan.approved_date)}</td>
                       <td>{getStatusBadge()}</td>
+                      <td>
+                        <Button
+                          variant="outline-primary"
+                          size="sm"
+                          onClick={() => handleView(loan)}
+                        >
+                          <i className="bi bi-eye me-1"></i>View
+                        </Button>
+                      </td>
                     </tr>
                   ))
                 )}
@@ -561,6 +574,14 @@ const ApprovedLoansReport = () => {
           )}
         </div>
       </div>
+
+      {/* ── Loan Details Modal ── */}
+      <LoanDetailsModal
+        show={showModal}
+        handleClose={() => setShowModal(false)}
+        loan={selectedLoan}
+        imageBaseUrl="http://localhost:5002/uploads/"   // adjust if needed
+      />
     </div>
   );
 };
