@@ -16,6 +16,7 @@ import {
 
 import logo from "../image/yonko1.jpeg";
 import OfficerApplications from "./OfficerApplications";
+import OfficerDashboardContent from "./OfficerDashboardContent"; // <-- import
 
 const Officerdasboard = () => {
   const navigate = useNavigate();
@@ -61,7 +62,6 @@ const Officerdasboard = () => {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-
     navigate("/officer-access");
   };
 
@@ -82,70 +82,41 @@ const Officerdasboard = () => {
   const renderContent = () => {
     switch (activePage) {
       // ========================================================
-      // DASHBOARD
+      // DASHBOARD – now uses the separate component
       // ========================================================
       case "dashboard":
-        return (
-          <div
-            style={{
-              minHeight: "calc(100vh - 64px)",
-              padding: isMobile ? "30px 16px" : "40px 32px",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-              alignItems: "center",
-              textAlign: "center",
-              boxSizing: "border-box",
-            }}
-          >
-            <h1
-              style={{
-                fontSize: isMobile ? "24px" : "28px",
-                fontWeight: "600",
-                color: "#1e293b",
-                marginBottom: "8px",
-              }}
-            >
-              Welcome, {user?.fullName || "Officer"} 👋
-            </h1>
-
-            <p
-              style={{
-                color: "#64748b",
-                fontSize: "16px",
-                margin: 0,
-              }}
-            >
-              You are logged in as{" "}
-              <span
-                style={{
-                  background: "#e0e7ff",
-                  color: "#4338ca",
-                  padding: "4px 14px",
-                  borderRadius: "20px",
-                  fontWeight: "500",
-                }}
-              >
-                {user?.role?.replace("_", " ") || "Officer"}
-              </span>
-            </p>
-
-            <p
-              style={{
-                color: "#94a3b8",
-                marginTop: "16px",
-              }}
-            >
-              Use the sidebar to navigate through the officer portal.
-            </p>
-          </div>
-        );
+        return <OfficerDashboardContent user={user} isMobile={isMobile} />;
 
       // ========================================================
       // APPLICATIONS
       // ========================================================
       case "applications":
         return <OfficerApplications />;
+
+      // ========================================================
+      // CLIENTS, REPORTS, SETTINGS – placeholders
+      // ========================================================
+      case "clients":
+        return (
+          <div style={{ padding: "40px 16px", textAlign: "center", color: "#64748b" }}>
+            <h2>Clients</h2>
+            <p>Coming soon…</p>
+          </div>
+        );
+      case "reports":
+        return (
+          <div style={{ padding: "40px 16px", textAlign: "center", color: "#64748b" }}>
+            <h2>Reports</h2>
+            <p>Coming soon…</p>
+          </div>
+        );
+      case "settings":
+        return (
+          <div style={{ padding: "40px 16px", textAlign: "center", color: "#64748b" }}>
+            <h2>Settings</h2>
+            <p>Coming soon…</p>
+          </div>
+        );
 
       // ========================================================
       // DEFAULT
@@ -290,7 +261,7 @@ const Officerdasboard = () => {
                 color: "#1e293b",
               }}
             >
-              Yonkopa
+              Yonkopa Micro Credit
             </span>
           </div>
 
@@ -419,8 +390,7 @@ const Officerdasboard = () => {
         }}
       >
         {/* ======================================================
-            FIXED TOP BAR
-            This does NOT scroll.
+            FIXED TOP BAR (does not scroll)
         ====================================================== */}
         <header
           style={{
@@ -440,7 +410,7 @@ const Officerdasboard = () => {
           }}
         >
           {/* ====================================================
-              LEFT SIDE OF TOP BAR
+              LEFT SIDE
           ==================================================== */}
           <div
             style={{
@@ -449,7 +419,6 @@ const Officerdasboard = () => {
               gap: "12px",
             }}
           >
-            {/* Mobile Menu */}
             {isMobile && (
               <button
                 onClick={() => setIsSidebarOpen(true)}
@@ -468,7 +437,6 @@ const Officerdasboard = () => {
               </button>
             )}
 
-            {/* Page Title */}
             <h2
               style={{
                 fontSize: "18px",
@@ -492,7 +460,7 @@ const Officerdasboard = () => {
           </div>
 
           {/* ====================================================
-              RIGHT SIDE OF TOP BAR
+              RIGHT SIDE
           ==================================================== */}
           <div
             style={{
@@ -501,7 +469,6 @@ const Officerdasboard = () => {
               gap: "12px",
             }}
           >
-            {/* Search */}
             <button
               style={{
                 background: "transparent",
@@ -517,7 +484,6 @@ const Officerdasboard = () => {
               <MdSearch />
             </button>
 
-            {/* Notifications */}
             <button
               style={{
                 background: "transparent",
@@ -532,7 +498,6 @@ const Officerdasboard = () => {
               }}
             >
               <MdNotificationsNone />
-
               <span
                 style={{
                   position: "absolute",
@@ -554,9 +519,6 @@ const Officerdasboard = () => {
               </span>
             </button>
 
-            {/* ==================================================
-                USER PROFILE
-            ================================================== */}
             <div
               style={{
                 display: "flex",
@@ -597,11 +559,7 @@ const Officerdasboard = () => {
                   >
                     {user?.fullName || "Officer"}
                   </span>
-
-                  <MdKeyboardArrowDown
-                    size={20}
-                    color="#94a3b8"
-                  />
+                  <MdKeyboardArrowDown size={20} color="#94a3b8" />
                 </>
               )}
             </div>
@@ -610,10 +568,6 @@ const Officerdasboard = () => {
 
         {/* ======================================================
             SCROLLABLE CONTENT AREA
-
-            IMPORTANT:
-            Only this section scrolls.
-            The top bar remains constant.
         ====================================================== */}
         <main
           style={{
@@ -651,19 +605,9 @@ const NavItem = ({
         padding: "10px 24px",
         margin: "2px 8px",
         borderRadius: "10px",
-
-        background: active
-          ? "#83a0ff"
-          : "transparent",
-
-        color: active
-          ? "#4338ca"
-          : "#64748b",
-
-        fontWeight: active
-          ? "600"
-          : "500",
-
+        background: active ? "#83a0ff" : "transparent",
+        color: active ? "#4338ca" : "#64748b",
+        fontWeight: active ? "600" : "500",
         cursor: "pointer",
         transition: "all 0.2s",
       }}
@@ -687,7 +631,6 @@ const NavItem = ({
       >
         {icon}
       </span>
-
       <span
         style={{
           fontSize: "14px",
