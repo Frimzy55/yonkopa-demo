@@ -261,7 +261,7 @@ const Officerdasboard = () => {
                 color: "#1e293b",
               }}
             >
-              Yonkopa Micro Credit
+              Yonkopa 
             </span>
           </div>
 

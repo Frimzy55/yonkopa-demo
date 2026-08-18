@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { MdArrowBack, MdClose, MdPerson } from "react-icons/md";
+import React, { useState, useEffect, useRef } from "react";
+import { MdArrowBack, MdClose, MdPerson, MdAttachFile } from "react-icons/md";
 
 const KYCForm = ({
   formData,
@@ -10,7 +10,9 @@ const KYCForm = ({
   photoPreview,
 }) => {
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-  const [step, setStep] = useState(1); // 1=KYC, 2=Business, 3=Loan, 4=Reference
+  const [step, setStep] = useState(1); // 1=KYC, 2=Business, 3=Loan, 4=Reference, 5=Documents
+  const [documents, setDocuments] = useState([]);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
@@ -19,6 +21,10 @@ const KYCForm = ({
   }, []);
 
   const isMobile = windowWidth < 768;
+
+  // Step labels for the progress bar
+  const stepLabels = ["KYC", "Business", "Loan", "Reference", "Documents"];
+  const totalSteps = stepLabels.length;
 
   const inputStyle = {
     width: "100%",
@@ -58,6 +64,40 @@ const KYCForm = ({
 
   const goToStep = (s) => setStep(s);
 
+  // Document upload handlers
+  const handleAddDocuments = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+
+    const newDocs = files.map((file) => ({
+      file,
+      name: file.name,
+      size: file.size,
+    }));
+
+    setDocuments((prev) => [...prev, ...newDocs]);
+    e.target.value = "";
+  };
+
+  const removeDocument = (index) => {
+    setDocuments((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const formatSize = (bytes) => {
+    if (bytes < 1024) return bytes + " B";
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + " KB";
+    return (bytes / 1048576).toFixed(1) + " MB";
+  };
+
+  // Final submit – includes documents
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSubmit({
+      ...formData,
+      documents: documents.map((d) => d.file),
+    });
+  };
+
   return (
     <div
       style={{
@@ -86,7 +126,58 @@ const KYCForm = ({
         <MdArrowBack size={18} /> Back to applications
       </button>
 
-      <form onSubmit={onSubmit}>
+      {/* ===================== PROGRESS INDICATOR (only names) ===================== */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: "32px",
+          padding: "0 4px",
+          gap: isMobile ? "4px" : "8px",
+          flexWrap: "wrap",
+        }}
+      >
+        {stepLabels.map((label, index) => {
+          const stepNumber = index + 1;
+          const isActive = step === stepNumber;
+          const isCompleted = step > stepNumber;
+
+          return (
+            <React.Fragment key={index}>
+              <span
+                style={{
+                  fontSize: isMobile ? "12px" : "14px",
+                  fontWeight: isActive ? "700" : isCompleted ? "500" : "400",
+                  color: isActive ? "#1e293b" : isCompleted ? "#6366f1" : "#94a3b8",
+                  cursor: "default",
+                  borderBottom: isActive ? "2px solid #6366f1" : "none",
+                  paddingBottom: "4px",
+                  transition: "all 0.2s",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.5px",
+                }}
+              >
+                {label}
+              </span>
+              {index < totalSteps - 1 && (
+                <span
+                  style={{
+                    color: step > index + 1 ? "#6366f1" : "#e2e8f0",
+                    fontWeight: "300",
+                    fontSize: isMobile ? "14px" : "18px",
+                    flexShrink: 0,
+                  }}
+                >
+                  ›
+                </span>
+              )}
+            </React.Fragment>
+          );
+        })}
+      </div>
+
+      <form onSubmit={handleSubmit}>
         {/* ===================== STEP 1: KYC ===================== */}
         {step === 1 && (
           <>
@@ -1236,11 +1327,141 @@ const KYCForm = ({
               </div>
             </div>
 
-            {/* Step 4 buttons: Back + Submit */}
+            {/* Step 4 buttons: Back + Next (to Documents) */}
             <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end", marginTop: "32px" }}>
               <button
                 type="button"
                 onClick={() => goToStep(3)}
+                style={{
+                  padding: "10px 24px",
+                  background: "#f1f5f9",
+                  border: "none",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  color: "#334155",
+                  fontWeight: "500",
+                }}
+              >
+                Back
+              </button>
+              <button
+                type="button"
+                onClick={() => goToStep(5)}
+                style={{
+                  padding: "10px 24px",
+                  background: "#6366f1",
+                  border: "none",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  color: "#fff",
+                  fontWeight: "500",
+                }}
+              >
+                Next
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* ===================== STEP 5: DOCUMENT UPLOAD ===================== */}
+        {step === 5 && (
+          <>
+            <h3 style={{ fontSize: "18px", fontWeight: "600", color: "#1e293b", marginTop: "0", marginBottom: "20px", paddingBottom: "8px", borderBottom: "2px solid #e2e8f0" }}>
+              Document Upload
+            </h3>
+
+            <div style={{ marginBottom: "20px" }}>
+              <p style={{ fontSize: "14px", color: "#64748b", margin: "0 0 12px 0" }}>
+                Upload any supporting documents (e.g., ID, proof of address, business registration). You can add multiple files.
+              </p>
+
+              {/* Hidden file input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                onChange={handleAddDocuments}
+                style={{ display: "none" }}
+              />
+
+              <button
+                type="button"
+                onClick={() => fileInputRef.current.click()}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  padding: "10px 20px",
+                  background: "#eef2ff",
+                  border: "1px dashed #6366f1",
+                  borderRadius: "8px",
+                  color: "#4338ca",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  cursor: "pointer",
+                  transition: "background 0.2s",
+                }}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.background = "#e0e7ff")
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.background = "#eef2ff")
+                }
+              >
+                <MdAttachFile size={18} /> Add Document
+              </button>
+            </div>
+
+            {/* List of uploaded documents */}
+            {documents.length > 0 && (
+              <div style={{ marginTop: "16px" }}>
+                <h4 style={{ fontSize: "14px", fontWeight: "600", color: "#334155", marginBottom: "8px" }}>
+                  Uploaded Files ({documents.length})
+                </h4>
+                <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+                  {documents.map((doc, index) => (
+                    <li
+                      key={index}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        padding: "8px 12px",
+                        background: "#f8fafc",
+                        borderRadius: "6px",
+                        marginBottom: "6px",
+                        border: "1px solid #e2e8f0",
+                      }}
+                    >
+                      <span style={{ fontSize: "14px", color: "#1e293b" }}>
+                        {doc.name} <span style={{ color: "#94a3b8", fontSize: "12px" }}>({formatSize(doc.size)})</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => removeDocument(index)}
+                        style={{
+                          background: "transparent",
+                          border: "none",
+                          color: "#ef4444",
+                          cursor: "pointer",
+                          padding: "4px",
+                          display: "flex",
+                          alignItems: "center",
+                        }}
+                      >
+                        <MdClose size={18} />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Step 5 buttons: Back + Submit */}
+            <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end", marginTop: "32px" }}>
+              <button
+                type="button"
+                onClick={() => goToStep(4)}
                 style={{
                   padding: "10px 24px",
                   background: "#f1f5f9",
