@@ -1,6 +1,6 @@
 {
   "short_name": "Yonkopa",
-  "name": "Yonkopa Microcredit",
+  "name": "Yonkopa Microcredit Application",
   "icons": [
     {
       "src": "yonko1.jpeg",
@@ -13,7 +13,7 @@
       "type": "image/jpeg"
     }
   ],
-  "start_url": "/#/officer-access",
+  "start_url": "/#/apply",
   "scope": "/",
   "display": "standalone",
   "theme_color": "#ffffff",
