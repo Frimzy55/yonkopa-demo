@@ -54,7 +54,10 @@ const Step7GuarantorDocuments = ({
                 <span style={{ fontSize: "14px", color: "#1e293b" }}>
                   {doc.name} <span style={{ color: "#94a3b8", fontSize: "12px" }}>({formatSize(doc.size)})</span>
                 </span>
-                <button type="button" onClick={() => removeGuarantorDocument(index)} style={{ background: "transparent", border: "none", color: "#ef4444", cursor: "pointer", padding: "4px", display: "flex", alignItems: "center" }}>
+                <button type="button" onClick={(
+
+              
+                ) => removeGuarantorDocument(index)} style={{ background: "transparent", border: "none", color: "#ef4444", cursor: "pointer", padding: "4px", display: "flex", alignItems: "center" }}>
                   <MdClose size={18} />
                 </button>
               </li>

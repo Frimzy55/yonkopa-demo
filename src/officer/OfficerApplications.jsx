@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import {
   MdSearch,
-  MdFilterList,
+  
   MdAdd,
   MdMoreVert,
 } from "react-icons/md";
@@ -147,21 +147,7 @@ const OfficerApplications = () => {
         <div style={{ display: "flex", gap: "8px" }}>
           {!showForm && (
             <>
-              <button
-                style={{
-                  padding: "8px 16px",
-                  background: "#ffffff",
-                  border: "1px solid #e2e8f0",
-                  borderRadius: "8px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  cursor: "pointer",
-                  color: "#334155",
-                }}
-              >
-                <MdFilterList /> Filter
-              </button>
+              {/* Filter button removed */}
               <button
                 onClick={() => setShowForm(true)}
                 style={{

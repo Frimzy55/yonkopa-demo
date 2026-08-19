@@ -250,8 +250,8 @@ const KYCForm = ({
                 style={{
                   fontSize: isMobile ? "10px" : "13px",
                   fontWeight: isActive ? "700" : isCompleted ? "500" : "400",
-                  color: isActive ? "#1e293b" : isCompleted ? "#6366f1" : "#94a3b8",
-                  borderBottom: isActive ? "2px solid #6366f1" : "none",
+                  color: isActive ? "#1e293b" : isCompleted ? "#f37712" : "#94a3b8",
+                  borderBottom: isActive ? "2px solid #fc821f" : "none",
                   paddingBottom: "4px",
                   textTransform: "uppercase",
                   letterSpacing: "0.3px",
@@ -263,7 +263,7 @@ const KYCForm = ({
               {index < totalSteps - 1 && (
                 <span
                   style={{
-                    color: step > index + 1 ? "#6366f1" : "#e2e8f0",
+                    color: step > index + 1 ? "#090efa" : "#e2e8f0",
                     fontWeight: "300",
                     fontSize: isMobile ? "12px" : "16px",
                     flexShrink: 0,

@@ -32,7 +32,7 @@ function OfficerAccess() {
     setErrorMessage("");
 
     if (!identifier.trim()) {
-      setErrorMessage("Please enter your username, email, or phone.");
+      setErrorMessage("Please enter your username.");
       return;
     }
 
@@ -89,7 +89,7 @@ function OfficerAccess() {
       if (!response.ok) {
         if (response.status === 401) {
           throw new Error(
-            "Invalid username/email/phone or password. Please try again."
+            "Invalid username or password. Please try again."
           );
         }
 
@@ -101,7 +101,7 @@ function OfficerAccess() {
 
         if (response.status === 404) {
           throw new Error(
-            "User not found. Please check your identifier."
+            "User not found. Please check your username."
           );
         }
 
@@ -274,7 +274,7 @@ function OfficerAccess() {
 
         {/* Login Form */}
         <form onSubmit={handleLogin}>
-          {/* Username / Email / Phone */}
+          {/* Username */}
           <div style={{ marginBottom: "24px" }}>
             <label
               htmlFor="identifier"
@@ -288,7 +288,7 @@ function OfficerAccess() {
                 textTransform: "uppercase",
               }}
             >
-              Username / Email / Phone
+              Username
             </label>
 
             <div
@@ -317,7 +317,7 @@ function OfficerAccess() {
                 type="text"
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
-                placeholder="Enter username, email, or phone"
+                placeholder="Enter your username"
                 required
                 autoComplete="username"
                 disabled={isLoading}
@@ -418,7 +418,7 @@ function OfficerAccess() {
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
+                // placeholder removed as requested
                 required
                 autoComplete="current-password"
                 disabled={isLoading}

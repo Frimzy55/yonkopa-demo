@@ -164,56 +164,6 @@ const Step6GuarantorDetails = ({
         </div>
       </div>
 
-      {/* Personal Information */}
-      <div style={{ marginBottom: "24px" }}>
-        <h4 style={{ fontSize: "16px", fontWeight: "600", color: "#334155", marginBottom: "12px" }}>Personal Information</h4>
-        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "16px" }}>
-          <div>
-            <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
-              Full Name <span style={{ color: "#ef4444" }}>*</span>
-            </label>
-            <input type="text" name="guarantorName" value={formData.guarantorName || ""} onChange={onChange} required style={inputStyle} onFocus={focusStyle} onBlur={blurStyle} placeholder="Enter guarantor's full name" />
-          </div>
-          <div>
-            <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
-              Phone Number <span style={{ color: "#ef4444" }}>*</span>
-            </label>
-            <input type="tel" name="guarantorPhone" value={formData.guarantorPhone || ""} onChange={onChange} required style={inputStyle} onFocus={focusStyle} onBlur={blurStyle} placeholder="e.g., 0244123456" />
-          </div>
-          <div>
-            <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
-              ID Number <span style={{ color: "#ef4444" }}>*</span>
-            </label>
-            <input type="text" name="guarantorIdNumber" value={formData.guarantorIdNumber || ""} onChange={onChange} required style={inputStyle} onFocus={focusStyle} onBlur={blurStyle} placeholder="Ghana Card / Passport" />
-          </div>
-          <div>
-            <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
-              Relationship <span style={{ color: "#ef4444" }}>*</span>
-            </label>
-            <input type="text" name="guarantorRelationship" value={formData.guarantorRelationship || ""} onChange={onChange} required style={inputStyle} onFocus={focusStyle} onBlur={blurStyle} placeholder="e.g., Brother, Friend" />
-          </div>
-        </div>
-      </div>
-
-      {/* Address Information */}
-      <div style={{ marginBottom: "24px" }}>
-        <h4 style={{ fontSize: "16px", fontWeight: "600", color: "#334155", marginBottom: "12px" }}>Address Information</h4>
-        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "16px" }}>
-          <div>
-            <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
-              GPS Address <span style={{ color: "#ef4444" }}>*</span>
-            </label>
-            <input type="text" name="guarantorAddress" value={formData.guarantorAddress || ""} onChange={onChange} required style={inputStyle} onFocus={focusStyle} onBlur={blurStyle} placeholder="e.g., GA-123-4567" />
-          </div>
-          <div>
-            <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
-              Residential Location
-            </label>
-            <input type="text" name="guarantorResidenceLocation" value={formData.guarantorResidenceLocation || ""} onChange={onChange} style={inputStyle} onFocus={focusStyle} onBlur={blurStyle} placeholder="e.g., East Legon, Atomic Hills" />
-          </div>
-        </div>
-      </div>
-
       {/* Employment Information */}
       <div style={{ marginBottom: "24px" }}>
         <h4 style={{ fontSize: "16px", fontWeight: "600", color: "#334155", marginBottom: "12px" }}>Employment Information</h4>
@@ -236,25 +186,25 @@ const Step6GuarantorDetails = ({
                   <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
                     Rank / Position <span style={{ color: "#ef4444" }}>*</span>
                   </label>
-                  <input type="text" name="guarantorRank" value={formData.guarantorRank || ""} onChange={onChange} required style={inputStyle} onFocus={focusStyle} onBlur={blurStyle} placeholder="e.g., Senior Manager" />
+                  <input type="text" name="guarantorRank" value={formData.guarantorRank || ""} onChange={onChange} required style={inputStyle} onFocus={focusStyle} onBlur={blurStyle} />
                 </div>
                 <div>
                   <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
                     Employer Name <span style={{ color: "#ef4444" }}>*</span>
                   </label>
-                  <input type="text" name="guarantorNameOfEmployer" value={formData.guarantorNameOfEmployer || ""} onChange={onChange} required style={inputStyle} onFocus={focusStyle} onBlur={blurStyle} placeholder="Company/Organization name" />
+                  <input type="text" name="guarantorNameOfEmployer" value={formData.guarantorNameOfEmployer || ""} onChange={onChange} required style={inputStyle} onFocus={focusStyle} onBlur={blurStyle} />
                 </div>
                 <div>
                   <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
                     Work Location <span style={{ color: "#ef4444" }}>*</span>
                   </label>
-                  <input type="text" name="guarantorWorkLocation" value={formData.guarantorWorkLocation || ""} onChange={onChange} required style={inputStyle} onFocus={focusStyle} onBlur={blurStyle} placeholder="City or town" />
+                  <input type="text" name="guarantorWorkLocation" value={formData.guarantorWorkLocation || ""} onChange={onChange} required style={inputStyle} onFocus={focusStyle} onBlur={blurStyle} />
                 </div>
                 <div>
                   <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
                     Years in Service <span style={{ color: "#ef4444" }}>*</span>
                   </label>
-                  <input type="number" name="guarantorYearsInService" value={formData.guarantorYearsInService || ""} onChange={onChange} required min="0" style={inputStyle} onFocus={focusStyle} onBlur={blurStyle} placeholder="Number of years" />
+                  <input type="number" name="guarantorYearsInService" value={formData.guarantorYearsInService || ""} onChange={onChange} required min="0" style={inputStyle} onFocus={focusStyle} onBlur={blurStyle} />
                 </div>
               </div>
               <div>
@@ -273,19 +223,19 @@ const Step6GuarantorDetails = ({
                   <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
                     Business Name <span style={{ color: "#ef4444" }}>*</span>
                   </label>
-                  <input type="text" name="guarantorBusinessName" value={formData.guarantorBusinessName || ""} onChange={onChange} required style={inputStyle} onFocus={focusStyle} onBlur={blurStyle} placeholder="Registered business name" />
+                  <input type="text" name="guarantorBusinessName" value={formData.guarantorBusinessName || ""} onChange={onChange} required style={inputStyle} onFocus={focusStyle} onBlur={blurStyle} />
                 </div>
                 <div>
                   <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
                     Business Location <span style={{ color: "#ef4444" }}>*</span>
                   </label>
-                  <input type="text" name="guarantorBusinessLocation" value={formData.guarantorBusinessLocation || ""} onChange={onChange} required style={inputStyle} onFocus={focusStyle} onBlur={blurStyle} placeholder="Address or area" />
+                  <input type="text" name="guarantorBusinessLocation" value={formData.guarantorBusinessLocation || ""} onChange={onChange} required style={inputStyle} onFocus={focusStyle} onBlur={blurStyle} />
                 </div>
                 <div>
                   <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
                     Years in Business <span style={{ color: "#ef4444" }}>*</span>
                   </label>
-                  <input type="number" name="guarantorYearsInBusiness" value={formData.guarantorYearsInBusiness || ""} onChange={onChange} required min="0" style={inputStyle} onFocus={focusStyle} onBlur={blurStyle} placeholder="Number of years" />
+                  <input type="number" name="guarantorYearsInBusiness" value={formData.guarantorYearsInBusiness || ""} onChange={onChange} required min="0" style={inputStyle} onFocus={focusStyle} onBlur={blurStyle} />
                 </div>
               </div>
               <div>
@@ -319,6 +269,59 @@ const Step6GuarantorDetails = ({
           </div>
         </div>
       )}
+
+
+      {/* Personal Information */}
+      <div style={{ marginBottom: "24px" }}>
+        <h4 style={{ fontSize: "16px", fontWeight: "600", color: "#334155", marginBottom: "12px" }}>Personal Information</h4>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "16px" }}>
+          <div>
+            <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
+              Full Name <span style={{ color: "#ef4444" }}>*</span>
+            </label>
+            <input type="text" name="guarantorName" value={formData.guarantorName || ""} onChange={onChange} required style={inputStyle} onFocus={focusStyle} onBlur={blurStyle} />
+          </div>
+          <div>
+            <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
+              Phone Number <span style={{ color: "#ef4444" }}>*</span>
+            </label>
+            <input type="tel" name="guarantorPhone" value={formData.guarantorPhone || ""} onChange={onChange} required style={inputStyle} onFocus={focusStyle} onBlur={blurStyle} />
+          </div>
+          <div>
+            <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
+              ID Number <span style={{ color: "#ef4444" }}>*</span>
+            </label>
+            <input type="text" name="guarantorIdNumber" value={formData.guarantorIdNumber || ""} onChange={onChange} required style={inputStyle} onFocus={focusStyle} onBlur={blurStyle} />
+          </div>
+          <div>
+            <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
+              Relationship <span style={{ color: "#ef4444" }}>*</span>
+            </label>
+            <input type="text" name="guarantorRelationship" value={formData.guarantorRelationship || ""} onChange={onChange} required style={inputStyle} onFocus={focusStyle} onBlur={blurStyle} />
+          </div>
+        </div>
+      </div>
+
+      {/* Address Information */}
+      <div style={{ marginBottom: "24px" }}>
+        <h4 style={{ fontSize: "16px", fontWeight: "600", color: "#334155", marginBottom: "12px" }}>Address Information</h4>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "16px" }}>
+          <div>
+            <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
+              GPS Address <span style={{ color: "#ef4444" }}>*</span>
+            </label>
+            <input type="text" name="guarantorAddress" value={formData.guarantorAddress || ""} onChange={onChange} required style={inputStyle} onFocus={focusStyle} onBlur={blurStyle} />
+          </div>
+          <div>
+            <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
+              Residential Location
+            </label>
+            <input type="text" name="guarantorResidenceLocation" value={formData.guarantorResidenceLocation || ""} onChange={onChange} style={inputStyle} onFocus={focusStyle} onBlur={blurStyle} />
+          </div>
+        </div>
+      </div>
+
+     
 
       <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end", marginTop: "32px" }}>
         <button type="button" onClick={onBack} style={{ padding: "10px 24px", background: "#f1f5f9", border: "none", borderRadius: "8px", cursor: "pointer", color: "#334155", fontWeight: "500" }}>Back</button>

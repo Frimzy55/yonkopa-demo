@@ -16,7 +16,7 @@ import {
 
 import logo from "../image/yonko1.jpeg";
 import OfficerApplications from "./OfficerApplications";
-import OfficerDashboardContent from "./OfficerDashboardContent"; // <-- import
+import OfficerDashboardContent from "./OfficerDashboardContent";
 
 const Officerdasboard = () => {
   const navigate = useNavigate();
@@ -81,21 +81,12 @@ const Officerdasboard = () => {
   // ============================================================
   const renderContent = () => {
     switch (activePage) {
-      // ========================================================
-      // DASHBOARD – now uses the separate component
-      // ========================================================
       case "dashboard":
         return <OfficerDashboardContent user={user} isMobile={isMobile} />;
-
-      // ========================================================
-      // APPLICATIONS
-      // ========================================================
       case "applications":
         return <OfficerApplications />;
-
-      // ========================================================
-      // CLIENTS, REPORTS, SETTINGS – placeholders
-      // ========================================================
+      // Clients, Reports, Settings are still available if needed,
+      // but no longer in the sidebar.
       case "clients":
         return (
           <div style={{ padding: "40px 16px", textAlign: "center", color: "#64748b" }}>
@@ -117,10 +108,6 @@ const Officerdasboard = () => {
             <p>Coming soon…</p>
           </div>
         );
-
-      // ========================================================
-      // DEFAULT
-      // ========================================================
       default:
         return null;
     }
@@ -253,7 +240,6 @@ const Officerdasboard = () => {
                 objectFit: "cover",
               }}
             />
-
             <span
               style={{
                 fontSize: "18px",
@@ -261,10 +247,9 @@ const Officerdasboard = () => {
                 color: "#1e293b",
               }}
             >
-              Yonkopa 
+              Yonkopa
             </span>
           </div>
-
           <p
             style={{
               fontSize: "12px",
@@ -278,7 +263,7 @@ const Officerdasboard = () => {
         </div>
 
         {/* ======================================================
-            NAVIGATION
+            NAVIGATION – only Dashboard & Applications remain
         ====================================================== */}
         <nav
           style={{
@@ -294,7 +279,6 @@ const Officerdasboard = () => {
               closeSidebar();
             }}
           />
-
           <NavItem
             icon={<MdAssignment />}
             label="Applications"
@@ -304,36 +288,7 @@ const Officerdasboard = () => {
               closeSidebar();
             }}
           />
-
-          <NavItem
-            icon={<MdPeople />}
-            label="Clients"
-            active={activePage === "clients"}
-            onClick={() => {
-              setActivePage("clients");
-              closeSidebar();
-            }}
-          />
-
-          <NavItem
-            icon={<MdBarChart />}
-            label="Reports"
-            active={activePage === "reports"}
-            onClick={() => {
-              setActivePage("reports");
-              closeSidebar();
-            }}
-          />
-
-          <NavItem
-            icon={<MdSettings />}
-            label="Settings"
-            active={activePage === "settings"}
-            onClick={() => {
-              setActivePage("settings");
-              closeSidebar();
-            }}
-          />
+          {/* Clients, Reports, Settings have been removed from the sidebar */}
         </nav>
 
         {/* ======================================================
@@ -390,7 +345,7 @@ const Officerdasboard = () => {
         }}
       >
         {/* ======================================================
-            FIXED TOP BAR (does not scroll)
+            FIXED TOP BAR
         ====================================================== */}
         <header
           style={{
@@ -409,9 +364,7 @@ const Officerdasboard = () => {
             boxSizing: "border-box",
           }}
         >
-          {/* ====================================================
-              LEFT SIDE
-          ==================================================== */}
+          {/* LEFT SIDE */}
           <div
             style={{
               display: "flex",
@@ -436,7 +389,6 @@ const Officerdasboard = () => {
                 <MdMenu />
               </button>
             )}
-
             <h2
               style={{
                 fontSize: "18px",
@@ -449,19 +401,11 @@ const Officerdasboard = () => {
                 ? "Dashboard"
                 : activePage === "applications"
                 ? "Applications"
-                : activePage === "clients"
-                ? "Clients"
-                : activePage === "reports"
-                ? "Reports"
-                : activePage === "settings"
-                ? "Settings"
                 : "Dashboard"}
             </h2>
           </div>
 
-          {/* ====================================================
-              RIGHT SIDE
-          ==================================================== */}
+          {/* RIGHT SIDE */}
           <div
             style={{
               display: "flex",
@@ -483,7 +427,6 @@ const Officerdasboard = () => {
             >
               <MdSearch />
             </button>
-
             <button
               style={{
                 background: "transparent",
@@ -518,7 +461,6 @@ const Officerdasboard = () => {
                 3
               </span>
             </button>
-
             <div
               style={{
                 display: "flex",
@@ -547,7 +489,6 @@ const Officerdasboard = () => {
               >
                 {user?.fullName?.charAt(0)?.toUpperCase() || "O"}
               </div>
-
               {!isMobile && (
                 <>
                   <span
