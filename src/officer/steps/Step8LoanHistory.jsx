@@ -23,8 +23,8 @@ const Step8LoanHistory = ({
       principalAmount: "",
       installmentAmount: "",
       currentBalance: "",
-      arrearsBalance: "",   // new separate field
-      status: "",
+      arrearsBalance: "",
+      // status is not stored – computed from expiryDate
       expiryDate: "",
     };
     const updatedLoans = [...(formData.loans || []), newLoan];
@@ -47,7 +47,7 @@ const Step8LoanHistory = ({
     });
   };
 
-  // Helper to update a specific field in a specific row (direct, used for table inputs)
+  // Helper to update a specific field in a specific row (direct)
   const handleLoanChange = (index, field, value) => {
     const updatedLoans = [...(formData.loans || [])];
     updatedLoans[index] = { ...updatedLoans[index], [field]: value };
@@ -91,6 +91,16 @@ const Step8LoanHistory = ({
 
   const handleModalFieldChange = (field, value) => {
     setEditingRowData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  // Compute status from expiry date
+  const getLoanStatus = (expiryDate) => {
+    if (!expiryDate) return "";
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const expiry = new Date(expiryDate);
+    expiry.setHours(0, 0, 0, 0);
+    return expiry > today ? "Active" : "Expired";
   };
 
   const hasPreviousLoan = formData.hasPreviousLoan === "yes";
@@ -169,7 +179,7 @@ const Step8LoanHistory = ({
                 width: "100%",
                 borderCollapse: "collapse",
                 fontSize: "14px",
-                minWidth: "900px", // increased to accommodate extra column
+                minWidth: "900px",
               }}
             >
               <thead>
@@ -187,156 +197,20 @@ const Step8LoanHistory = ({
                 </tr>
               </thead>
               <tbody>
-                {loans.map((loan, index) => (
-                  <tr key={index}>
-                    <td style={{ padding: "8px", border: "1px solid #e2e8f0", textAlign: "center" }}>
-                      {index + 1}
-                    </td>
-                    <td style={{ padding: "8px", border: "1px solid #e2e8f0" }}>
-                      <input
-                        type="date"
-                        value={loan.dateDisbursed || ""}
-                        readOnly={isMobile}
-                        onClick={isMobile ? () => openModal(index) : undefined}
-                        onChange={(e) => handleLoanChange(index, "dateDisbursed", e.target.value)}
-                        style={{
-                          width: "100%",
-                          padding: "6px 8px",
-                          border: "1px solid #e2e8f0",
-                          borderRadius: "6px",
-                          fontSize: "13px",
-                          outline: "none",
-                          boxSizing: "border-box",
-                          background: isMobile ? "#f8fafc" : "#fff",
-                          cursor: isMobile ? "pointer" : "default",
-                        }}
-                        onFocus={focusStyle}
-                        onBlur={blurStyle}
-                      />
-                    </td>
-                    <td style={{ padding: "8px", border: "1px solid #e2e8f0" }}>
-                      <input
-                        type="text"
-                        value={loan.institution || ""}
-                        readOnly={isMobile}
-                        onClick={isMobile ? () => openModal(index) : undefined}
-                        onChange={(e) => handleLoanChange(index, "institution", e.target.value)}
-                        placeholder="e.g., Bank ABC"
-                        style={{
-                          width: "100%",
-                          padding: "6px 8px",
-                          border: "1px solid #e2e8f0",
-                          borderRadius: "6px",
-                          fontSize: "13px",
-                          outline: "none",
-                          boxSizing: "border-box",
-                          background: isMobile ? "#f8fafc" : "#fff",
-                          cursor: isMobile ? "pointer" : "default",
-                        }}
-                        onFocus={focusStyle}
-                        onBlur={blurStyle}
-                      />
-                    </td>
-                    <td style={{ padding: "8px", border: "1px solid #e2e8f0" }}>
-                      <input
-                        type="text"
-                        value={loan.principalAmount || ""}
-                        readOnly={isMobile}
-                        onClick={isMobile ? () => openModal(index) : undefined}
-                        onChange={(e) => handleLoanChange(index, "principalAmount", e.target.value)}
-                        placeholder="e.g., 10000"
-                        style={{
-                          width: "100%",
-                          padding: "6px 8px",
-                          border: "1px solid #e2e8f0",
-                          borderRadius: "6px",
-                          fontSize: "13px",
-                          outline: "none",
-                          boxSizing: "border-box",
-                          background: isMobile ? "#f8fafc" : "#fff",
-                          cursor: isMobile ? "pointer" : "default",
-                        }}
-                        onFocus={focusStyle}
-                        onBlur={blurStyle}
-                      />
-                    </td>
-                    <td style={{ padding: "8px", border: "1px solid #e2e8f0" }}>
-                      <input
-                        type="text"
-                        value={loan.installmentAmount || ""}
-                        readOnly={isMobile}
-                        onClick={isMobile ? () => openModal(index) : undefined}
-                        onChange={(e) => handleLoanChange(index, "installmentAmount", e.target.value)}
-                        placeholder="e.g., 2000"
-                        style={{
-                          width: "100%",
-                          padding: "6px 8px",
-                          border: "1px solid #e2e8f0",
-                          borderRadius: "6px",
-                          fontSize: "13px",
-                          outline: "none",
-                          boxSizing: "border-box",
-                          background: isMobile ? "#f8fafc" : "#fff",
-                          cursor: isMobile ? "pointer" : "default",
-                        }}
-                        onFocus={focusStyle}
-                        onBlur={blurStyle}
-                      />
-                    </td>
-                    <td style={{ padding: "8px", border: "1px solid #e2e8f0" }}>
-                      <input
-                        type="text"
-                        value={loan.currentBalance || ""}
-                        readOnly={isMobile}
-                        onClick={isMobile ? () => openModal(index) : undefined}
-                        onChange={(e) => handleLoanChange(index, "currentBalance", e.target.value)}
-                        placeholder="e.g., 5000"
-                        style={{
-                          width: "100%",
-                          padding: "6px 8px",
-                          border: "1px solid #e2e8f0",
-                          borderRadius: "6px",
-                          fontSize: "13px",
-                          outline: "none",
-                          boxSizing: "border-box",
-                          background: isMobile ? "#f8fafc" : "#fff",
-                          cursor: isMobile ? "pointer" : "default",
-                        }}
-                        onFocus={focusStyle}
-                        onBlur={blurStyle}
-                      />
-                    </td>
-                    <td style={{ padding: "8px", border: "1px solid #e2e8f0" }}>
-                      <input
-                        type="text"
-                        value={loan.arrearsBalance || ""}
-                        readOnly={isMobile}
-                        onClick={isMobile ? () => openModal(index) : undefined}
-                        onChange={(e) => handleLoanChange(index, "arrearsBalance", e.target.value)}
-                        placeholder="e.g., 2000"
-                        style={{
-                          width: "100%",
-                          padding: "6px 8px",
-                          border: "1px solid #e2e8f0",
-                          borderRadius: "6px",
-                          fontSize: "13px",
-                          outline: "none",
-                          boxSizing: "border-box",
-                          background: isMobile ? "#f8fafc" : "#fff",
-                          cursor: isMobile ? "pointer" : "default",
-                        }}
-                        onFocus={focusStyle}
-                        onBlur={blurStyle}
-                      />
-                    </td>
-                    <td style={{ padding: "8px", border: "1px solid #e2e8f0" }}>
-                      {isMobile ? (
+                {loans.map((loan, index) => {
+                  const status = getLoanStatus(loan.expiryDate);
+                  return (
+                    <tr key={index}>
+                      <td style={{ padding: "8px", border: "1px solid #e2e8f0", textAlign: "center" }}>
+                        {index + 1}
+                      </td>
+                      <td style={{ padding: "8px", border: "1px solid #e2e8f0" }}>
                         <input
-                          type="text"
-                          value={loan.status || ""}
-                          readOnly
-                          onClick={() => openModal(index)}
-                          placeholder="Status"
+                          type="date"
+                          value={loan.dateDisbursed || ""}
+                          readOnly={isMobile}
+                          onClick={isMobile ? () => openModal(index) : undefined}
+                          onChange={(e) => handleLoanChange(index, "dateDisbursed", e.target.value)}
                           style={{
                             width: "100%",
                             padding: "6px 8px",
@@ -345,77 +219,186 @@ const Step8LoanHistory = ({
                             fontSize: "13px",
                             outline: "none",
                             boxSizing: "border-box",
-                            background: "#f8fafc",
-                            cursor: "pointer",
-                          }}
-                        />
-                      ) : (
-                        <select
-                          value={loan.status || ""}
-                          onChange={(e) => handleLoanChange(index, "status", e.target.value)}
-                          style={{
-                            width: "100%",
-                            padding: "6px 8px",
-                            border: "1px solid #e2e8f0",
-                            borderRadius: "6px",
-                            fontSize: "13px",
-                            outline: "none",
-                            boxSizing: "border-box",
-                            background: "#fff",
+                            background: isMobile ? "#f8fafc" : "#fff",
+                            cursor: isMobile ? "pointer" : "default",
                           }}
                           onFocus={focusStyle}
                           onBlur={blurStyle}
+                        />
+                      </td>
+                      <td style={{ padding: "8px", border: "1px solid #e2e8f0" }}>
+                        <input
+                          type="text"
+                          value={loan.institution || ""}
+                          readOnly={isMobile}
+                          onClick={isMobile ? () => openModal(index) : undefined}
+                          onChange={(e) => handleLoanChange(index, "institution", e.target.value)}
+                          placeholder="e.g., Bank ABC"
+                          style={{
+                            width: "100%",
+                            padding: "6px 8px",
+                            border: "1px solid #e2e8f0",
+                            borderRadius: "6px",
+                            fontSize: "13px",
+                            outline: "none",
+                            boxSizing: "border-box",
+                            background: isMobile ? "#f8fafc" : "#fff",
+                            cursor: isMobile ? "pointer" : "default",
+                          }}
+                          onFocus={focusStyle}
+                          onBlur={blurStyle}
+                        />
+                      </td>
+                      <td style={{ padding: "8px", border: "1px solid #e2e8f0" }}>
+                        <input
+                          type="text"
+                          value={loan.principalAmount || ""}
+                          readOnly={isMobile}
+                          onClick={isMobile ? () => openModal(index) : undefined}
+                          onChange={(e) => handleLoanChange(index, "principalAmount", e.target.value)}
+                          placeholder="e.g., 10000"
+                          style={{
+                            width: "100%",
+                            padding: "6px 8px",
+                            border: "1px solid #e2e8f0",
+                            borderRadius: "6px",
+                            fontSize: "13px",
+                            outline: "none",
+                            boxSizing: "border-box",
+                            background: isMobile ? "#f8fafc" : "#fff",
+                            cursor: isMobile ? "pointer" : "default",
+                          }}
+                          onFocus={focusStyle}
+                          onBlur={blurStyle}
+                        />
+                      </td>
+                      <td style={{ padding: "8px", border: "1px solid #e2e8f0" }}>
+                        <input
+                          type="text"
+                          value={loan.installmentAmount || ""}
+                          readOnly={isMobile}
+                          onClick={isMobile ? () => openModal(index) : undefined}
+                          onChange={(e) => handleLoanChange(index, "installmentAmount", e.target.value)}
+                          placeholder="e.g., 2000"
+                          style={{
+                            width: "100%",
+                            padding: "6px 8px",
+                            border: "1px solid #e2e8f0",
+                            borderRadius: "6px",
+                            fontSize: "13px",
+                            outline: "none",
+                            boxSizing: "border-box",
+                            background: isMobile ? "#f8fafc" : "#fff",
+                            cursor: isMobile ? "pointer" : "default",
+                          }}
+                          onFocus={focusStyle}
+                          onBlur={blurStyle}
+                        />
+                      </td>
+                      <td style={{ padding: "8px", border: "1px solid #e2e8f0" }}>
+                        <input
+                          type="text"
+                          value={loan.currentBalance || ""}
+                          readOnly={isMobile}
+                          onClick={isMobile ? () => openModal(index) : undefined}
+                          onChange={(e) => handleLoanChange(index, "currentBalance", e.target.value)}
+                          placeholder="e.g., 5000"
+                          style={{
+                            width: "100%",
+                            padding: "6px 8px",
+                            border: "1px solid #e2e8f0",
+                            borderRadius: "6px",
+                            fontSize: "13px",
+                            outline: "none",
+                            boxSizing: "border-box",
+                            background: isMobile ? "#f8fafc" : "#fff",
+                            cursor: isMobile ? "pointer" : "default",
+                          }}
+                          onFocus={focusStyle}
+                          onBlur={blurStyle}
+                        />
+                      </td>
+                      <td style={{ padding: "8px", border: "1px solid #e2e8f0" }}>
+                        <input
+                          type="text"
+                          value={loan.arrearsBalance || ""}
+                          readOnly={isMobile}
+                          onClick={isMobile ? () => openModal(index) : undefined}
+                          onChange={(e) => handleLoanChange(index, "arrearsBalance", e.target.value)}
+                          placeholder="e.g., 2000"
+                          style={{
+                            width: "100%",
+                            padding: "6px 8px",
+                            border: "1px solid #e2e8f0",
+                            borderRadius: "6px",
+                            fontSize: "13px",
+                            outline: "none",
+                            boxSizing: "border-box",
+                            background: isMobile ? "#f8fafc" : "#fff",
+                            cursor: isMobile ? "pointer" : "default",
+                          }}
+                          onFocus={focusStyle}
+                          onBlur={blurStyle}
+                        />
+                      </td>
+                      <td style={{ padding: "8px", border: "1px solid #e2e8f0" }}>
+                        <span
+                          style={{
+                            display: "inline-block",
+                            padding: "4px 10px",
+                            borderRadius: "12px",
+                            fontSize: "12px",
+                            fontWeight: "500",
+                            backgroundColor: status === "Active" ? "#dcfce7" : status === "Expired" ? "#fee2e2" : "#f1f5f9",
+                            color: status === "Active" ? "#166534" : status === "Expired" ? "#991b1b" : "#64748b",
+                          }}
                         >
-                          <option value="">Select</option>
-                          <option value="Active">Active</option>
-                          <option value="Completed">Completed</option>
-                          <option value="Defaulted">Defaulted</option>
-                          <option value="Pending">Pending</option>
-                        </select>
-                      )}
-                    </td>
-                    <td style={{ padding: "8px", border: "1px solid #e2e8f0" }}>
-                      <input
-                        type="date"
-                        value={loan.expiryDate || ""}
-                        readOnly={isMobile}
-                        onClick={isMobile ? () => openModal(index) : undefined}
-                        onChange={(e) => handleLoanChange(index, "expiryDate", e.target.value)}
-                        style={{
-                          width: "100%",
-                          padding: "6px 8px",
-                          border: "1px solid #e2e8f0",
-                          borderRadius: "6px",
-                          fontSize: "13px",
-                          outline: "none",
-                          boxSizing: "border-box",
-                          background: isMobile ? "#f8fafc" : "#fff",
-                          cursor: isMobile ? "pointer" : "default",
-                        }}
-                        onFocus={focusStyle}
-                        onBlur={blurStyle}
-                      />
-                    </td>
-                    <td style={{ padding: "8px", border: "1px solid #e2e8f0", textAlign: "center" }}>
-                      <button
-                        type="button"
-                        onClick={() => removeLoanRow(index)}
-                        style={{
-                          background: "transparent",
-                          border: "none",
-                          color: "#ef4444",
-                          cursor: "pointer",
-                          fontSize: "20px",
-                          fontWeight: "bold",
-                          padding: "0 4px",
-                        }}
-                        aria-label="Remove row"
-                      >
-                        ×
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                          {status || "—"}
+                        </span>
+                      </td>
+                      <td style={{ padding: "8px", border: "1px solid #e2e8f0" }}>
+                        <input
+                          type="date"
+                          value={loan.expiryDate || ""}
+                          readOnly={isMobile}
+                          onClick={isMobile ? () => openModal(index) : undefined}
+                          onChange={(e) => handleLoanChange(index, "expiryDate", e.target.value)}
+                          style={{
+                            width: "100%",
+                            padding: "6px 8px",
+                            border: "1px solid #e2e8f0",
+                            borderRadius: "6px",
+                            fontSize: "13px",
+                            outline: "none",
+                            boxSizing: "border-box",
+                            background: isMobile ? "#f8fafc" : "#fff",
+                            cursor: isMobile ? "pointer" : "default",
+                          }}
+                          onFocus={focusStyle}
+                          onBlur={blurStyle}
+                        />
+                      </td>
+                      <td style={{ padding: "8px", border: "1px solid #e2e8f0", textAlign: "center" }}>
+                        <button
+                          type="button"
+                          onClick={() => removeLoanRow(index)}
+                          style={{
+                            background: "transparent",
+                            border: "none",
+                            color: "#ef4444",
+                            cursor: "pointer",
+                            fontSize: "20px",
+                            fontWeight: "bold",
+                            padding: "0 4px",
+                          }}
+                          aria-label="Remove row"
+                        >
+                          ×
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -607,26 +590,20 @@ const Step8LoanHistory = ({
                 <label style={{ display: "block", fontSize: "14px", fontWeight: "500", marginBottom: "4px" }}>
                   Status
                 </label>
-                <select
-                  value={editingRowData.status || ""}
-                  onChange={(e) => handleModalFieldChange("status", e.target.value)}
+                <div
                   style={{
                     width: "100%",
                     padding: "10px 12px",
                     border: "1px solid #e2e8f0",
                     borderRadius: "8px",
                     fontSize: "16px",
-                    outline: "none",
+                    background: "#f8fafc",
+                    color: "#334155",
                     boxSizing: "border-box",
-                    background: "#fff",
                   }}
                 >
-                  <option value="">Select</option>
-                  <option value="Active">Active</option>
-                  <option value="Completed">Completed</option>
-                  <option value="Defaulted">Defaulted</option>
-                  <option value="Pending">Pending</option>
-                </select>
+                  {getLoanStatus(editingRowData.expiryDate) || "—"}
+                </div>
               </div>
               <div>
                 <label style={{ display: "block", fontSize: "14px", fontWeight: "500", marginBottom: "4px" }}>
