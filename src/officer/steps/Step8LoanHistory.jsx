@@ -18,11 +18,13 @@ const Step8LoanHistory = ({
   // Helper to add a new empty loan row
   const addLoanRow = () => {
     const newLoan = {
-      date: "",
+      dateDisbursed: "",
       institution: "",
       principalAmount: "",
       installmentAmount: "",
       currentBalance: "",
+      arrearsBalance: "",   // new separate field
+      status: "",
       expiryDate: "",
     };
     const updatedLoans = [...(formData.loans || []), newLoan];
@@ -167,17 +169,19 @@ const Step8LoanHistory = ({
                 width: "100%",
                 borderCollapse: "collapse",
                 fontSize: "14px",
-                minWidth: "700px",
+                minWidth: "900px", // increased to accommodate extra column
               }}
             >
               <thead>
                 <tr style={{ background: "#f1f5f9" }}>
                   <th style={{ padding: "10px 8px", border: "1px solid #e2e8f0", textAlign: "left" }}>S/N</th>
-                  <th style={{ padding: "10px 8px", border: "1px solid #e2e8f0", textAlign: "left" }}>Date</th>
+                  <th style={{ padding: "10px 8px", border: "1px solid #e2e8f0", textAlign: "left" }}>Date Disbursed</th>
                   <th style={{ padding: "10px 8px", border: "1px solid #e2e8f0", textAlign: "left" }}>Institution</th>
                   <th style={{ padding: "10px 8px", border: "1px solid #e2e8f0", textAlign: "left" }}>Principal Amount</th>
                   <th style={{ padding: "10px 8px", border: "1px solid #e2e8f0", textAlign: "left" }}>Installment Amount</th>
-                  <th style={{ padding: "10px 8px", border: "1px solid #e2e8f0", textAlign: "left" }}>Current Balance / Arrears</th>
+                  <th style={{ padding: "10px 8px", border: "1px solid #e2e8f0", textAlign: "left" }}>Current Balance</th>
+                  <th style={{ padding: "10px 8px", border: "1px solid #e2e8f0", textAlign: "left" }}>Arrears Balance</th>
+                  <th style={{ padding: "10px 8px", border: "1px solid #e2e8f0", textAlign: "left" }}>Status</th>
                   <th style={{ padding: "10px 8px", border: "1px solid #e2e8f0", textAlign: "left" }}>Expiry Date</th>
                   <th style={{ padding: "10px 8px", border: "1px solid #e2e8f0", textAlign: "center" }}>Action</th>
                 </tr>
@@ -191,10 +195,10 @@ const Step8LoanHistory = ({
                     <td style={{ padding: "8px", border: "1px solid #e2e8f0" }}>
                       <input
                         type="date"
-                        value={loan.date || ""}
-                        readOnly={isMobile} // prevent keyboard on mobile
+                        value={loan.dateDisbursed || ""}
+                        readOnly={isMobile}
                         onClick={isMobile ? () => openModal(index) : undefined}
-                        onChange={(e) => handleLoanChange(index, "date", e.target.value)}
+                        onChange={(e) => handleLoanChange(index, "dateDisbursed", e.target.value)}
                         style={{
                           width: "100%",
                           padding: "6px 8px",
@@ -304,6 +308,74 @@ const Step8LoanHistory = ({
                     </td>
                     <td style={{ padding: "8px", border: "1px solid #e2e8f0" }}>
                       <input
+                        type="text"
+                        value={loan.arrearsBalance || ""}
+                        readOnly={isMobile}
+                        onClick={isMobile ? () => openModal(index) : undefined}
+                        onChange={(e) => handleLoanChange(index, "arrearsBalance", e.target.value)}
+                        placeholder="e.g., 2000"
+                        style={{
+                          width: "100%",
+                          padding: "6px 8px",
+                          border: "1px solid #e2e8f0",
+                          borderRadius: "6px",
+                          fontSize: "13px",
+                          outline: "none",
+                          boxSizing: "border-box",
+                          background: isMobile ? "#f8fafc" : "#fff",
+                          cursor: isMobile ? "pointer" : "default",
+                        }}
+                        onFocus={focusStyle}
+                        onBlur={blurStyle}
+                      />
+                    </td>
+                    <td style={{ padding: "8px", border: "1px solid #e2e8f0" }}>
+                      {isMobile ? (
+                        <input
+                          type="text"
+                          value={loan.status || ""}
+                          readOnly
+                          onClick={() => openModal(index)}
+                          placeholder="Status"
+                          style={{
+                            width: "100%",
+                            padding: "6px 8px",
+                            border: "1px solid #e2e8f0",
+                            borderRadius: "6px",
+                            fontSize: "13px",
+                            outline: "none",
+                            boxSizing: "border-box",
+                            background: "#f8fafc",
+                            cursor: "pointer",
+                          }}
+                        />
+                      ) : (
+                        <select
+                          value={loan.status || ""}
+                          onChange={(e) => handleLoanChange(index, "status", e.target.value)}
+                          style={{
+                            width: "100%",
+                            padding: "6px 8px",
+                            border: "1px solid #e2e8f0",
+                            borderRadius: "6px",
+                            fontSize: "13px",
+                            outline: "none",
+                            boxSizing: "border-box",
+                            background: "#fff",
+                          }}
+                          onFocus={focusStyle}
+                          onBlur={blurStyle}
+                        >
+                          <option value="">Select</option>
+                          <option value="Active">Active</option>
+                          <option value="Completed">Completed</option>
+                          <option value="Defaulted">Defaulted</option>
+                          <option value="Pending">Pending</option>
+                        </select>
+                      )}
+                    </td>
+                    <td style={{ padding: "8px", border: "1px solid #e2e8f0" }}>
+                      <input
                         type="date"
                         value={loan.expiryDate || ""}
                         readOnly={isMobile}
@@ -385,7 +457,7 @@ const Step8LoanHistory = ({
             padding: "20px",
             boxSizing: "border-box",
           }}
-          onClick={closeModal} // close on backdrop click
+          onClick={closeModal}
         >
           <div
             style={{
@@ -398,7 +470,7 @@ const Step8LoanHistory = ({
               overflowY: "auto",
               boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
             }}
-            onClick={(e) => e.stopPropagation()} // prevent closing when clicking inside
+            onClick={(e) => e.stopPropagation()}
           >
             <h4
               style={{
@@ -414,12 +486,12 @@ const Step8LoanHistory = ({
             <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
               <div>
                 <label style={{ display: "block", fontSize: "14px", fontWeight: "500", marginBottom: "4px" }}>
-                  Date
+                  Date Disbursed
                 </label>
                 <input
                   type="date"
-                  value={editingRowData.date || ""}
-                  onChange={(e) => handleModalFieldChange("date", e.target.value)}
+                  value={editingRowData.dateDisbursed || ""}
+                  onChange={(e) => handleModalFieldChange("dateDisbursed", e.target.value)}
                   style={{
                     width: "100%",
                     padding: "10px 12px",
@@ -493,7 +565,7 @@ const Step8LoanHistory = ({
               </div>
               <div>
                 <label style={{ display: "block", fontSize: "14px", fontWeight: "500", marginBottom: "4px" }}>
-                  Current Balance / Arrears
+                  Current Balance
                 </label>
                 <input
                   type="text"
@@ -510,6 +582,51 @@ const Step8LoanHistory = ({
                     boxSizing: "border-box",
                   }}
                 />
+              </div>
+              <div>
+                <label style={{ display: "block", fontSize: "14px", fontWeight: "500", marginBottom: "4px" }}>
+                  Arrears Balance
+                </label>
+                <input
+                  type="text"
+                  value={editingRowData.arrearsBalance || ""}
+                  onChange={(e) => handleModalFieldChange("arrearsBalance", e.target.value)}
+                  placeholder="e.g., 2000"
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px",
+                    border: "1px solid #e2e8f0",
+                    borderRadius: "8px",
+                    fontSize: "16px",
+                    outline: "none",
+                    boxSizing: "border-box",
+                  }}
+                />
+              </div>
+              <div>
+                <label style={{ display: "block", fontSize: "14px", fontWeight: "500", marginBottom: "4px" }}>
+                  Status
+                </label>
+                <select
+                  value={editingRowData.status || ""}
+                  onChange={(e) => handleModalFieldChange("status", e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px",
+                    border: "1px solid #e2e8f0",
+                    borderRadius: "8px",
+                    fontSize: "16px",
+                    outline: "none",
+                    boxSizing: "border-box",
+                    background: "#fff",
+                  }}
+                >
+                  <option value="">Select</option>
+                  <option value="Active">Active</option>
+                  <option value="Completed">Completed</option>
+                  <option value="Defaulted">Defaulted</option>
+                  <option value="Pending">Pending</option>
+                </select>
               </div>
               <div>
                 <label style={{ display: "block", fontSize: "14px", fontWeight: "500", marginBottom: "4px" }}>
@@ -561,7 +678,7 @@ const Step8LoanHistory = ({
                 onClick={saveRowChanges}
                 style={{
                   padding: "10px 20px",
-                  background: "#6366f1",
+                  background: "#3b82f6",
                   border: "none",
                   borderRadius: "8px",
                   cursor: "pointer",
@@ -604,7 +721,7 @@ const Step8LoanHistory = ({
           type="submit"
           style={{
             padding: "10px 24px",
-            background: "#6366f1",
+            background: "#3b82f6",
             border: "none",
             borderRadius: "8px",
             cursor: "pointer",

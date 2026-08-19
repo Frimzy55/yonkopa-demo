@@ -152,7 +152,8 @@ const OfficerApplications = () => {
                 onClick={() => setShowForm(true)}
                 style={{
                   padding: "8px 16px",
-                  background: "#6366f1",
+               
+                   background: "#3b82f6", // 🔵 changed from indigo to blue
                   border: "none",
                   borderRadius: "8px",
                   display: "flex",

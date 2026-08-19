@@ -65,7 +65,7 @@ const Step5ClientDocuments = ({
 
       <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end", marginTop: "32px" }}>
         <button type="button" onClick={onBack} style={{ padding: "10px 24px", background: "#f1f5f9", border: "none", borderRadius: "8px", cursor: "pointer", color: "#334155", fontWeight: "500" }}>Back</button>
-        <button type="button" onClick={onNext} style={{ padding: "10px 24px", background: "#6366f1", border: "none", borderRadius: "8px", cursor: "pointer", color: "#fff", fontWeight: "500" }}>Next</button>
+        <button type="button" onClick={onNext} style={{ padding: "10px 24px", background: "#3b82f6", border: "none", borderRadius: "8px", cursor: "pointer", color: "#fff", fontWeight: "500" }}>Next</button>
       </div>
     </>
   );

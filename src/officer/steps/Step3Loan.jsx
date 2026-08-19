@@ -188,7 +188,7 @@ const Step3Loan = ({
           onClick={onNext}
           style={{
             padding: "10px 24px",
-            background: "#6366f1",
+            background: "#3b82f6",
             border: "none",
             borderRadius: "8px",
             cursor: "pointer",

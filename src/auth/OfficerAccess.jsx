@@ -255,7 +255,7 @@ function OfficerAccess() {
               letterSpacing: "-0.5px",
             }}
           >
-            Yonkopa
+            Yonkopa Micro Credit
           </h2>
 
           <p
@@ -502,7 +502,7 @@ function OfficerAccess() {
               padding: "16px",
               background: isLoading
                 ? "#c7d2fe"
-                : "linear-gradient(135deg, #818cf8 0%, #6366f1 100%)",
+                : "linear-gradient(135deg, #0474cf 0%, #2b6dfc 100%)",
               color: "#fff",
               border: "none",
               borderRadius: "14px",
@@ -549,7 +549,7 @@ function OfficerAccess() {
                 }}
               />
             ) : (
-              "Sign In →"
+              "Login →"
             )}
           </button>
         </form>
