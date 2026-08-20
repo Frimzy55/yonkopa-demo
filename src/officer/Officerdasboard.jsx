@@ -3,20 +3,21 @@ import { useNavigate } from "react-router-dom";
 import {
   MdDashboard,
   MdAssignment,
-  MdPeople,
-  MdBarChart,
-  MdSettings,
+  MdDescription,
+  MdVerified,
   MdLogout,
   MdSearch,
   MdNotificationsNone,
   MdKeyboardArrowDown,
   MdMenu,
   MdClose,
+  MdRefresh, // <-- new import for Pending Resubmission
 } from "react-icons/md";
 
 import logo from "../image/yonko1.jpeg";
 import OfficerApplications from "./OfficerApplications";
 import OfficerDashboardContent from "./OfficerDashboardContent";
+import OfficerVerifyClient from "./OfficerVerifyClient";
 
 const Officerdasboard = () => {
   const navigate = useNavigate();
@@ -85,8 +86,22 @@ const Officerdasboard = () => {
         return <OfficerDashboardContent user={user} isMobile={isMobile} />;
       case "applications":
         return <OfficerApplications />;
-      // Clients, Reports, Settings are still available if needed,
-      // but no longer in the sidebar.
+      case "verify":
+        return <OfficerVerifyClient />;
+      case "pendingResubmission": // <-- new case
+        return (
+          <div style={{ padding: "40px 16px", textAlign: "center", color: "#64748b" }}>
+            <h2>Pending Resubmission</h2>
+            <p>Clients awaiting resubmission will appear here.</p>
+          </div>
+        );
+      case "draft":
+        return (
+          <div style={{ padding: "40px 16px", textAlign: "center", color: "#64748b" }}>
+            <h2>Drafts</h2>
+            <p>Your saved drafts will appear here.</p>
+          </div>
+        );
       case "clients":
         return (
           <div style={{ padding: "40px 16px", textAlign: "center", color: "#64748b" }}>
@@ -263,7 +278,8 @@ const Officerdasboard = () => {
         </div>
 
         {/* ======================================================
-            NAVIGATION – only Dashboard & Applications remain
+            NAVIGATION – Dashboard, Applications, Verify Client,
+            Pending Resubmission, Draft
         ====================================================== */}
         <nav
           style={{
@@ -285,6 +301,34 @@ const Officerdasboard = () => {
             active={activePage === "applications"}
             onClick={() => {
               setActivePage("applications");
+              closeSidebar();
+            }}
+          />
+          <NavItem
+            icon={<MdVerified />}
+            label="Verify Client"
+            active={activePage === "verify"}
+            onClick={() => {
+              setActivePage("verify");
+              closeSidebar();
+            }}
+          />
+          {/* NEW: Pending Resubmission */}
+          <NavItem
+            icon={<MdRefresh />}
+            label="Pending Resubmission"
+            active={activePage === "pendingResubmission"}
+            onClick={() => {
+              setActivePage("pendingResubmission");
+              closeSidebar();
+            }}
+          />
+          <NavItem
+            icon={<MdDescription />}
+            label="Draft"
+            active={activePage === "draft"}
+            onClick={() => {
+              setActivePage("draft");
               closeSidebar();
             }}
           />
@@ -401,6 +445,12 @@ const Officerdasboard = () => {
                 ? "Dashboard"
                 : activePage === "applications"
                 ? "Applications"
+                : activePage === "verify"
+                ? "Verify Client"
+                : activePage === "pendingResubmission" // <-- new title
+                ? "Pending Resubmission"
+                : activePage === "draft"
+                ? "Draft"
                 : "Dashboard"}
             </h2>
           </div>
@@ -458,7 +508,7 @@ const Officerdasboard = () => {
                   justifyContent: "center",
                 }}
               >
-                3
+                0
               </span>
             </button>
             <div
@@ -530,12 +580,7 @@ const Officerdasboard = () => {
 // ============================================================
 // NAVIGATION ITEM COMPONENT
 // ============================================================
-const NavItem = ({
-  icon,
-  label,
-  active = false,
-  onClick = null,
-}) => {
+const NavItem = ({ icon, label, active = false, onClick = null }) => {
   return (
     <div
       onClick={onClick}

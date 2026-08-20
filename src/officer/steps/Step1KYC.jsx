@@ -171,6 +171,21 @@ const Step1KYC = ({
             onBlur={blurStyle}
           />
         </div>
+        {/* NEW: Alternative Phone Number */}
+        <div>
+          <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
+            Alternative Phone Number
+          </label>
+          <input
+            type="tel"
+            name="altPhone"
+            value={formData.altPhone || ""}
+            onChange={onChange}
+            style={inputStyle}
+            onFocus={focusStyle}
+            onBlur={blurStyle}
+          />
+        </div>
         <div>
           <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
             Hometown *
@@ -424,6 +439,21 @@ const Step1KYC = ({
             onBlur={blurStyle}
           />
         </div>
+        {/* NEW: District */}
+        <div>
+          <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
+            District
+          </label>
+          <input
+            type="text"
+            name="district"
+            value={formData.district || ""}
+            onChange={onChange}
+            style={inputStyle}
+            onFocus={focusStyle}
+            onBlur={blurStyle}
+          />
+        </div>
         <div>
           <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
             Residential Ownership *
@@ -510,6 +540,22 @@ const Step1KYC = ({
             value={formData.numberOfDependents || ""}
             onChange={onChange}
             min="0"
+            style={inputStyle}
+            onFocus={focusStyle}
+            onBlur={blurStyle}
+          />
+        </div>
+        {/* NEW: Number of household members */}
+        <div>
+          <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
+            Number of Household Members
+          </label>
+          <input
+            type="number"
+            name="householdMembers"
+            value={formData.householdMembers || ""}
+            onChange={onChange}
+            min="1"
             style={inputStyle}
             onFocus={focusStyle}
             onBlur={blurStyle}

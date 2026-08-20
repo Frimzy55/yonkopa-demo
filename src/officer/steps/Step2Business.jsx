@@ -34,6 +34,21 @@ const Step2Business = ({
           gap: "16px",
         }}
       >
+        {/* NEW: Business Name */}
+        <div>
+          <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
+            Business Name
+          </label>
+          <input
+            type="text"
+            name="businessName"
+            value={formData.businessName || ""}
+            onChange={onChange}
+            style={inputStyle}
+            onFocus={focusStyle}
+            onBlur={blurStyle}
+          />
+        </div>
         <div>
           <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
             Business Information
