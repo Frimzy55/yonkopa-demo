@@ -12,6 +12,7 @@ import {
   Badge,
   Modal,
   Button,
+  Card,
 } from "react-bootstrap";
 import axios from "axios";
 import LoanDetailsModal from "./LoanDetailsModal";
@@ -32,15 +33,25 @@ const ApproveWebLoanApplication = () => {
   const [showKycModal, setShowKycModal] = useState(false);
   const [selectedKyc, setSelectedKyc] = useState(null);
 
-  // Reject confirmation modal state
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectLoan, setRejectLoan] = useState(null);
 
-  // Evaluation screen state
   const [evaluatingLoan, setEvaluatingLoan] = useState(null);
   const [highlightedRowId, setHighlightedRowId] = useState(null);
   const tableRef = useRef(null);
   const [evaluationStep, setEvaluationStep] = useState(1);
+
+  // Helper: format date
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "N/A";
+    return date.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  };
 
   // Fetch all loans
   useEffect(() => {
@@ -110,7 +121,6 @@ const ApproveWebLoanApplication = () => {
     }
 
     if (action === "reject") {
-      // Open custom modal instead of window.confirm
       setRejectLoan(loan);
       setShowRejectModal(true);
     }
@@ -122,7 +132,6 @@ const ApproveWebLoanApplication = () => {
     }
   };
 
-  // Confirm reject from modal
   const handleConfirmReject = async () => {
     if (!rejectLoan) return;
     try {
@@ -179,32 +188,25 @@ const ApproveWebLoanApplication = () => {
   };
 
   const getStatusBadge = (status) => {
-    switch (status.toLowerCase()) {
-      case "approved":
-        return <Badge bg="success">{status}</Badge>;
-      case "rejected":
-        return <Badge bg="danger">{status}</Badge>;
-      case "pending":
-        return (
-          <Badge bg="warning" text="dark">
-            {status}
-          </Badge>
-        );
-      default:
-        return <Badge bg="secondary">{status}</Badge>;
-    }
+    const map = {
+      approved: "success",
+      rejected: "danger",
+      pending: "warning",
+    };
+    const variant = map[status?.toLowerCase()] || "secondary";
+    return <Badge bg={variant} pill className="px-3 py-2">{status}</Badge>;
   };
 
   if (loading)
     return (
-      <div className="text-center mt-5">
-        <Spinner animation="border" />
+      <div className="d-flex justify-content-center mt-5">
+        <Spinner animation="border" variant="primary" />
       </div>
     );
 
   if (error)
     return (
-      <div className="text-center mt-5">
+      <div className="mt-4">
         <Alert variant="danger">{error}</Alert>
       </div>
     );
@@ -222,9 +224,13 @@ const ApproveWebLoanApplication = () => {
   }
 
   return (
-    <div className="loan-table-container" ref={tableRef}>
-      <h2 className="mb-4">Full Loan KYC Applications</h2>
+    <div className="container-fluid p-4" ref={tableRef}>
+      {/* Header */}
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h4 className="fw-bold text-secondary">Full Loan KYC Applications</h4>
+      </div>
 
+      {/* Styling for highlight */}
       <style>
         {`
           .highlight-row {
@@ -240,96 +246,113 @@ const ApproveWebLoanApplication = () => {
         `}
       </style>
 
-      <Row className="mb-3">
-        <Col md={6}>
+      {/* Filters */}
+      <Row className="mb-3 align-items-end">
+        <Col md={6} lg={4}>
           <Form.Control
             type="text"
-            placeholder="Search..."
+            placeholder="Search by name, KYC code or phone..."
             value={searchTerm}
             onChange={handleSearch}
+            className="rounded-pill"
           />
         </Col>
-        <Col md={3}>
-          <Form.Select value={entries} onChange={handleEntriesChange}>
-            <option value={5}>5</option>
-            <option value={10}>10</option>
-            <option value={25}>25</option>
+        <Col md={3} lg={2}>
+          <Form.Select value={entries} onChange={handleEntriesChange} className="rounded-pill">
+            <option value={5}>5 entries</option>
+            <option value={10}>10 entries</option>
+            <option value={25}>25 entries</option>
           </Form.Select>
         </Col>
       </Row>
 
-      <Table bordered hover>
-        <thead>
-          <tr>
-            <th>Loan ID</th>
-            <th>Kyc code</th>
-            <th>Full Name</th>
-            <th>Phone</th>
-            <th>Amount</th>
-            <th>Status</th>
-            <th>Date</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredData.length === 0 ? (
-            <tr>
-              <td colSpan="8" className="text-center">
-                No loan applications found.
-              </td>
-            </tr>
-          ) : (
-            filteredData.slice(0, entries).map((loan) => (
-              <tr
-                key={loan.applicant_id}
-                id={`loan-row-${loan.loan_id}`}
-                className={highlightedRowId === loan.loan_id ? "highlight-row" : ""}
-              >
-                <td>{loan.loan_id}</td>
-                <td>{loan.kyc_code}</td>
-                <td>{loan.applicant_fullName}</td>
-                <td>{loan.mobileNumber}</td>
-                <td>₵{loan.loanAmount}</td>
-                <td>{getStatusBadge(loan.loan_status)}</td>
-                <td>{new Date(loan.applicant_created_at).toLocaleString()}</td>
-                <td>
-                  <Dropdown as={ButtonGroup}>
-                    <Dropdown.Toggle size="sm">Actions</Dropdown.Toggle>
-                    <Dropdown.Menu>
-                      <Dropdown.Item onClick={() => handleAction("review", loan)}>
-                        Review
-                      </Dropdown.Item>
-                      <Dropdown.Item onClick={() => handleAction("evaluate", loan)}>
-                        Evaluate Loan
-                      </Dropdown.Item>
-                      <Dropdown.Item onClick={() => handleAction("skip", loan)}>
-                        Skip Evaluation
-                      </Dropdown.Item>
-                      <Dropdown.Item onClick={() => handleAction("reject", loan)}>
-                        Reject
-                      </Dropdown.Item>
-                    </Dropdown.Menu>
-                  </Dropdown>
-                </td>
-              </tr>
-            ))
-          )}
-        </tbody>
-      </Table>
+      {/* Table Card */}
+      <Card className="shadow-sm border-0">
+        <Card.Body className="p-0">
+          <div className="table-responsive">
+            <Table hover className="mb-0" style={{ borderCollapse: "separate", borderSpacing: "0" }}>
+              <thead className="bg-light" style={{ borderBottom: "2px solid #dee2e6" }}>
+                <tr>
+                  <th className="fw-semibold text-muted py-3">Loan ID</th>
+                  <th className="fw-semibold text-muted py-3">KYC Code</th>
+                  <th className="fw-semibold text-muted py-3">Full Name</th>
+                  <th className="fw-semibold text-muted py-3">Phone</th>
+                  <th className="fw-semibold text-muted py-3">Amount</th>
+                  <th className="fw-semibold text-muted py-3">Status</th>
+                  <th className="fw-semibold text-muted py-3">Date</th>
+                  <th className="fw-semibold text-muted py-3 text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredData.length === 0 ? (
+                  <tr>
+                    <td colSpan="8" className="text-center text-muted py-5">
+                      No loan applications found.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredData.slice(0, entries).map((loan) => (
+                    <tr
+                      key={loan.applicant_id}
+                      id={`loan-row-${loan.loan_id}`}
+                      className={highlightedRowId === loan.loan_id ? "highlight-row" : ""}
+                    >
+                      <td className="py-2">
+                        <strong className="text-primary">WL-{String(loan.loan_id).padStart(5, "0")}</strong>
+                      </td>
+                      <td className="py-2">{loan.kyc_code}</td>
+                      <td className="py-2">{loan.applicant_fullName}</td>
+                      <td className="py-2">{loan.mobileNumber}</td>
+                      <td className="py-2 fw-semibold">₵{loan.loanAmount}</td>
+                      <td className="py-2">{getStatusBadge(loan.loan_status)}</td>
+                      <td className="py-2">{formatDate(loan.applicant_created_at)}</td>
+                      <td className="py-2 text-center">
+                        <Dropdown as={ButtonGroup}>
+                          <Dropdown.Toggle
+                            variant="outline-secondary"
+                            size="sm"
+                            className="rounded-pill px-3"
+                          >
+                            Actions
+                          </Dropdown.Toggle>
+                          <Dropdown.Menu align="end">
+                            <Dropdown.Item onClick={() => handleAction("review", loan)}>
+                              <i className="bi bi-eye me-2"></i> Review
+                            </Dropdown.Item>
+                            <Dropdown.Item onClick={() => handleAction("evaluate", loan)}>
+                              <i className="bi bi-clipboard-check me-2"></i> Evaluate Loan
+                            </Dropdown.Item>
+                            <Dropdown.Item onClick={() => handleAction("skip", loan)}>
+                              <i className="bi bi-fast-forward me-2"></i> Skip Evaluation
+                            </Dropdown.Item>
+                            <Dropdown.Item onClick={() => handleAction("reject", loan)}>
+                              <i className="bi bi-x-circle me-2 text-danger"></i> Reject
+                            </Dropdown.Item>
+                          </Dropdown.Menu>
+                        </Dropdown>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </Table>
+          </div>
+        </Card.Body>
+      </Card>
 
       {/* Reject Confirmation Modal */}
       <Modal show={showRejectModal} onHide={handleCancelReject} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Confirm Rejection</Modal.Title>
+        <Modal.Header closeButton className="border-0">
+          <Modal.Title className="fw-bold">Confirm Rejection</Modal.Title>
         </Modal.Header>
-        <Modal.Body>
-          Are you sure you want to reject this loan?
+        <Modal.Body className="py-4">
+          <p className="mb-0">Are you sure you want to reject this loan application?</p>
         </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleCancelReject}>
+        <Modal.Footer className="border-0">
+          <Button variant="light" onClick={handleCancelReject}>
             Cancel
           </Button>
-          <Button variant="danger" onClick={handleConfirmReject}>
+          <Button variant="danger" onClick={handleConfirmReject} className="px-4">
             Yes, Reject
           </Button>
         </Modal.Footer>

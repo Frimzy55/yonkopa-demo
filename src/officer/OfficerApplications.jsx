@@ -1,15 +1,20 @@
 import React, { useState, useEffect } from "react";
 import {
   MdSearch,
-  
   MdAdd,
   MdMoreVert,
+  MdVerified,
+  MdArrowBack,
 } from "react-icons/md";
 import KYCForm from "./KYCForm";
+import OfficerVerifyClient from "./OfficerVerifyClient"; // Import the separate component
 
 const OfficerApplications = () => {
+  // ---- State for applications ----
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // ---- State for KYC form ----
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     fullName: "",
@@ -23,6 +28,10 @@ const OfficerApplications = () => {
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
 
+  // ---- State for client verification ----
+  const [showVerify, setShowVerify] = useState(false);
+
+  // ---- Fetch applications (dummy) ----
   useEffect(() => {
     const fetchApplications = async () => {
       try {
@@ -40,23 +49,7 @@ const OfficerApplications = () => {
     fetchApplications();
   }, []);
 
-  const getStatusBadge = (status) => {
-    const styles = {
-      Pending: { background: "#fef3c7", color: "#92400e" },
-      Approved: { background: "#d1fae5", color: "#065f46" },
-      Rejected: { background: "#fee2e2", color: "#991b1b" },
-    };
-    const s = styles[status] || styles.Pending;
-    return {
-      ...s,
-      padding: "4px 12px",
-      borderRadius: "20px",
-      fontSize: "12px",
-      fontWeight: "500",
-      display: "inline-block",
-    };
-  };
-
+  // ---- Handlers for KYC form ----
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -79,14 +72,9 @@ const OfficerApplications = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     // Here you would send the KYC data (including photoFile) to your API
-    // For example, using FormData:
-    // const formDataToSend = new FormData();
-    // formDataToSend.append("fullName", formData.fullName);
-    // ... etc.
-    // if (photoFile) formDataToSend.append("photo", photoFile);
     console.log("KYC Data submitted:", formData);
     console.log("Photo file:", photoFile);
-    // Reset form and go back to list
+    // Reset and go back
     setFormData({
       fullName: "",
       email: "",
@@ -99,7 +87,7 @@ const OfficerApplications = () => {
     setPhotoFile(null);
     setPhotoPreview(null);
     setShowForm(false);
-    // Optionally refresh the applications list
+    // Optionally refresh applications list
   };
 
   const handleCancel = () => {
@@ -117,13 +105,49 @@ const OfficerApplications = () => {
     setShowForm(false);
   };
 
+  // ---- Callback when a client is verified ----
+  const handleClientVerified = (client) => {
+    console.log("Verified client:", client);
+    // Example: pre‑fill the KYC form with client data
+    setFormData((prev) => ({
+      ...prev,
+      fullName: client.fullName || "",
+      phone: client.phone || "",
+      // Map other fields if available (e.g., email, address, idNumber)
+      // email: client.email || "",
+      // address: client.address || "",
+      // idNumber: client.idNumber || "",
+    }));
+    // Close verify view and open KYC form (or just go back to applications)
+    setShowVerify(false);
+    setShowForm(true); // optionally open the form with pre‑filled data
+  };
+
+  // ---- Helper for status badges ----
+  const getStatusBadge = (status) => {
+    const styles = {
+      Pending: { background: "#fef3c7", color: "#92400e" },
+      Approved: { background: "#d1fae5", color: "#065f46" },
+      Rejected: { background: "#fee2e2", color: "#991b1b" },
+    };
+    const s = styles[status] || styles.Pending;
+    return {
+      ...s,
+      padding: "4px 12px",
+      borderRadius: "20px",
+      fontSize: "12px",
+      fontWeight: "500",
+      display: "inline-block",
+    };
+  };
+
   if (loading) {
     return <div style={{ padding: "40px", textAlign: "center" }}>Loading applications...</div>;
   }
 
   return (
     <div style={{ padding: "24px 16px" }}>
-      {/* Header with actions */}
+      {/* ---- Header with actions ---- */}
       <div
         style={{
           display: "flex",
@@ -135,25 +159,50 @@ const OfficerApplications = () => {
         }}
       >
         <div>
-          <h2 style={{ fontSize: "22px", fontWeight: "600", color: "#1e293b", margin: 0 }}>
-            {showForm ? "New Application" : "Applications"}
+          <h2
+            style={{ fontSize: "22px", fontWeight: "600", color: "#1e293b", margin: 0 }}
+          >
+            {showForm
+              ? "New Application"
+              : showVerify
+              ? "Verify Client"
+              : "Applications"}
           </h2>
           <p style={{ color: "#64748b", margin: "4px 0 0" }}>
             {showForm
               ? "Enter customer KYC details to start a new loan application."
+              : showVerify
+              ? "Search for an existing client using their full name or popular name."
               : "Manage all loan applications here."}
           </p>
         </div>
         <div style={{ display: "flex", gap: "8px" }}>
-          {!showForm && (
+          {!showForm && !showVerify && (
             <>
-              {/* Filter button removed */}
+              {/* Verify Client button */}
+              <button
+                onClick={() => setShowVerify(true)}
+                style={{
+                  padding: "8px 16px",
+                  background: "#10b981",
+                  border: "none",
+                  borderRadius: "8px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  cursor: "pointer",
+                  color: "#fff",
+                  fontWeight: "500",
+                }}
+              >
+                <MdVerified /> Verify Client
+              </button>
+              {/* New Application button */}
               <button
                 onClick={() => setShowForm(true)}
                 style={{
                   padding: "8px 16px",
-               
-                   background: "#3b82f6", // 🔵 changed from indigo to blue
+                  background: "#3b82f6",
                   border: "none",
                   borderRadius: "8px",
                   display: "flex",
@@ -168,10 +217,29 @@ const OfficerApplications = () => {
               </button>
             </>
           )}
+          {(showForm || showVerify) && (
+            <button
+              onClick={showForm ? handleCancel : () => setShowVerify(false)}
+              style={{
+                padding: "8px 16px",
+                background: "#e2e8f0",
+                border: "none",
+                borderRadius: "8px",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                cursor: "pointer",
+                color: "#334155",
+                fontWeight: "500",
+              }}
+            >
+              <MdArrowBack /> Back
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Render either the KYC form or the application list */}
+      {/* ---- Conditional rendering ---- */}
       {showForm ? (
         <KYCForm
           formData={formData}
@@ -181,9 +249,12 @@ const OfficerApplications = () => {
           onFileChange={handleFileChange}
           photoPreview={photoPreview}
         />
+      ) : showVerify ? (
+        <OfficerVerifyClient onVerify={handleClientVerified} />
       ) : (
+        /* ---- Applications list ---- */
         <>
-          {/* Search bar */}
+          {/* Search bar for applications */}
           <div
             style={{
               marginBottom: "24px",

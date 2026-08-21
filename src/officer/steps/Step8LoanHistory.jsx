@@ -9,6 +9,7 @@ const Step8LoanHistory = ({
   focusStyle,
   blurStyle,
   onBack,
+  onSubmit,   // ← new prop for the final submit
 }) => {
   // State for modal
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -24,7 +25,6 @@ const Step8LoanHistory = ({
       installmentAmount: "",
       currentBalance: "",
       arrearsBalance: "",
-      // status is not stored – computed from expiryDate
       expiryDate: "",
     };
     const updatedLoans = [...(formData.loans || []), newLoan];
@@ -190,7 +190,7 @@ const Step8LoanHistory = ({
                   <th style={{ padding: "10px 8px", border: "1px solid #e2e8f0", textAlign: "left" }}>Principal Amount</th>
                   <th style={{ padding: "10px 8px", border: "1px solid #e2e8f0", textAlign: "left" }}>Installment Amount</th>
                   <th style={{ padding: "10px 8px", border: "1px solid #e2e8f0", textAlign: "left" }}>Current Balance</th>
-                  <th style={{ padding: "10px 8px", border: "1px solid #e2e8f0", textAlign: "left" }}>Arrears Balance</th>
+                  <th style={{ padding: "10px 8px", border: "1px solid #e2e8f0", textAlign: "left" }}>Arrears Amount</th>
                   <th style={{ padding: "10px 8px", border: "1px solid #e2e8f0", textAlign: "left" }}>Status</th>
                   <th style={{ padding: "10px 8px", border: "1px solid #e2e8f0", textAlign: "left" }}>Expiry Date</th>
                   <th style={{ padding: "10px 8px", border: "1px solid #e2e8f0", textAlign: "center" }}>Action</th>
@@ -568,7 +568,7 @@ const Step8LoanHistory = ({
               </div>
               <div>
                 <label style={{ display: "block", fontSize: "14px", fontWeight: "500", marginBottom: "4px" }}>
-                  Arrears Balance
+                  Arrears Amount
                 </label>
                 <input
                   type="text"
@@ -671,6 +671,7 @@ const Step8LoanHistory = ({
         </div>
       )}
 
+      {/* ========== FINAL BUTTONS – FIXED ========== */}
       <div
         style={{
           display: "flex",
@@ -695,7 +696,8 @@ const Step8LoanHistory = ({
           Back
         </button>
         <button
-          type="submit"
+          type="button"           // <-- NOT "submit"
+          onClick={onSubmit}      // <-- triggers the final submit
           style={{
             padding: "10px 24px",
             background: "#3b82f6",

@@ -49,6 +49,7 @@ import CallOver from "./teller/CallOver";
 import CreateTill from "./teller/CreateTill";
 
 // Loan Components
+import OfficerWebLoan from "./loans/OfficerWebLoan";  
 import LoanApplication from "./loans/LoanApplication";
 import ApproveWebLoanApplication from "./loans/ApproveWebLoanApplication";
 import LoanApproval from "./loans/LoanApproval";
@@ -147,7 +148,7 @@ import UploadLoans from "./batch-upload/UploadLoans";
 
 // System Settings Components
 import Branches from "./system-settings/Branches";
-import Configurations from "./system-settings/configurations/Configurations";
+//import Configurations from "./system-settings/configurations/Configurations";
 import LoanProduct from "./system-settings/configurations/LoanProduct"; // new
 import LoanFees from "./system-settings/configurations/LoanFees"; // new
 
@@ -739,7 +740,7 @@ const AdminDashboard = () => {
     }
 
     // Loans Section
-    if (activeMenu === "Loans") {
+    /*if (activeMenu === "Loans") {
       const loanComponents = {
         "Loan Application": LoanApplication,
         "Web Loan": ApproveWebLoanApplication,
@@ -768,7 +769,67 @@ const AdminDashboard = () => {
           </p>
         </div>
       );
+    }*/
+
+
+      // Loans Section
+if (activeMenu === "Loans") {
+  // Regular loan components (no nested)
+  const loanComponents = {
+    "Loan Application": LoanApplication,
+    // "Web Loan": ApproveWebLoanApplication,  // remove this line
+    "Edit Loan Application": EditLoanApplication,
+    "Edit Loan Evaluation": EditLoanEvaluation,
+    "Loan Evaluation": LoanApproval,
+    "Loan Disbursement": LoanDisbursement,
+    "Disburse Loan List": DisburseLoanList,
+    "Loan Repayment": LoanRepayment,
+    "Expected Repayments": ExpectedRepayments,
+    "Due Repayments": DueRepayments,
+    "View Loan": ViewLoan,
+    "Reverse Loan": ReverseLoan,
+    "Terminate Loan": TerminateLoan,
+    "Loan Reschedule": LoanReschedule,
+  };
+
+  // Handle Web Loan with nested menus
+  if (activeSubMenu === "Web Loan") {
+    const webLoanComponents = {
+     "Client's Web Loan": ApproveWebLoanApplication,          // or ApproveWebLoanApplication
+     "Officer's Web Loan": OfficerWebLoan,     
+    };
+    if (activeNestedMenu && webLoanComponents[activeNestedMenu]) {
+      const Component = webLoanComponents[activeNestedMenu];
+      return <Component />;
     }
+    // Default view when no nested menu selected
+    return (
+      <div className="bg-light p-4 rounded-3 text-center">
+        <i className="bi bi-globe fs-1 text-secondary"></i>
+        <p className="mt-2 mb-0">
+          Please select either <strong>Client Web Loan</strong> or{' '}
+          <strong>Officer Web Loan</strong> from the menu.
+        </p>
+      </div>
+    );
+  }
+
+  // Other sub‑menus (non‑Web Loan)
+  if (activeSubMenu && loanComponents[activeSubMenu]) {
+    const Component = loanComponents[activeSubMenu];
+    return <Component />;
+  }
+
+  // Fallback
+  return (
+    <div className="bg-light p-4 rounded-3 text-center">
+      <i className="bi bi-piggy-bank fs-1 text-secondary"></i>
+      <p className="mt-2 mb-0">
+        Please select a loan management option from the menu.
+      </p>
+    </div>
+  );
+}
 
     // Investment Section
     if (activeMenu === "Investment") {

@@ -27,6 +27,7 @@ const Step2Business = ({
       >
         Business & Personal Expenses
       </h3>
+
       <div
         style={{
           display: "grid",
@@ -34,7 +35,9 @@ const Step2Business = ({
           gap: "16px",
         }}
       >
-        {/* NEW: Business Name */}
+        {/* --- TEXT / SELECT FIELDS (first) --- */}
+
+        {/* Business Name */}
         <div>
           <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
             Business Name
@@ -49,20 +52,8 @@ const Step2Business = ({
             onBlur={blurStyle}
           />
         </div>
-        <div>
-          <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
-            Business Information
-          </label>
-          <input
-            type="text"
-            name="businessInformation"
-            value={formData.businessInformation || ""}
-            onChange={onChange}
-            style={inputStyle}
-            onFocus={focusStyle}
-            onBlur={blurStyle}
-          />
-        </div>
+
+        {/* Business Sector */}
         <div>
           <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
             Business Sector
@@ -77,6 +68,8 @@ const Step2Business = ({
             onBlur={blurStyle}
           />
         </div>
+
+        {/* Types of Business */}
         <div>
           <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
             Types of Business
@@ -91,6 +84,8 @@ const Step2Business = ({
             onBlur={blurStyle}
           />
         </div>
+
+        {/* Business Description - full width */}
         <div style={{ gridColumn: isMobile ? "1" : "1 / -1" }}>
           <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
             Business Description
@@ -105,6 +100,8 @@ const Step2Business = ({
             onBlur={blurStyle}
           />
         </div>
+
+        {/* Business Location */}
         <div>
           <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
             Business Location
@@ -119,6 +116,40 @@ const Step2Business = ({
             onBlur={blurStyle}
           />
         </div>
+
+        {/* Business GPS Address */}
+        <div>
+          <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
+            Business GPS Address
+          </label>
+          <input
+            type="text"
+            name="businessGpsAddress"
+            value={formData.businessGpsAddress || ""}
+            onChange={onChange}
+            style={inputStyle}
+            onFocus={focusStyle}
+            onBlur={blurStyle}
+          />
+        </div>
+
+        {/* Business Landmark */}
+        <div>
+          <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
+            Business Landmark
+          </label>
+          <input
+            type="text"
+            name="businessLandmark"
+            value={formData.businessLandmark || ""}
+            onChange={onChange}
+            style={inputStyle}
+            onFocus={focusStyle}
+            onBlur={blurStyle}
+          />
+        </div>
+
+        {/* Business Location Status (select) */}
         <div>
           <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
             Business Location Status
@@ -136,6 +167,10 @@ const Step2Business = ({
             <option value="other">Other</option>
           </select>
         </div>
+
+        {/* --- NUMERIC / FINANCIAL FIELDS (last) --- */}
+
+        {/* Working Capital */}
         <div>
           <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
             Working Capital
@@ -150,6 +185,8 @@ const Step2Business = ({
             onBlur={blurStyle}
           />
         </div>
+
+        {/* Stock Value */}
         <div>
           <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
             Stock Value
@@ -164,20 +201,8 @@ const Step2Business = ({
             onBlur={blurStyle}
           />
         </div>
-        <div>
-          <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
-            Business GPS Address
-          </label>
-          <input
-            type="text"
-            name="businessGpsAddress"
-            value={formData.businessGpsAddress || ""}
-            onChange={onChange}
-            style={inputStyle}
-            onFocus={focusStyle}
-            onBlur={blurStyle}
-          />
-        </div>
+
+        {/* Years in Business */}
         <div>
           <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
             Years in Business
@@ -193,20 +218,8 @@ const Step2Business = ({
             onBlur={blurStyle}
           />
         </div>
-        <div>
-          <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
-            Business Landmark
-          </label>
-          <input
-            type="text"
-            name="businessLandmark"
-            value={formData.businessLandmark || ""}
-            onChange={onChange}
-            style={inputStyle}
-            onFocus={focusStyle}
-            onBlur={blurStyle}
-          />
-        </div>
+
+        {/* Minimum Sale */}
         <div>
           <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
             Minimum Sale
@@ -221,6 +234,8 @@ const Step2Business = ({
             onBlur={blurStyle}
           />
         </div>
+
+        {/* Maximum Sale */}
         <div>
           <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
             Maximum Sale
@@ -237,6 +252,7 @@ const Step2Business = ({
         </div>
       </div>
 
+      {/* Navigation Buttons */}
       <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end", marginTop: "32px" }}>
         <button
           type="button"

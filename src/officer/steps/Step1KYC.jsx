@@ -127,14 +127,15 @@ const Step1KYC = ({
           gap: "16px",
         }}
       >
+        {/* ---- FIRST NAME ---- */}
         <div>
           <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
-            Full Name *
+            First Name *
           </label>
           <input
             type="text"
-            name="fullName"
-            value={formData.fullName || ""}
+            name="firstName"
+            value={formData.firstName || ""}
             onChange={onChange}
             required
             style={inputStyle}
@@ -142,6 +143,25 @@ const Step1KYC = ({
             onBlur={blurStyle}
           />
         </div>
+
+        {/* ---- SURNAME ---- */}
+        <div>
+          <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
+            Surname *
+          </label>
+          <input
+            type="text"
+            name="surname"
+            value={formData.surname || ""}
+            onChange={onChange}
+            required
+            style={inputStyle}
+            onFocus={focusStyle}
+            onBlur={blurStyle}
+          />
+        </div>
+
+        {/* ---- POPULAR NAME ---- */}
         <div>
           <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
             Popular Name
@@ -156,6 +176,8 @@ const Step1KYC = ({
             onBlur={blurStyle}
           />
         </div>
+
+        {/* ---- PHONE ---- */}
         <div>
           <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
             Phone Number *
@@ -171,7 +193,8 @@ const Step1KYC = ({
             onBlur={blurStyle}
           />
         </div>
-        {/* NEW: Alternative Phone Number */}
+
+        {/* ---- ALT PHONE ---- */}
         <div>
           <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
             Alternative Phone Number
@@ -186,6 +209,8 @@ const Step1KYC = ({
             onBlur={blurStyle}
           />
         </div>
+
+        {/* ---- HOMETOWN ---- */}
         <div>
           <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
             Hometown *
@@ -201,6 +226,8 @@ const Step1KYC = ({
             onBlur={blurStyle}
           />
         </div>
+
+        {/* ---- PLACE OF BIRTH ---- */}
         <div>
           <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
             Place of Birth *
@@ -216,6 +243,8 @@ const Step1KYC = ({
             onBlur={blurStyle}
           />
         </div>
+
+        {/* ---- GHANA CARD NUMBER ---- */}
         <div>
           <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
             Ghana Card Number *
@@ -231,6 +260,8 @@ const Step1KYC = ({
             onBlur={blurStyle}
           />
         </div>
+
+        {/* ---- DATE ISSUED ---- */}
         <div>
           <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
             Date Issued *
@@ -246,6 +277,8 @@ const Step1KYC = ({
             onBlur={blurStyle}
           />
         </div>
+
+        {/* ---- EXPIRY DATE ---- */}
         <div>
           <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
             Expiry Date *
@@ -261,6 +294,8 @@ const Step1KYC = ({
             onBlur={blurStyle}
           />
         </div>
+
+        {/* ---- DATE OF BIRTH ---- */}
         <div>
           <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
             Date of Birth *
@@ -276,6 +311,8 @@ const Step1KYC = ({
             onBlur={blurStyle}
           />
         </div>
+
+        {/* ---- MARITAL STATUS ---- */}
         <div>
           <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
             Marital Status *
@@ -439,7 +476,6 @@ const Step1KYC = ({
             onBlur={blurStyle}
           />
         </div>
-        {/* NEW: District */}
         <div>
           <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
             District
@@ -545,7 +581,6 @@ const Step1KYC = ({
             onBlur={blurStyle}
           />
         </div>
-        {/* NEW: Number of household members */}
         <div>
           <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
             Number of Household Members
@@ -666,7 +701,7 @@ const Step1KYC = ({
         <button
           type="button"
           onClick={onNext}
-          style={{ padding: "10px 24px", background:"#3b82f6", border: "none", borderRadius: "8px", cursor: "pointer", color: "#fff", fontWeight: "500" }}
+          style={{ padding: "10px 24px", background: "#3b82f6", border: "none", borderRadius: "8px", cursor: "pointer", color: "#fff", fontWeight: "500" }}
         >
           Next
         </button>

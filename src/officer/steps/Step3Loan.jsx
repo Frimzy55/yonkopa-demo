@@ -3,7 +3,7 @@ import React from "react";
 const Step3Loan = ({
   formData,
   onChange,
-  onFileChange,        // new: for collateral photos & ownership docs
+  onFileChange,
   isMobile,
   inputStyle,
   selectStyle,
@@ -395,7 +395,7 @@ const Step3Loan = ({
         </div>
         <div>
           <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
-            Photos
+            Asset Photo
           </label>
           <input
             type="file"
@@ -500,12 +500,12 @@ const Step3Loan = ({
         </div>
         <div>
           <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
-            Number Successfully Completed
+            Loan Cycle Completed
           </label>
           <input
             type="number"
-            name="completedLoans"
-            value={formData.completedLoans || ""}
+            name="loanCycleCompleted"
+            value={formData.loanCycleCompleted || ""}
             onChange={onChange}
             min="0"
             style={inputStyle}
@@ -513,21 +513,7 @@ const Step3Loan = ({
             onBlur={blurStyle}
           />
         </div>
-        <div>
-          <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
-            Number of Late Payments
-          </label>
-          <input
-            type="number"
-            name="latePayments"
-            value={formData.latePayments || ""}
-            onChange={onChange}
-            min="0"
-            style={inputStyle}
-            onFocus={focusStyle}
-            onBlur={blurStyle}
-          />
-        </div>
+        {/* REMOVED: Number of Late Payments */}
         <div>
           <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
             Maximum Past Due Date
@@ -604,12 +590,12 @@ const Step3Loan = ({
         </div>
         <div>
           <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
-            Early Repayments
+            Number of Pay‑off
           </label>
           <input
             type="number"
-            name="earlyRepayments"
-            value={formData.earlyRepayments || ""}
+            name="numberOfPayOff"
+            value={formData.numberOfPayOff || ""}
             onChange={onChange}
             min="0"
             style={inputStyle}
@@ -845,7 +831,7 @@ const Step3Loan = ({
         </div>
         <div>
           <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
-            What repayment amount can the client reasonably support?
+            What repayment amount can the client reasonably pay?
           </label>
           <input
             type="text"
