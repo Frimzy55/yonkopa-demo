@@ -790,9 +790,9 @@ const KYCForm = ({
         setClientPhotoFile(null);
         setGuarantorPhotoFile(null);
       }
-
+       
       setDraftStatus(
-        `Saved at ${new Date().toLocaleTimeString()}`
+        ` ${new Date().toLocaleTimeString()}`
       );
     } catch (err) {
       console.error(
