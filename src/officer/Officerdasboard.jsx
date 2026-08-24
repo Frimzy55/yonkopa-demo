@@ -20,6 +20,10 @@ import OfficerVerifyClient from "./OfficerVerifyClient";
 import OfficerDrafts from "./OfficerDrafts";
 import KYCForm from "./KYCForm";
 
+const API_BASE = process.env.REACT_APP_API_URL
+  ? `${process.env.REACT_APP_API_URL}/api/kyc`
+  : "/api/kyc";
+
 const Officerdasboard = () => {
   const navigate = useNavigate();
 
@@ -36,6 +40,37 @@ const Officerdasboard = () => {
     }
   });
 
+  // ─── Draft count state ──────────────────────────────────────────
+  const [draftCount, setDraftCount] = useState(0);
+
+  // ─── Fetch draft count ──────────────────────────────────────────
+  const fetchDraftCount = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_BASE}/officer/drafts`, {
+        headers: {
+          Authorization: token ? `Bearer ${token}` : "",
+        },
+      });
+      if (!response.ok) {
+        throw new Error("Failed to fetch draft count");
+      }
+      const data = await response.json();
+      setDraftCount((data.drafts || []).length);
+    } catch (err) {
+      console.error("Error fetching draft count:", err);
+      // Keep previous count; do not set to 0 to avoid flicker
+    }
+  };
+
+  // ─── Effect: fetch draft count on mount ──────────────────────
+  useEffect(() => {
+    if (user) {
+      fetchDraftCount();
+    }
+  }, [user]);
+
+  // ─── Effect: authentication check ──────────────────────────────
   useEffect(() => {
     if (!user) {
       navigate("/officer-access", { replace: true });
@@ -77,6 +112,13 @@ const Officerdasboard = () => {
     if (isMobile) setSidebarOpen(false);
   };
 
+  // ─── Callback when a draft is deleted ──────────────────────────
+  const handleDraftDeleted = () => {
+    // Decrement count by 1 (optimistic) or refetch
+    setDraftCount((prev) => Math.max(0, prev - 1));
+    // Optionally refetch to stay in sync, but decrement is fine.
+  };
+
   const renderPage = () => {
     switch (activePage) {
       case "dashboard":
@@ -93,7 +135,13 @@ const Officerdasboard = () => {
           </div>
         );
       case "draft":
-        return <OfficerDrafts user={user} onViewDraft={handleViewDraft} />;
+        return (
+          <OfficerDrafts
+            user={user}
+            onViewDraft={handleViewDraft}
+            onDraftDeleted={handleDraftDeleted}
+          />
+        );
       case "kyc":
         if (!selectedDraft?.draftUuid) {
           return (
@@ -151,7 +199,11 @@ const Officerdasboard = () => {
     { id: "applications", label: "Applications", icon: <MdAssignment /> },
     { id: "verify", label: "Verify Client", icon: <MdVerifiedUser /> },
     { id: "pendingResubmission", label: "Pending Resubmission", icon: <MdPendingActions /> },
-    { id: "draft", label: "Drafts", icon: <MdDescription /> },
+    {
+      id: "draft",
+      label: `Drafts (${draftCount})`, // ← dynamic count
+      icon: <MdDescription />,
+    },
   ];
 
   const closeSidebar = () => setSidebarOpen(false);
@@ -312,7 +364,7 @@ const Officerdasboard = () => {
           minHeight: "100vh",
         }}
       >
-        {/* ─── TOP BAR (light blue with logo and user name) ─── */}
+        {/* ─── TOP BAR ─── */}
         <header
           style={{
             height: "72px",
@@ -346,7 +398,6 @@ const Officerdasboard = () => {
                 <MdMenu />
               </button>
             )}
-            {/* Logo on top bar */}
             <img
               src={logo}
               alt="Yonkopa"
@@ -358,7 +409,6 @@ const Officerdasboard = () => {
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            {/* Bell icon with badge 0 */}
             <button
               style={{
                 background: "transparent",
@@ -394,7 +444,6 @@ const Officerdasboard = () => {
               </span>
             </button>
 
-            {/* User avatar */}
             <div
               style={{
                 width: "38px",
@@ -411,7 +460,6 @@ const Officerdasboard = () => {
               {(user?.full_name || user?.name || "O").charAt(0).toUpperCase()}
             </div>
 
-            {/* User name and login name */}
             <div style={{ lineHeight: "1.3" }}>
               <div style={{ fontSize: "14px", fontWeight: "600", color: "#1e293b" }}>
                 {displayName}

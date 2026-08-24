@@ -1,3 +1,4 @@
+
 import React from "react";
 
 const Step3Loan = ({
@@ -83,12 +84,13 @@ const Step3Loan = ({
           />
         </div>
         <div>
+          {/* Changed label: Weekly Installment → No. Of instalments */}
           <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
-            Weekly Installment *
+            No. Of instalments *
           </label>
           <input
             type="text"
-            name="weeklyInstallment"
+            name="weeklyInstallment" // field name unchanged
             value={formData.weeklyInstallment || ""}
             onChange={onChange}
             required
@@ -98,12 +100,13 @@ const Step3Loan = ({
           />
         </div>
         <div>
+          {/* Changed label: Repayment Amount → Instalment amount */}
           <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
-            Repayment Amount *
+            Instalment amount *
           </label>
           <input
             type="text"
-            name="repaymentAmount"
+            name="repaymentAmount" // field name unchanged
             value={formData.repaymentAmount || ""}
             onChange={onChange}
             required
@@ -156,12 +159,13 @@ const Step3Loan = ({
           />
         </div>
         <div>
+          {/* Changed label: Actual Due Date → Actual payment date */}
           <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
-            Actual Due Date
+            Actual payment date
           </label>
           <input
             type="date"
-            name="actualDueDate"
+            name="actualDueDate" // field name unchanged
             value={formData.actualDueDate || ""}
             onChange={onChange}
             style={inputStyle}
@@ -171,18 +175,22 @@ const Step3Loan = ({
         </div>
 
         <div>
+          {/* Changed input to select for Repayment Frequency */}
           <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
             Repayment Frequency *
           </label>
-          <input
-            type="text"
+          <select
             name="repaymentFrequency"
             value={formData.repaymentFrequency || ""}
             onChange={onChange}
-            style={inputStyle}
-            onFocus={focusStyle}
-            onBlur={blurStyle}
-          />
+            style={selectStyle}
+            required
+          >
+            <option value="">Select</option>
+            <option value="Daily">Daily</option>
+            <option value="Weekly">Weekly</option>
+            <option value="Monthly">Monthly</option>
+          </select>
         </div>
         <div>
           <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
@@ -513,10 +521,9 @@ const Step3Loan = ({
             onBlur={blurStyle}
           />
         </div>
-        {/* REMOVED: Number of Late Payments */}
         <div>
           <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
-            Maximum Past Due Date
+            Maximum Past Due Days
           </label>
           <input
             type="number"

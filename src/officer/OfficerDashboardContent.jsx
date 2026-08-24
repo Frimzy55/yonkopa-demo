@@ -98,19 +98,40 @@ const OfficerDashboardContent = ({ user, isMobile }) => {
             </div>
           </div>
 
+          {/* ✅ FIXED AVATAR – stays a perfect circle */}
+          {/* Avatar */}
           <div
             style={{
               width: isMobile ? "90px" : "120px",
               height: isMobile ? "90px" : "120px",
+              minWidth: isMobile ? "90px" : "120px",
+              minHeight: isMobile ? "90px" : "120px",
+              maxWidth: isMobile ? "90px" : "120px",
+              maxHeight: isMobile ? "90px" : "120px",
+              flex: "0 0 auto",
+              flexShrink: 0,
+              boxSizing: "border-box",
               borderRadius: "50%",
               background: "rgba(255,255,255,0.18)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
+              overflow: "hidden",
               border: "4px solid rgba(255,255,255,0.25)",
             }}
           >
-            <FaUserShield size={isMobile ? 38 : 52} />
+            <FaUserShield
+              style={{
+                width: isMobile ? "38px" : "52px",
+                height: isMobile ? "38px" : "52px",
+                minWidth: isMobile ? "38px" : "52px",
+                minHeight: isMobile ? "38px" : "52px",
+                maxWidth: isMobile ? "38px" : "52px",
+                maxHeight: isMobile ? "38px" : "52px",
+                flex: "0 0 auto",
+                display: "block",
+              }}
+            />
           </div>
         </div>
 

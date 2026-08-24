@@ -72,7 +72,7 @@ const Step2Business = ({
         {/* Types of Business */}
         <div>
           <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
-            Types of Business
+            Types of Businesses
           </label>
           <input
             type="text"

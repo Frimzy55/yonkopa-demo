@@ -1,4 +1,4 @@
-// KYCForm.js - Compact version
+// KYCForm.js - Compact version (status display removed)
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { MdArrowBack, MdCheckCircle } from "react-icons/md";
 import Step1KYC from "./steps/Step1KYC";
@@ -54,7 +54,7 @@ const KYCForm = ({
   });
   const draftUuid = selectedDraftUuid || internalDraftUuid;
 
-  const [draftStatus, setDraftStatus] = useState("");
+  const [draftStatus, setDraftStatus] = useState(""); // kept for internal use, not displayed
   const saveTimeoutRef = useRef(null);
   const draftLoadedRef = useRef(false);
   const loadingDraftRef = useRef(false);
@@ -524,9 +524,7 @@ const KYCForm = ({
         <button type="button" onClick={onCancel} style={{ display: "flex", alignItems: "center", gap: "6px", background: "transparent", border: "none", color: "#64748b", cursor: "pointer", marginBottom: "20px", fontSize: "14px" }}>
           <MdArrowBack size={18} /> Back to applications
         </button>
-        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "8px" }}>
-          <span style={{ fontSize: "13px", color: draftStatus === "Save failed" ? "#dc2626" : "#64748b" }}>{draftStatus}</span>
-        </div>
+        {/* Removed draft status display here */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "32px", padding: "0 4px", gap: isMobile ? "4px" : "8px", flexWrap: "wrap" }}>
           {stepLabels.map((label, index) => {
             const stepNumber = index + 1;
