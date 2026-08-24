@@ -161,6 +161,22 @@ const Step1KYC = ({
           />
         </div>
 
+        {/* ---- NEW: MIDDLE NAME (full width) ---- */}
+        <div style={{ gridColumn: isMobile ? "1" : "1 / -1" }}>
+          <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
+            Middle Name
+          </label>
+          <input
+            type="text"
+            name="middleName"
+            value={formData.middleName || ""}
+            onChange={onChange}
+            style={inputStyle}
+            onFocus={focusStyle}
+            onBlur={blurStyle}
+          />
+        </div>
+
         {/* ---- POPULAR NAME ---- */}
         <div>
           <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>

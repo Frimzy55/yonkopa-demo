@@ -3,7 +3,7 @@ import {
   HashRouter as Router,
   Routes,
   Route,
-  Navigate,
+  //Navigate,
 } from "react-router-dom";
 
 import CustomerLanding from "./auth/CustomerLanding";
@@ -25,7 +25,17 @@ import Officerdasboard from "./officer/Officerdasboard"; // component named "Off
 import ProtectedRoute from "./ProtectedRoute";
 import AutoLogout from "./components/AutoLogout";
 
+import MaintenancePage from "./components/MaintenancePage";
+
+
+
+const MAINTENANCE_MODE =false;
+//  process.env.REACT_APP_MAINTENANCE_MODE === "true";
+
+
 function App() {
+
+
   useEffect(() => {
     const style = document.createElement("style");
 
@@ -68,6 +78,12 @@ function App() {
     };
   }, []);
 
+
+  
+   if (MAINTENANCE_MODE) {
+    return <MaintenancePage />;
+  }
+
   return (
     <Router>
       {" "}
@@ -75,8 +91,8 @@ function App() {
       <AutoLogout />
       <div className="App">
         <Routes>
-          {/* DEFAULT ROUTE */}
-          <Route path="/" element={<Navigate to="/demo" replace />} />
+          {/* DEFAULT ROUTE 
+          <Route path="/" element={<Navigate to="/demo" replace />} />   */}
 
           {/* PUBLIC ROUTES */}
           <Route path="/apply" element={<CustomerLanding />} />
@@ -154,8 +170,8 @@ function App() {
 
 
 
-          {/* CATCH ALL */}
-          <Route path="*" element={<Navigate to="/demo" replace />} />
+          {/* CATCH ALL 
+          <Route path="*" element={<Navigate to="/demo" replace />} />  */}
         </Routes>
       </div>
     </Router>

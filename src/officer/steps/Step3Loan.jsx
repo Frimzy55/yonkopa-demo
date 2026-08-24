@@ -1,5 +1,12 @@
+import React, { useState, useRef } from "react";
+import { MdAttachFile, MdCheck, MdCancel, MdEdit, MdClose } from "react-icons/md";
 
-import React from "react";
+// Helper to format file size
+const formatSize = (bytes) => {
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1048576) return (bytes / 1024).toFixed(1) + " KB";
+  return (bytes / 1048576).toFixed(1) + " MB";
+};
 
 const Step3Loan = ({
   formData,
@@ -12,7 +19,124 @@ const Step3Loan = ({
   blurStyle,
   onBack,
   onNext,
+  // New props for multi‑file management
+  collateralPhotos = [],
+  ownershipDocuments = [],
+  onCollateralPhotosChange,
+  onOwnershipDocumentsChange,
 }) => {
+  // Local state for editing file names
+  const [collateralEditingIndex, setCollateralEditingIndex] = useState(null);
+  const [collateralEditName, setCollateralEditName] = useState("");
+  const [ownershipEditingIndex, setOwnershipEditingIndex] = useState(null);
+  const [ownershipEditName, setOwnershipEditName] = useState("");
+
+  // Refs for hidden file inputs
+  const collateralFileInputRef = useRef(null);
+  const ownershipFileInputRef = useRef(null);
+
+  // --- Handlers for Collateral Photos ---
+  const handleAddCollateralPhotos = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+    const newFiles = files.map((file) => ({
+      name: file.name,
+      size: file.size,
+      file, // keep the actual File object
+    }));
+    onCollateralPhotosChange && onCollateralPhotosChange([...collateralPhotos, ...newFiles]);
+    e.target.value = null; // reset input
+  };
+
+  const removeCollateralPhoto = (index) => {
+    const updated = collateralPhotos.filter((_, i) => i !== index);
+    onCollateralPhotosChange && onCollateralPhotosChange(updated);
+    if (collateralEditingIndex === index) {
+      setCollateralEditingIndex(null);
+      setCollateralEditName("");
+    }
+  };
+
+  const startCollateralEdit = (index) => {
+    setCollateralEditingIndex(index);
+    setCollateralEditName(collateralPhotos[index].name);
+  };
+
+  const saveCollateralEdit = () => {
+    if (collateralEditingIndex !== null && collateralEditName.trim()) {
+      const updated = collateralPhotos.map((doc, i) =>
+        i === collateralEditingIndex ? { ...doc, name: collateralEditName.trim() } : doc
+      );
+      onCollateralPhotosChange && onCollateralPhotosChange(updated);
+    }
+    cancelCollateralEdit();
+  };
+
+  const cancelCollateralEdit = () => {
+    setCollateralEditingIndex(null);
+    setCollateralEditName("");
+  };
+
+  const handleCollateralKeyDown = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      saveCollateralEdit();
+    } else if (e.key === "Escape") {
+      cancelCollateralEdit();
+    }
+  };
+
+  // --- Handlers for Ownership Documents ---
+  const handleAddOwnershipDocuments = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+    const newFiles = files.map((file) => ({
+      name: file.name,
+      size: file.size,
+      file,
+    }));
+    onOwnershipDocumentsChange && onOwnershipDocumentsChange([...ownershipDocuments, ...newFiles]);
+    e.target.value = null;
+  };
+
+  const removeOwnershipDocument = (index) => {
+    const updated = ownershipDocuments.filter((_, i) => i !== index);
+    onOwnershipDocumentsChange && onOwnershipDocumentsChange(updated);
+    if (ownershipEditingIndex === index) {
+      setOwnershipEditingIndex(null);
+      setOwnershipEditName("");
+    }
+  };
+
+  const startOwnershipEdit = (index) => {
+    setOwnershipEditingIndex(index);
+    setOwnershipEditName(ownershipDocuments[index].name);
+  };
+
+  const saveOwnershipEdit = () => {
+    if (ownershipEditingIndex !== null && ownershipEditName.trim()) {
+      const updated = ownershipDocuments.map((doc, i) =>
+        i === ownershipEditingIndex ? { ...doc, name: ownershipEditName.trim() } : doc
+      );
+      onOwnershipDocumentsChange && onOwnershipDocumentsChange(updated);
+    }
+    cancelOwnershipEdit();
+  };
+
+  const cancelOwnershipEdit = () => {
+    setOwnershipEditingIndex(null);
+    setOwnershipEditName("");
+  };
+
+  const handleOwnershipKeyDown = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      saveOwnershipEdit();
+    } else if (e.key === "Escape") {
+      cancelOwnershipEdit();
+    }
+  };
+
   return (
     <>
       <h3
@@ -84,13 +208,12 @@ const Step3Loan = ({
           />
         </div>
         <div>
-          {/* Changed label: Weekly Installment → No. Of instalments */}
           <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
             No. Of instalments *
           </label>
           <input
             type="text"
-            name="weeklyInstallment" // field name unchanged
+            name="weeklyInstallment"
             value={formData.weeklyInstallment || ""}
             onChange={onChange}
             required
@@ -100,13 +223,12 @@ const Step3Loan = ({
           />
         </div>
         <div>
-          {/* Changed label: Repayment Amount → Instalment amount */}
           <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
             Instalment amount *
           </label>
           <input
             type="text"
-            name="repaymentAmount" // field name unchanged
+            name="repaymentAmount"
             value={formData.repaymentAmount || ""}
             onChange={onChange}
             required
@@ -159,13 +281,12 @@ const Step3Loan = ({
           />
         </div>
         <div>
-          {/* Changed label: Actual Due Date → Actual payment date */}
           <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
             Actual payment date
           </label>
           <input
             type="date"
-            name="actualDueDate" // field name unchanged
+            name="actualDueDate"
             value={formData.actualDueDate || ""}
             onChange={onChange}
             style={inputStyle}
@@ -175,7 +296,6 @@ const Step3Loan = ({
         </div>
 
         <div>
-          {/* Changed input to select for Repayment Frequency */}
           <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
             Repayment Frequency *
           </label>
@@ -296,10 +416,8 @@ const Step3Loan = ({
             style={selectStyle}
           >
             <option value="">Select</option>
-            <option value="realEstate">Real Estate</option>
             <option value="vehicle">Vehicle</option>
-            <option value="equipment">Equipment</option>
-            <option value="guarantor">Guarantor</option>
+            <option value="land">Land</option>
             <option value="other">Other</option>
           </select>
         </div>
@@ -401,30 +519,261 @@ const Step3Loan = ({
             onBlur={blurStyle}
           />
         </div>
-        <div>
+
+        {/* --- ASSET PHOTO (multi-file UI) --- */}
+        <div style={{ gridColumn: isMobile ? "1" : "1 / -1" }}>
           <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
-            Asset Photo
+            Asset Photos
           </label>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => onFileChange && onFileChange(e.target.files[0], "collateralPhotos")}
-            style={{ display: "block", marginTop: "4px" }}
-          />
-          <small style={{ color: "#94a3b8", fontSize: "12px" }}>Upload photo(s) of collateral</small>
+          <div style={{ marginBottom: "8px" }}>
+            <input
+              ref={collateralFileInputRef}
+              type="file"
+              multiple
+              accept="image/*"
+              onChange={handleAddCollateralPhotos}
+              style={{ display: "none" }}
+            />
+            <button
+              type="button"
+              onClick={() => collateralFileInputRef.current.click()}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "8px",
+                padding: "10px 20px",
+                background: "#eef2ff",
+                border: "1px dashed #6366f1",
+                borderRadius: "8px",
+                color: "#4338ca",
+                fontSize: "14px",
+                fontWeight: "500",
+                cursor: "pointer",
+                transition: "background 0.2s",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "#e0e7ff")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "#eef2ff")}
+            >
+              <MdAttachFile size={18} /> Add Asset Photo(s)
+            </button>
+            <small style={{ color: "#94a3b8", fontSize: "12px", marginLeft: "12px" }}>
+              Upload photo(s) of collateral
+            </small>
+          </div>
+
+          {collateralPhotos.length > 0 && (
+            <div style={{ marginTop: "8px" }}>
+              <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+                {collateralPhotos.map((doc, index) => (
+                  <li
+                    key={index}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "8px 12px",
+                      background: "#f8fafc",
+                      borderRadius: "6px",
+                      marginBottom: "6px",
+                      border: "1px solid #e2e8f0",
+                      gap: "8px",
+                    }}
+                  >
+                    <div style={{ flex: 1, display: "flex", alignItems: "center", gap: "8px" }}>
+                      {collateralEditingIndex === index ? (
+                        <>
+                          <input
+                            type="text"
+                            value={collateralEditName}
+                            onChange={(e) => setCollateralEditName(e.target.value)}
+                            onKeyDown={handleCollateralKeyDown}
+                            onBlur={saveCollateralEdit}
+                            autoFocus
+                            style={{
+                              flex: 1,
+                              padding: "4px 8px",
+                              border: "1px solid #6366f1",
+                              borderRadius: "4px",
+                              fontSize: "14px",
+                              outline: "none",
+                            }}
+                          />
+                          <button
+                            type="button"
+                            onClick={saveCollateralEdit}
+                            style={{ background: "transparent", border: "none", color: "#22c55e", cursor: "pointer", padding: "4px" }}
+                          >
+                            <MdCheck size={18} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={cancelCollateralEdit}
+                            style={{ background: "transparent", border: "none", color: "#ef4444", cursor: "pointer", padding: "4px" }}
+                          >
+                            <MdCancel size={18} />
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <span style={{ fontSize: "14px", color: "#1e293b" }}>
+                            {doc.name}{" "}
+                            <span style={{ color: "#94a3b8", fontSize: "12px" }}>
+                              ({formatSize(doc.size)})
+                            </span>
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => startCollateralEdit(index)}
+                            style={{ background: "transparent", border: "none", color: "#64748b", cursor: "pointer", padding: "4px" }}
+                          >
+                            <MdEdit size={16} />
+                          </button>
+                        </>
+                      )}
+                    </div>
+                    {collateralEditingIndex !== index && (
+                      <button
+                        type="button"
+                        onClick={() => removeCollateralPhoto(index)}
+                        style={{ background: "transparent", border: "none", color: "#ef4444", cursor: "pointer", padding: "4px" }}
+                      >
+                        <MdClose size={18} />
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
-        <div>
+
+        {/* --- OWNERSHIP DOCUMENTATION (multi-file UI) --- */}
+        <div style={{ gridColumn: isMobile ? "1" : "1 / -1" }}>
           <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
             Ownership Documentation
           </label>
-          <input
-            type="file"
-            accept=".pdf,.jpg,.png,.docx"
-            onChange={(e) => onFileChange && onFileChange(e.target.files[0], "ownershipDocument")}
-            style={{ display: "block", marginTop: "4px" }}
-          />
-          <small style={{ color: "#94a3b8", fontSize: "12px" }}>PDF, JPG, PNG, DOCX</small>
+          <div style={{ marginBottom: "8px" }}>
+            <input
+              ref={ownershipFileInputRef}
+              type="file"
+              multiple
+              accept=".pdf,.jpg,.png,.docx"
+              onChange={handleAddOwnershipDocuments}
+              style={{ display: "none" }}
+            />
+            <button
+              type="button"
+              onClick={() => ownershipFileInputRef.current.click()}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "8px",
+                padding: "10px 20px",
+                background: "#eef2ff",
+                border: "1px dashed #6366f1",
+                borderRadius: "8px",
+                color: "#4338ca",
+                fontSize: "14px",
+                fontWeight: "500",
+                cursor: "pointer",
+                transition: "background 0.2s",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "#e0e7ff")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "#eef2ff")}
+            >
+              <MdAttachFile size={18} /> Add Ownership Document(s)
+            </button>
+            <small style={{ color: "#94a3b8", fontSize: "12px", marginLeft: "12px" }}>
+              PDF, JPG, PNG, DOCX
+            </small>
+          </div>
+
+          {ownershipDocuments.length > 0 && (
+            <div style={{ marginTop: "8px" }}>
+              <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+                {ownershipDocuments.map((doc, index) => (
+                  <li
+                    key={index}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "8px 12px",
+                      background: "#f8fafc",
+                      borderRadius: "6px",
+                      marginBottom: "6px",
+                      border: "1px solid #e2e8f0",
+                      gap: "8px",
+                    }}
+                  >
+                    <div style={{ flex: 1, display: "flex", alignItems: "center", gap: "8px" }}>
+                      {ownershipEditingIndex === index ? (
+                        <>
+                          <input
+                            type="text"
+                            value={ownershipEditName}
+                            onChange={(e) => setOwnershipEditName(e.target.value)}
+                            onKeyDown={handleOwnershipKeyDown}
+                            onBlur={saveOwnershipEdit}
+                            autoFocus
+                            style={{
+                              flex: 1,
+                              padding: "4px 8px",
+                              border: "1px solid #6366f1",
+                              borderRadius: "4px",
+                              fontSize: "14px",
+                              outline: "none",
+                            }}
+                          />
+                          <button
+                            type="button"
+                            onClick={saveOwnershipEdit}
+                            style={{ background: "transparent", border: "none", color: "#22c55e", cursor: "pointer", padding: "4px" }}
+                          >
+                            <MdCheck size={18} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={cancelOwnershipEdit}
+                            style={{ background: "transparent", border: "none", color: "#ef4444", cursor: "pointer", padding: "4px" }}
+                          >
+                            <MdCancel size={18} />
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <span style={{ fontSize: "14px", color: "#1e293b" }}>
+                            {doc.name}{" "}
+                            <span style={{ color: "#94a3b8", fontSize: "12px" }}>
+                              ({formatSize(doc.size)})
+                            </span>
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => startOwnershipEdit(index)}
+                            style={{ background: "transparent", border: "none", color: "#64748b", cursor: "pointer", padding: "4px" }}
+                          >
+                            <MdEdit size={16} />
+                          </button>
+                        </>
+                      )}
+                    </div>
+                    {ownershipEditingIndex !== index && (
+                      <button
+                        type="button"
+                        onClick={() => removeOwnershipDocument(index)}
+                        style={{ background: "transparent", border: "none", color: "#ef4444", cursor: "pointer", padding: "4px" }}
+                      >
+                        <MdClose size={18} />
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
+
         <div>
           <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "4px" }}>
             Verification Status

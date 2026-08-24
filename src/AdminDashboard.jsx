@@ -389,7 +389,7 @@ const AdminDashboard = () => {
       setIsUserDropdownOpen(false);
       localStorage.removeItem("token");
 
-      navigate("/access");
+      navigate("/demo");
     },
     [navigate],
   );

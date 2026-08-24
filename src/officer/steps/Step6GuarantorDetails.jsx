@@ -414,6 +414,7 @@ const Step6GuarantorDetails = ({
               onBlur={blurStyle}
             />
           </div>
+
           {/* Last Name */}
           <div>
             <label
@@ -438,6 +439,31 @@ const Step6GuarantorDetails = ({
               onBlur={blurStyle}
             />
           </div>
+
+          {/* NEW: Middle Name (full width) */}
+          <div style={{ gridColumn: isMobile ? "1" : "1 / -1" }}>
+            <label
+              style={{
+                display: "block",
+                fontSize: "14px",
+                fontWeight: "500",
+                color: "#334155",
+                marginBottom: "4px",
+              }}
+            >
+              Middle Name
+            </label>
+            <input
+              type="text"
+              name="guarantorMiddleName"
+              value={formData.guarantorMiddleName || ""}
+              onChange={onChange}
+              style={inputStyle}
+              onFocus={focusStyle}
+              onBlur={blurStyle}
+            />
+          </div>
+
           {/* Phone Number */}
           <div>
             <label
@@ -462,6 +488,7 @@ const Step6GuarantorDetails = ({
               onBlur={blurStyle}
             />
           </div>
+
           {/* Alternative Phone Number */}
           <div>
             <label
@@ -485,6 +512,7 @@ const Step6GuarantorDetails = ({
               onBlur={blurStyle}
             />
           </div>
+
           {/* ID Number */}
           <div>
             <label
@@ -509,6 +537,7 @@ const Step6GuarantorDetails = ({
               onBlur={blurStyle}
             />
           </div>
+
           {/* Relationship */}
           <div>
             <label
@@ -533,6 +562,7 @@ const Step6GuarantorDetails = ({
               onBlur={blurStyle}
             />
           </div>
+
           {/* Church Name */}
           <div>
             <label
@@ -556,7 +586,8 @@ const Step6GuarantorDetails = ({
               onBlur={blurStyle}
             />
           </div>
-          {/* Church Location (NEW) */}
+
+          {/* Church Location */}
           <div>
             <label
               style={{
@@ -646,8 +677,6 @@ const Step6GuarantorDetails = ({
               onBlur={blurStyle}
             />
           </div>
-          
-
         </div>
       </div>
 
