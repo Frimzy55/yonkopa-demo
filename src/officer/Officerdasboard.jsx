@@ -1,94 +1,91 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import {
   MdDashboard,
   MdAssignment,
-  MdDescription,
-  MdVerified,
+  MdVerifiedUser,
   MdLogout,
-  MdSearch,
-  MdNotificationsNone,
-  MdKeyboardArrowDown,
+  MdPendingActions,
+  MdDescription,
   MdMenu,
   MdClose,
-  MdRefresh, // <-- new import for Pending Resubmission
+  MdNotificationsNone,
 } from "react-icons/md";
+import { useNavigate } from "react-router-dom";
 
-import logo from "../image/yonko1.jpeg";
+import logo from "../image/yonko1.jpeg"; // adjust path as needed
+
 import OfficerApplications from "./OfficerApplications";
 import OfficerDashboardContent from "./OfficerDashboardContent";
 import OfficerVerifyClient from "./OfficerVerifyClient";
+import OfficerDrafts from "./OfficerDrafts";
+import KYCForm from "./KYCForm";
 
 const Officerdasboard = () => {
   const navigate = useNavigate();
 
-  const [user, setUser] = useState(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const [activePage, setActivePage] = useState("dashboard");
+  const [selectedDraft, setSelectedDraft] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
-  // ============================================================
-  // LOAD USER + WINDOW RESIZE
-  // ============================================================
-  useEffect(() => {
-    const userData = localStorage.getItem("user");
-
-    if (userData) {
-      try {
-        setUser(JSON.parse(userData));
-      } catch (error) {
-        console.error("Invalid user data:", error);
-        localStorage.removeItem("user");
-        localStorage.removeItem("token");
-        navigate("/officer-access");
-      }
-    } else {
-      navigate("/officer-access");
+  const [user, setUser] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("user") || "null");
+    } catch {
+      return null;
     }
+  });
 
-    const handleResize = () => {
-      setWindowWidth(window.innerWidth);
-    };
+  useEffect(() => {
+    if (!user) {
+      navigate("/officer-access", { replace: true });
+    }
+  }, [user, navigate]);
 
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
     window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
-  }, [navigate]);
+  const isMobile = windowWidth < 768;
 
-  // ============================================================
-  // LOGOUT
-  // ============================================================
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    navigate("/officer-access");
+    localStorage.removeItem("role");
+    sessionStorage.removeItem("loginRoute");
+    navigate("/officer-access", {
+      replace: true,
+      state: { message: "You have been logged out." },
+    });
   };
 
-  // ============================================================
-  // RESPONSIVE
-  // ============================================================
-  const isMobile = windowWidth < 768;
-
-  const closeSidebar = () => {
-    if (isMobile) {
-      setIsSidebarOpen(false);
+  const handleViewDraft = (draft) => {
+    if (!draft?.draftUuid) {
+      console.error("Cannot open draft: draftUuid is missing", draft);
+      return;
     }
+    setSelectedDraft(draft);
+    setActivePage("kyc");
+    if (isMobile) setSidebarOpen(false);
   };
 
-  // ============================================================
-  // PAGE CONTENT
-  // ============================================================
-  const renderContent = () => {
+  const handleBackFromKyc = () => {
+    setSelectedDraft(null);
+    setActivePage("draft");
+    if (isMobile) setSidebarOpen(false);
+  };
+
+  const renderPage = () => {
     switch (activePage) {
       case "dashboard":
-        return <OfficerDashboardContent user={user} isMobile={isMobile} />;
+        return <OfficerDashboardContent user={user} />;
       case "applications":
-        return <OfficerApplications />;
+        return <OfficerApplications user={user} />;
       case "verify":
-        return <OfficerVerifyClient />;
-      case "pendingResubmission": // <-- new case
+        return <OfficerVerifyClient user={user} />;
+      case "pendingResubmission":
         return (
           <div style={{ padding: "40px 16px", textAlign: "center", color: "#64748b" }}>
             <h2>Pending Resubmission</h2>
@@ -96,74 +93,77 @@ const Officerdasboard = () => {
           </div>
         );
       case "draft":
+        return <OfficerDrafts user={user} onViewDraft={handleViewDraft} />;
+      case "kyc":
+        if (!selectedDraft?.draftUuid) {
+          return (
+            <div style={{ padding: "40px", textAlign: "center", color: "#64748b" }}>
+              <h2>No Draft Selected</h2>
+              <p>Please return to Drafts and select a draft to continue.</p>
+              <button
+                type="button"
+                onClick={() => setActivePage("draft")}
+                style={{
+                  marginTop: "16px",
+                  padding: "10px 20px",
+                  border: "none",
+                  borderRadius: "8px",
+                  background: "#3b82f6",
+                  color: "#fff",
+                  cursor: "pointer",
+                  fontWeight: "500",
+                }}
+              >
+                Back to Drafts
+              </button>
+            </div>
+          );
+        }
         return (
-          <div style={{ padding: "40px 16px", textAlign: "center", color: "#64748b" }}>
-            <h2>Drafts</h2>
-            <p>Your saved drafts will appear here.</p>
-          </div>
-        );
-      case "clients":
-        return (
-          <div style={{ padding: "40px 16px", textAlign: "center", color: "#64748b" }}>
-            <h2>Clients</h2>
-            <p>Coming soon…</p>
-          </div>
-        );
-      case "reports":
-        return (
-          <div style={{ padding: "40px 16px", textAlign: "center", color: "#64748b" }}>
-            <h2>Reports</h2>
-            <p>Coming soon…</p>
-          </div>
-        );
-      case "settings":
-        return (
-          <div style={{ padding: "40px 16px", textAlign: "center", color: "#64748b" }}>
-            <h2>Settings</h2>
-            <p>Coming soon…</p>
-          </div>
+          <KYCForm
+            userId={user?.userId || user?.id}
+            draftUuid={selectedDraft.draftUuid}
+            onCancel={handleBackFromKyc}
+          />
         );
       default:
-        return null;
+        return <OfficerDashboardContent user={user} />;
     }
   };
 
-  // ============================================================
-  // LOADING
-  // ============================================================
-  if (!user) {
-    return (
-      <div
-        style={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "#f8fafc",
-          color: "#64748b",
-        }}
-      >
-        Loading...
-      </div>
-    );
-  }
+  const pageTitle =
+    activePage === "dashboard"
+      ? "Dashboard"
+      : activePage === "applications"
+      ? "Applications"
+      : activePage === "verify"
+      ? "Verify Client"
+      : activePage === "pendingResubmission"
+      ? "Pending Resubmission"
+      : activePage === "draft"
+      ? "Drafts"
+      : activePage === "kyc"
+      ? "Continue KYC"
+      : "Dashboard";
 
-  // ============================================================
-  // MAIN LAYOUT
-  // ============================================================
+  const menuItems = [
+    { id: "dashboard", label: "Dashboard", icon: <MdDashboard /> },
+    { id: "applications", label: "Applications", icon: <MdAssignment /> },
+    { id: "verify", label: "Verify Client", icon: <MdVerifiedUser /> },
+    { id: "pendingResubmission", label: "Pending Resubmission", icon: <MdPendingActions /> },
+    { id: "draft", label: "Drafts", icon: <MdDescription /> },
+  ];
+
+  const closeSidebar = () => setSidebarOpen(false);
+
+  // Determine display name and login name
+  const displayName = user?.full_name || user?.name || "Officer";
+  const loginName = user?.username || user?.email || displayName;
+
   return (
-    <div
-      style={{
-        display: "flex",
-        height: "100vh",
-        overflow: "hidden",
-        background: "#f8fafc",
-      }}
-    >
-      {/* ========================================================
-          MOBILE SIDEBAR OVERLAY
-      ======================================================== */}
-      {isMobile && isSidebarOpen && (
+    <div style={{ display: "flex", minHeight: "100vh", background: "#f8fafc" }}>
+      {/* Mobile overlay */}
+      {isMobile && sidebarOpen && (
         <div
           onClick={closeSidebar}
           style={{
@@ -178,193 +178,120 @@ const Officerdasboard = () => {
         />
       )}
 
-      {/* ========================================================
-          SIDEBAR
-      ======================================================== */}
+      {/* Sidebar */}
       <aside
         style={{
           width: "250px",
-          minWidth: "250px",
           background: "#ffffff",
           borderRight: "1px solid #e2e8f0",
-          padding: "24px 0",
           display: "flex",
           flexDirection: "column",
           position: "fixed",
           top: 0,
           left: 0,
+          bottom: 0,
           height: "100vh",
-          overflowY: "auto",
           zIndex: 1000,
           transition: "transform 0.3s ease",
-          transform:
-            isMobile && !isSidebarOpen
-              ? "translateX(-100%)"
-              : "translateX(0)",
-          boxSizing: "border-box",
+          transform: isMobile && !sidebarOpen ? "translateX(-100%)" : "translateX(0)",
+          boxShadow: isMobile && sidebarOpen ? "0 0 20px rgba(0,0,0,0.1)" : "none",
+          overflowY: "auto",
         }}
       >
-        {/* ======================================================
-            MOBILE CLOSE BUTTON
-        ====================================================== */}
-        {isMobile && (
-          <button
-            onClick={() => setIsSidebarOpen(false)}
-            style={{
-              position: "absolute",
-              top: "16px",
-              right: "16px",
-              background: "transparent",
-              border: "none",
-              fontSize: "24px",
-              color: "#64748b",
-              cursor: "pointer",
-              padding: "4px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <MdClose />
-          </button>
-        )}
-
-        {/* ======================================================
-            LOGO
-        ====================================================== */}
+        {/* Logo & close button */}
         <div
           style={{
-            padding: "0 24px",
-            marginBottom: "32px",
+            padding: "20px 20px",
+            borderBottom: "1px solid #f1f5f9",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
           }}
         >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "12px",
-            }}
-          >
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <img
               src={logo}
               alt="Yonkopa"
-              style={{
-                width: "40px",
-                height: "40px",
-                borderRadius: "10px",
-                objectFit: "cover",
-              }}
+              style={{ width: "36px", height: "36px", borderRadius: "8px", objectFit: "cover" }}
             />
-            <span
+            <div>
+              <h2 style={{ margin: 0, fontSize: "20px", fontWeight: "700", color: "#1e293b" }}>
+                Yonkopa
+              </h2>
+              <p style={{ margin: "4px 0 0", fontSize: "12px", color: "#64748b" }}>
+                Officer Portal
+              </p>
+            </div>
+          </div>
+          {isMobile && (
+            <button
+              onClick={closeSidebar}
               style={{
-                fontSize: "18px",
-                fontWeight: "600",
-                color: "#1e293b",
+                background: "transparent",
+                border: "none",
+                fontSize: "24px",
+                cursor: "pointer",
+                color: "#64748b",
               }}
             >
-              Yonkopa
-            </span>
-          </div>
-          <p
-            style={{
-              fontSize: "12px",
-              color: "#94a3b8",
-              margin: "4px 0 0 0",
-              paddingLeft: "4px",
-            }}
-          >
-            Officer Portal
-          </p>
+              <MdClose />
+            </button>
+          )}
         </div>
 
-        {/* ======================================================
-            NAVIGATION – Dashboard, Applications, Verify Client,
-            Pending Resubmission, Draft
-        ====================================================== */}
-        <nav
-          style={{
-            flex: 1,
-          }}
-        >
-          <NavItem
-            icon={<MdDashboard />}
-            label="Dashboard"
-            active={activePage === "dashboard"}
-            onClick={() => {
-              setActivePage("dashboard");
-              closeSidebar();
-            }}
-          />
-          <NavItem
-            icon={<MdAssignment />}
-            label="Applications"
-            active={activePage === "applications"}
-            onClick={() => {
-              setActivePage("applications");
-              closeSidebar();
-            }}
-          />
-          <NavItem
-            icon={<MdVerified />}
-            label="Verify Client"
-            active={activePage === "verify"}
-            onClick={() => {
-              setActivePage("verify");
-              closeSidebar();
-            }}
-          />
-          {/* NEW: Pending Resubmission */}
-          <NavItem
-            icon={<MdRefresh />}
-            label="Pending Resubmission"
-            active={activePage === "pendingResubmission"}
-            onClick={() => {
-              setActivePage("pendingResubmission");
-              closeSidebar();
-            }}
-          />
-          <NavItem
-            icon={<MdDescription />}
-            label="Draft"
-            active={activePage === "draft"}
-            onClick={() => {
-              setActivePage("draft");
-              closeSidebar();
-            }}
-          />
-          {/* Clients, Reports, Settings have been removed from the sidebar */}
+        <nav style={{ padding: "20px 12px", flex: 1 }}>
+          {menuItems.map((item) => {
+            const isActive = activePage === item.id;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => {
+                  if (item.id !== "kyc") setSelectedDraft(null);
+                  setActivePage(item.id);
+                  if (isMobile) closeSidebar();
+                }}
+                style={{
+                  width: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "12px",
+                  padding: "12px 14px",
+                  marginBottom: "6px",
+                  border: "none",
+                  borderRadius: "8px",
+                  background: isActive ? "#eff6ff" : "transparent",
+                  color: isActive ? "#2563eb" : "#64748b",
+                  cursor: "pointer",
+                  textAlign: "left",
+                  fontSize: "14px",
+                  fontWeight: isActive ? "600" : "500",
+                }}
+              >
+                <span style={{ display: "flex", fontSize: "20px" }}>{item.icon}</span>
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
         </nav>
 
-        {/* ======================================================
-            LOGOUT
-        ====================================================== */}
-        <div
-          style={{
-            padding: "0 16px",
-            marginTop: "auto",
-          }}
-        >
+        <div style={{ padding: "16px 12px", borderTop: "1px solid #f1f5f9" }}>
           <button
+            type="button"
             onClick={handleLogout}
             style={{
               width: "100%",
-              padding: "10px 16px",
-              background: "#f1f5f9",
-              border: "none",
-              borderRadius: "10px",
               display: "flex",
               alignItems: "center",
               gap: "12px",
-              color: "#64748b",
-              fontWeight: "500",
+              padding: "12px 14px",
+              border: "none",
+              borderRadius: "8px",
+              background: "#fef2f2",
+              color: "#dc2626",
               cursor: "pointer",
-              transition: "background 0.2s",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "#e2e8f0";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "#f1f5f9";
+              fontSize: "14px",
+              fontWeight: "500",
             }}
           >
             <MdLogout size={20} />
@@ -373,116 +300,71 @@ const Officerdasboard = () => {
         </div>
       </aside>
 
-      {/* ========================================================
-          MAIN AREA
-      ======================================================== */}
-      <div
+      {/* Main content */}
+      <main
         style={{
-          marginLeft: isMobile ? 0 : "250px",
           flex: 1,
+          marginLeft: isMobile ? 0 : "250px",
+          minWidth: 0,
+          width: isMobile ? "100%" : "auto",
           display: "flex",
           flexDirection: "column",
-          height: "100vh",
-          minHeight: 0,
-          width: isMobile ? "100%" : "calc(100% - 250px)",
-          overflow: "hidden",
+          minHeight: "100vh",
         }}
       >
-        {/* ======================================================
-            FIXED TOP BAR
-        ====================================================== */}
+        {/* ─── TOP BAR (light blue with logo and user name) ─── */}
         <header
           style={{
+            height: "72px",
             background: "#e0f2fe",
             borderBottom: "1px solid #7fd0fc",
-            padding: "0 16px",
-            height: "64px",
-            minHeight: "64px",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            position: "relative",
-            zIndex: 500,
-            flexShrink: 0,
-            boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+            padding: "0 24px",
+            position: "sticky",
+            top: 0,
+            zIndex: 50,
+            width: "100%",
             boxSizing: "border-box",
           }}
         >
-          {/* LEFT SIDE */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "12px",
-            }}
-          >
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             {isMobile && (
               <button
-                onClick={() => setIsSidebarOpen(true)}
+                onClick={() => setSidebarOpen(true)}
                 style={{
                   background: "transparent",
                   border: "none",
                   fontSize: "24px",
-                  color: "#1e293b",
                   cursor: "pointer",
+                  color: "#1e293b",
                   display: "flex",
                   alignItems: "center",
-                  padding: "4px",
                 }}
               >
                 <MdMenu />
               </button>
             )}
-            <h2
-              style={{
-                fontSize: "18px",
-                fontWeight: "600",
-                color: "#1e293b",
-                margin: 0,
-              }}
-            >
-              {activePage === "dashboard"
-                ? "Dashboard"
-                : activePage === "applications"
-                ? "Applications"
-                : activePage === "verify"
-                ? "Verify Client"
-                : activePage === "pendingResubmission" // <-- new title
-                ? "Pending Resubmission"
-                : activePage === "draft"
-                ? "Draft"
-                : "Dashboard"}
+            {/* Logo on top bar */}
+            <img
+              src={logo}
+              alt="Yonkopa"
+              style={{ width: "32px", height: "32px", borderRadius: "6px", objectFit: "cover" }}
+            />
+            <h2 style={{ fontSize: "18px", fontWeight: "600", color: "#1e293b", margin: 0 }}>
+              {pageTitle}
             </h2>
           </div>
 
-          {/* RIGHT SIDE */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "12px",
-            }}
-          >
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            {/* Bell icon with badge 0 */}
             <button
               style={{
                 background: "transparent",
                 border: "none",
-                color: "#64748b",
-                fontSize: "20px",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                padding: "4px",
-              }}
-            >
-              <MdSearch />
-            </button>
-            <button
-              style={{
-                background: "transparent",
-                border: "none",
-                color: "#64748b",
-                fontSize: "20px",
+                color: "#1e293b",
+                fontSize: "22px",
                 cursor: "pointer",
                 display: "flex",
                 alignItems: "center",
@@ -496,11 +378,11 @@ const Officerdasboard = () => {
                   position: "absolute",
                   top: "-4px",
                   right: "-4px",
-                  width: "18px",
-                  height: "18px",
                   background: "#ef4444",
                   color: "#fff",
                   borderRadius: "50%",
+                  width: "18px",
+                  height: "18px",
                   fontSize: "10px",
                   fontWeight: "600",
                   display: "flex",
@@ -511,119 +393,48 @@ const Officerdasboard = () => {
                 0
               </span>
             </button>
+
+            {/* User avatar */}
             <div
               style={{
+                width: "38px",
+                height: "38px",
+                borderRadius: "50%",
+                background: "#eff6ff",
                 display: "flex",
                 alignItems: "center",
-                gap: "6px",
-                cursor: "pointer",
-                padding: "4px 8px 4px 4px",
-                borderRadius: "30px",
-                background: "#f8fafc",
-                border: "1px solid #e2e8f0",
+                justifyContent: "center",
+                color: "#2563eb",
+                fontWeight: "700",
               }}
             >
-              <div
-                style={{
-                  width: "32px",
-                  height: "32px",
-                  borderRadius: "50%",
-                  background: "#e0e7ff",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "#4338ca",
-                  fontWeight: "600",
-                  fontSize: "14px",
-                }}
-              >
-                {user?.fullName?.charAt(0)?.toUpperCase() || "O"}
+              {(user?.full_name || user?.name || "O").charAt(0).toUpperCase()}
+            </div>
+
+            {/* User name and login name */}
+            <div style={{ lineHeight: "1.3" }}>
+              <div style={{ fontSize: "14px", fontWeight: "600", color: "#1e293b" }}>
+                {displayName}
               </div>
-              {!isMobile && (
-                <>
-                  <span
-                    style={{
-                      fontSize: "14px",
-                      fontWeight: "500",
-                      color: "#1e293b",
-                    }}
-                  >
-                    {user?.fullName || "Officer"}
-                  </span>
-                  <MdKeyboardArrowDown size={20} color="#94a3b8" />
-                </>
-              )}
+              <div style={{ fontSize: "12px", color: "#64748b" }}>
+                {loginName}
+              </div>
             </div>
           </div>
         </header>
 
-        {/* ======================================================
-            SCROLLABLE CONTENT AREA
-        ====================================================== */}
-        <main
+        <section
           style={{
             flex: 1,
-            minHeight: 0,
-            overflowY: "auto",
-            overflowX: "hidden",
+            padding: "24px",
+            background: "#f8fafc",
             width: "100%",
             boxSizing: "border-box",
           }}
         >
-          {renderContent()}
-        </main>
-      </div>
-    </div>
-  );
-};
-
-// ============================================================
-// NAVIGATION ITEM COMPONENT
-// ============================================================
-const NavItem = ({ icon, label, active = false, onClick = null }) => {
-  return (
-    <div
-      onClick={onClick}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "12px",
-        padding: "10px 24px",
-        margin: "2px 8px",
-        borderRadius: "10px",
-        background: active ? "#83a0ff" : "transparent",
-        color: active ? "#4338ca" : "#64748b",
-        fontWeight: active ? "600" : "500",
-        cursor: "pointer",
-        transition: "all 0.2s",
-      }}
-      onMouseEnter={(e) => {
-        if (!active) {
-          e.currentTarget.style.background = "#f1f5f9";
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (!active) {
-          e.currentTarget.style.background = "transparent";
-        }
-      }}
-    >
-      <span
-        style={{
-          fontSize: "20px",
-          display: "flex",
-          alignItems: "center",
-        }}
-      >
-        {icon}
-      </span>
-      <span
-        style={{
-          fontSize: "14px",
-        }}
-      >
-        {label}
-      </span>
+          {renderPage()}
+        </section>
+      </main>
     </div>
   );
 };

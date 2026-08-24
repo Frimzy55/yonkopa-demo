@@ -40,8 +40,8 @@ const OfficerWebLoan = () => {
           amount: row.loan_amount
             ? `GHS ${Number(row.loan_amount).toLocaleString()}`
             : "N/A",
-          status: row.security_verification_status || "Pending",
-          date: formatDate(row.expected_due_date || row.actual_due_date),
+          status: row.security_verification || "Pending",
+          date: formatDate(row.applicant_created_at || row.applicant_created_at),
           raw: row,
         }));
 

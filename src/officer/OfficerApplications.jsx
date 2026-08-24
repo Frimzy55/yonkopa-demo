@@ -7,38 +7,20 @@ import {
   MdArrowBack,
 } from "react-icons/md";
 import KYCForm from "./KYCForm";
-import OfficerVerifyClient from "./OfficerVerifyClient"; // Import the separate component
+import OfficerVerifyClient from "./OfficerVerifyClient";
 
-const OfficerApplications = () => {
-  // ---- State for applications ----
+const OfficerApplications = ({ user }) => {
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  // ---- State for KYC form ----
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({
-    fullName: "",
-    email: "",
-    phone: "",
-    address: "",
-    idType: "national_id",
-    idNumber: "",
-    amountRequested: "",
-  });
-  const [photoFile, setPhotoFile] = useState(null);
-  const [photoPreview, setPhotoPreview] = useState(null);
-
-  // ---- State for client verification ----
   const [showVerify, setShowVerify] = useState(false);
+  const [formData, setFormData] = useState({});
+  const userId = user?.id || user?.userId || null;
 
-  // ---- Fetch applications (dummy) ----
   useEffect(() => {
+    // Replace with actual API call
     const fetchApplications = async () => {
       try {
-        // Replace with actual API call
-        // const res = await fetch("/api/officer/applications");
-        // const data = await res.json();
-        // setApplications(data);
         setApplications([]);
       } catch (error) {
         console.error("Error fetching applications:", error);
@@ -49,81 +31,28 @@ const OfficerApplications = () => {
     fetchApplications();
   }, []);
 
-  // ---- Handlers for KYC form ----
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleFileChange = (file) => {
-    if (file) {
-      setPhotoFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPhotoPreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-    } else {
-      setPhotoFile(null);
-      setPhotoPreview(null);
-    }
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // Here you would send the KYC data (including photoFile) to your API
-    console.log("KYC Data submitted:", formData);
-    console.log("Photo file:", photoFile);
-    // Reset and go back
+  const handleVerifyClient = (client) => {
     setFormData({
-      fullName: "",
-      email: "",
-      phone: "",
-      address: "",
-      idType: "national_id",
-      idNumber: "",
-      amountRequested: "",
-    });
-    setPhotoFile(null);
-    setPhotoPreview(null);
-    setShowForm(false);
-    // Optionally refresh applications list
-  };
-
-  const handleCancel = () => {
-    setFormData({
-      fullName: "",
-      email: "",
-      phone: "",
-      address: "",
-      idType: "national_id",
-      idNumber: "",
-      amountRequested: "",
-    });
-    setPhotoFile(null);
-    setPhotoPreview(null);
-    setShowForm(false);
-  };
-
-  // ---- Callback when a client is verified ----
-  const handleClientVerified = (client) => {
-    console.log("Verified client:", client);
-    // Example: pre‑fill the KYC form with client data
-    setFormData((prev) => ({
-      ...prev,
-      fullName: client.fullName || "",
+      firstName: client.firstName || "",
+      surname: client.surname || "",
       phone: client.phone || "",
-      // Map other fields if available (e.g., email, address, idNumber)
-      // email: client.email || "",
-      // address: client.address || "",
-      // idNumber: client.idNumber || "",
-    }));
-    // Close verify view and open KYC form (or just go back to applications)
+      // Add other fields as needed
+    });
     setShowVerify(false);
-    setShowForm(true); // optionally open the form with pre‑filled data
+    setShowForm(true);
   };
 
-  // ---- Helper for status badges ----
+  const handleBack = () => {
+    setShowForm(false);
+    setShowVerify(false);
+    setFormData({});
+  };
+
   const getStatusBadge = (status) => {
     const styles = {
       Pending: { background: "#fef3c7", color: "#92400e" },
@@ -141,13 +70,11 @@ const OfficerApplications = () => {
     };
   };
 
-  if (loading) {
-    return <div style={{ padding: "40px", textAlign: "center" }}>Loading applications...</div>;
-  }
+  if (loading) return <div style={{ padding: "40px", textAlign: "center" }}>Loading applications...</div>;
 
   return (
     <div style={{ padding: "24px 16px" }}>
-      {/* ---- Header with actions ---- */}
+      {/* Header */}
       <div
         style={{
           display: "flex",
@@ -159,14 +86,8 @@ const OfficerApplications = () => {
         }}
       >
         <div>
-          <h2
-            style={{ fontSize: "22px", fontWeight: "600", color: "#1e293b", margin: 0 }}
-          >
-            {showForm
-              ? "New Application"
-              : showVerify
-              ? "Verify Client"
-              : "Applications"}
+          <h2 style={{ fontSize: "22px", fontWeight: "600", color: "#1e293b", margin: 0 }}>
+            {showForm ? "New Application" : showVerify ? "Verify Client" : "Applications"}
           </h2>
           <p style={{ color: "#64748b", margin: "4px 0 0" }}>
             {showForm
@@ -179,7 +100,6 @@ const OfficerApplications = () => {
         <div style={{ display: "flex", gap: "8px" }}>
           {!showForm && !showVerify && (
             <>
-              {/* Verify Client button */}
               <button
                 onClick={() => setShowVerify(true)}
                 style={{
@@ -197,9 +117,13 @@ const OfficerApplications = () => {
               >
                 <MdVerified /> Verify Client
               </button>
-              {/* New Application button */}
               <button
-                onClick={() => setShowForm(true)}
+                onClick={() => {
+                  localStorage.removeItem("client_kyc_draft_uuid");
+                  setFormData({});
+                  setShowForm(true);
+                  setShowVerify(false);
+                }}
                 style={{
                   padding: "8px 16px",
                   background: "#3b82f6",
@@ -219,7 +143,7 @@ const OfficerApplications = () => {
           )}
           {(showForm || showVerify) && (
             <button
-              onClick={showForm ? handleCancel : () => setShowVerify(false)}
+              onClick={handleBack}
               style={{
                 padding: "8px 16px",
                 background: "#e2e8f0",
@@ -239,22 +163,19 @@ const OfficerApplications = () => {
         </div>
       </div>
 
-      {/* ---- Conditional rendering ---- */}
+      {/* Conditional Content */}
       {showForm ? (
         <KYCForm
+          userId={userId}
           formData={formData}
           onChange={handleInputChange}
-          onSubmit={handleSubmit}
-          onCancel={handleCancel}
-          onFileChange={handleFileChange}
-          photoPreview={photoPreview}
+          onCancel={handleBack}
         />
       ) : showVerify ? (
-        <OfficerVerifyClient onVerify={handleClientVerified} />
+        <OfficerVerifyClient onVerify={handleVerifyClient} />
       ) : (
-        /* ---- Applications list ---- */
+        // Applications List
         <>
-          {/* Search bar for applications */}
           <div
             style={{
               marginBottom: "24px",
@@ -282,7 +203,6 @@ const OfficerApplications = () => {
             />
           </div>
 
-          {/* Applications table */}
           <div
             style={{
               background: "#ffffff",
@@ -304,69 +224,19 @@ const OfficerApplications = () => {
                 <table style={{ width: "100%", borderCollapse: "collapse" }}>
                   <thead>
                     <tr style={{ borderBottom: "1px solid #f1f5f9" }}>
-                      <th
-                        style={{
-                          textAlign: "left",
-                          padding: "14px 16px",
-                          fontSize: "12px",
-                          fontWeight: "600",
-                          color: "#94a3b8",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.5px",
-                        }}
-                      >
+                      <th style={{ textAlign: "left", padding: "14px 16px", fontSize: "12px", fontWeight: "600", color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px" }}>
                         Client
                       </th>
-                      <th
-                        style={{
-                          textAlign: "left",
-                          padding: "14px 16px",
-                          fontSize: "12px",
-                          fontWeight: "600",
-                          color: "#94a3b8",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.5px",
-                        }}
-                      >
+                      <th style={{ textAlign: "left", padding: "14px 16px", fontSize: "12px", fontWeight: "600", color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px" }}>
                         Amount
                       </th>
-                      <th
-                        style={{
-                          textAlign: "left",
-                          padding: "14px 16px",
-                          fontSize: "12px",
-                          fontWeight: "600",
-                          color: "#94a3b8",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.5px",
-                        }}
-                      >
+                      <th style={{ textAlign: "left", padding: "14px 16px", fontSize: "12px", fontWeight: "600", color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px" }}>
                         Status
                       </th>
-                      <th
-                        style={{
-                          textAlign: "left",
-                          padding: "14px 16px",
-                          fontSize: "12px",
-                          fontWeight: "600",
-                          color: "#94a3b8",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.5px",
-                        }}
-                      >
+                      <th style={{ textAlign: "left", padding: "14px 16px", fontSize: "12px", fontWeight: "600", color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px" }}>
                         Date
                       </th>
-                      <th
-                        style={{
-                          textAlign: "right",
-                          padding: "14px 16px",
-                          fontSize: "12px",
-                          fontWeight: "600",
-                          color: "#94a3b8",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.5px",
-                        }}
-                      >
+                      <th style={{ textAlign: "right", padding: "14px 16px", fontSize: "12px", fontWeight: "600", color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px" }}>
                         Action
                       </th>
                     </tr>
@@ -374,24 +244,14 @@ const OfficerApplications = () => {
                   <tbody>
                     {applications.map((app) => (
                       <tr key={app.id} style={{ borderBottom: "1px solid #f8fafc" }}>
-                        <td
-                          style={{
-                            padding: "14px 16px",
-                            fontWeight: "500",
-                            color: "#1e293b",
-                          }}
-                        >
+                        <td style={{ padding: "14px 16px", fontWeight: "500", color: "#1e293b" }}>
                           {app.client}
                         </td>
-                        <td style={{ padding: "14px 16px", color: "#334155" }}>
-                          {app.amount}
-                        </td>
+                        <td style={{ padding: "14px 16px", color: "#334155" }}>{app.amount}</td>
                         <td style={{ padding: "14px 16px" }}>
                           <span style={getStatusBadge(app.status)}>{app.status}</span>
                         </td>
-                        <td style={{ padding: "14px 16px", color: "#64748b" }}>
-                          {app.date}
-                        </td>
+                        <td style={{ padding: "14px 16px", color: "#64748b" }}>{app.date}</td>
                         <td style={{ padding: "14px 16px", textAlign: "right" }}>
                           <button
                             style={{

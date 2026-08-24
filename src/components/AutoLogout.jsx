@@ -1,55 +1,46 @@
-import { useEffect, useRef, useCallback } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-
-const AUTO_LOGOUT_TIME = 15 * 60 * 1000;
+import { useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const AutoLogout = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const timeoutRef = useRef(null);
-
-  const logout = useCallback(() => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-
-    navigate("/access", {
-      replace: true,
-      state: {
-        message: "Logged out due to inactivity",
-      },
-    });
-  }, [navigate]);
-
-  const resetTimer = useCallback(() => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-
-    timeoutRef.current = setTimeout(logout, AUTO_LOGOUT_TIME);
-  }, [logout]);
 
   useEffect(() => {
-    // Do not run on customer page
-    if (location.pathname === "/customer-page") {
-      return;
-    }
+    const timeout = 15 * 60 * 1000;
+    let timer;
 
-    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const getLoginRoute = () => {
+      const currentPath = location.pathname;
+      const loginRoutes = ["/officer-access", "/demo", "/signup"];
 
-    // Do not run for customers
-    if (user.role === "customer") {
-      return;
-    }
+      // If we're already on a login page, stay there
+      if (loginRoutes.includes(currentPath)) {
+        return currentPath;
+      }
 
-    // Only run if logged in
-    if (!localStorage.getItem("token")) {
-      return;
-    }
+      // Fallback to saved route or /demo
+      const savedRoute = sessionStorage.getItem("loginRoute");
+      return savedRoute || "/demo";
+    };
+
+    const logout = () => {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      sessionStorage.removeItem("loginRoute");
+      navigate(getLoginRoute(), { replace: true });
+    };
+
+    const resetTimer = () => {
+      clearTimeout(timer);
+      timer = setTimeout(logout, timeout);
+    };
+
+    resetTimer();
 
     const events = [
       "mousemove",
       "mousedown",
-      "keypress",
+      "keydown",
       "scroll",
       "touchstart",
       "click",
@@ -59,18 +50,13 @@ const AutoLogout = () => {
       window.addEventListener(event, resetTimer);
     });
 
-    resetTimer();
-
     return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-
+      clearTimeout(timer);
       events.forEach((event) => {
         window.removeEventListener(event, resetTimer);
       });
     };
-  }, [location.pathname, resetTimer]);
+  }, [navigate, location.pathname]);
 
   return null;
 };

@@ -11,6 +11,7 @@ import LoginPage from "./auth/StaffLoginPage";
 import DefaultSuper from "./auth/DefaultSuper";
 import OfficerAccess from "./auth/OfficerAccess";
 
+
 import Customerview from "./customerpage/CustomerPage";
 import AdminDashboard from "./AdminDashboard";
 import ManagerDashboard from "./managerpage/ManagerDashboard";
@@ -150,6 +151,8 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+
 
           {/* CATCH ALL */}
           <Route path="*" element={<Navigate to="/demo" replace />} />
