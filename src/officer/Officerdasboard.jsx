@@ -10,6 +10,7 @@ import {
   MdNotificationsNone,
 } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
+import { clearOfflineAuth } from "../auth/offlineAuth";
 
 import logo from "../image/yonko1.jpeg";
 import OfficerApplications from "./OfficerApplications";
@@ -111,17 +112,30 @@ const Officerdasboard = () => {
   const loginName = user?.username || user?.email || fullName;
   const userInitials = getInitials(firstName);
 
-  // ─── Handlers ────────────────────────────────────────────────────
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    localStorage.removeItem("role");
-    sessionStorage.removeItem("loginRoute");
-    navigate("/officer-access", {
-      replace: true,
-      state: { message: "You have been logged out." },
-    });
-  };
+  const handleLogout = async () => {
+  try {
+    await clearOfflineAuth();
+  } catch (error) {
+    console.error(
+      "Failed to clear offline authentication:",
+      error
+    );
+  }
+
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+  localStorage.removeItem("role");
+  localStorage.removeItem("offlineMode");
+
+  sessionStorage.removeItem("loginRoute");
+
+  navigate("/officer-access", {
+    replace: true,
+    state: {
+      message: "You have been logged out.",
+    },
+  });
+};
 
   const handleViewDraft = (draft) => {
     if (!draft?.draftUuid) {
