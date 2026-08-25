@@ -10,7 +10,7 @@ import {
   MdNotificationsNone,
 } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
-import { clearOfflineAuth } from "../auth/offlineAuth";
+
 
 import logo from "../image/yonko1.jpeg";
 import OfficerApplications from "./OfficerApplications";
