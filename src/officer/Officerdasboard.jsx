@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import {
   MdDashboard,
   MdAssignment,
-  MdVerifiedUser,
   MdLogout,
   MdPendingActions,
   MdDescription,
@@ -12,11 +11,9 @@ import {
 } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 
-import logo from "../image/yonko1.jpeg"; // adjust path as needed
-
+import logo from "../image/yonko1.jpeg";
 import OfficerApplications from "./OfficerApplications";
 import OfficerDashboardContent from "./OfficerDashboardContent";
-import OfficerVerifyClient from "./OfficerVerifyClient";
 import OfficerDrafts from "./OfficerDrafts";
 import KYCForm from "./KYCForm";
 
@@ -32,7 +29,7 @@ const Officerdasboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
-  const [user, setUser] = useState(() => {
+  const [user] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem("user") || "null");
     } catch {
@@ -40,21 +37,16 @@ const Officerdasboard = () => {
     }
   });
 
-  // ─── Draft count state ──────────────────────────────────────────
+  // ─── Draft count ──────────────────────────────────────────────────
   const [draftCount, setDraftCount] = useState(0);
 
-  // ─── Fetch draft count ──────────────────────────────────────────
   const fetchDraftCount = async () => {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(`${API_BASE}/officer/drafts`, {
-        headers: {
-          Authorization: token ? `Bearer ${token}` : "",
-        },
+        headers: { Authorization: token ? `Bearer ${token}` : "" },
       });
-      if (!response.ok) {
-        throw new Error("Failed to fetch draft count");
-      }
+      if (!response.ok) throw new Error("Failed to fetch draft count");
       const data = await response.json();
       setDraftCount((data.drafts || []).length);
     } catch (err) {
@@ -62,27 +54,23 @@ const Officerdasboard = () => {
     }
   };
 
-  // ─── Effect: fetch draft count on mount ──────────────────────
   useEffect(() => {
-    if (user) {
-      fetchDraftCount();
-    }
+    if (user) fetchDraftCount();
   }, [user]);
 
-  // ─── Effect: authentication check ──────────────────────────────
+  // ─── Authentication check ────────────────────────────────────────
   useEffect(() => {
-    if (!user) {
-      navigate("/officer-access", { replace: true });
-    }
+    if (!user) navigate("/officer-access", { replace: true });
   }, [user, navigate]);
 
+  // ─── Window resize ───────────────────────────────────────────────
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // ─── Prevent body scroll, allow only main content scroll ──────
+  // ─── Prevent body scroll ────────────────────────────────────────
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => {
@@ -92,6 +80,38 @@ const Officerdasboard = () => {
 
   const isMobile = windowWidth < 768;
 
+  // ─── Helpers to get full name and first name ──────────────────
+  const getFullName = (user) => {
+    if (!user) return "Officer";
+    if (user.full_name) return user.full_name;
+    if (user.fullName) return user.fullName;
+    if (user.name) return user.name;
+    if (user.first_name && user.last_name)
+      return `${user.first_name} ${user.last_name}`;
+    if (user.firstName && user.lastName)
+      return `${user.firstName} ${user.lastName}`;
+    if (user.username) return user.username;
+    if (user.email) return user.email;
+    return "Officer";
+  };
+
+  const getFirstName = (fullName) => {
+    if (!fullName) return "Officer";
+    const parts = fullName.trim().split(/\s+/);
+    return parts[0] || "Officer";
+  };
+
+  const getInitials = (firstName) => {
+    if (!firstName) return "O";
+    return firstName.substring(0, 2).toUpperCase() || "O";
+  };
+
+  const fullName = getFullName(user);
+  const firstName = getFirstName(fullName);
+  const loginName = user?.username || user?.email || fullName;
+  const userInitials = getInitials(firstName);
+
+  // ─── Handlers ────────────────────────────────────────────────────
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -123,17 +143,29 @@ const Officerdasboard = () => {
     setDraftCount((prev) => Math.max(0, prev - 1));
   };
 
+  // ─── Render page content ────────────────────────────────────────
   const renderPage = () => {
     switch (activePage) {
       case "dashboard":
-        return <OfficerDashboardContent user={user} />;
+        return (
+          <OfficerDashboardContent
+            user={user}
+            isMobile={isMobile}
+            applicationsCount={0}
+            draftCount={draftCount}
+          />
+        );
       case "applications":
         return <OfficerApplications user={user} />;
-      case "verify":
-        return <OfficerVerifyClient user={user} />;
       case "pendingResubmission":
         return (
-          <div style={{ padding: "40px 16px", textAlign: "center", color: "#64748b" }}>
+          <div
+            style={{
+              padding: "40px 16px",
+              textAlign: "center",
+              color: "#64748b",
+            }}
+          >
             <h2>Pending Resubmission</h2>
             <p>Clients awaiting resubmission will appear here.</p>
           </div>
@@ -149,7 +181,9 @@ const Officerdasboard = () => {
       case "kyc":
         if (!selectedDraft?.draftUuid) {
           return (
-            <div style={{ padding: "40px", textAlign: "center", color: "#64748b" }}>
+            <div
+              style={{ padding: "40px", textAlign: "center", color: "#64748b" }}
+            >
               <h2>No Draft Selected</h2>
               <p>Please return to Drafts and select a draft to continue.</p>
               <button
@@ -179,7 +213,7 @@ const Officerdasboard = () => {
           />
         );
       default:
-        return <OfficerDashboardContent user={user} />;
+        return <OfficerDashboardContent user={user} isMobile={isMobile} />;
     }
   };
 
@@ -187,33 +221,27 @@ const Officerdasboard = () => {
     activePage === "dashboard"
       ? "Dashboard"
       : activePage === "applications"
-      ? "Applications"
-      : activePage === "verify"
-      ? "Verify Client"
-      : activePage === "pendingResubmission"
-      ? "Pending Resubmission"
-      : activePage === "draft"
-      ? "Drafts"
-      : activePage === "kyc"
-      ? "Continue KYC"
-      : "Dashboard";
+        ? "Applications"
+        : activePage === "pendingResubmission"
+          ? "Pending Resubmission"
+          : activePage === "draft"
+            ? "Drafts"
+            : activePage === "kyc"
+              ? "Continue KYC"
+              : "Dashboard";
 
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: <MdDashboard /> },
     { id: "applications", label: "Applications", icon: <MdAssignment /> },
-    { id: "verify", label: "Verify Client", icon: <MdVerifiedUser /> },
-    { id: "pendingResubmission", label: "Pending Resubmission", icon: <MdPendingActions /> },
     {
-      id: "draft",
-      label: `Drafts (${draftCount})`,
-      icon: <MdDescription />,
+      id: "pendingResubmission",
+      label: "Pending Resubmission",
+      icon: <MdPendingActions />,
     },
+    { id: "draft", label: `Drafts (${draftCount})`, icon: <MdDescription /> },
   ];
 
   const closeSidebar = () => setSidebarOpen(false);
-
-  const displayName = user?.full_name || user?.name || "Officer";
-  const loginName = user?.username || user?.email || displayName;
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: "#f8fafc" }}>
@@ -233,7 +261,7 @@ const Officerdasboard = () => {
         />
       )}
 
-      {/* Sidebar (fixed) */}
+      {/* Sidebar */}
       <aside
         style={{
           width: "250px",
@@ -248,12 +276,14 @@ const Officerdasboard = () => {
           height: "100vh",
           zIndex: 1000,
           transition: "transform 0.3s ease",
-          transform: isMobile && !sidebarOpen ? "translateX(-100%)" : "translateX(0)",
-          boxShadow: isMobile && sidebarOpen ? "0 0 20px rgba(0,0,0,0.1)" : "none",
+          transform:
+            isMobile && !sidebarOpen ? "translateX(-100%)" : "translateX(0)",
+          boxShadow:
+            isMobile && sidebarOpen ? "0 0 20px rgba(0,0,0,0.1)" : "none",
           overflowY: "auto",
         }}
       >
-        {/* Logo & close button */}
+        {/* Logo & close */}
         <div
           style={{
             padding: "20px 20px",
@@ -267,13 +297,31 @@ const Officerdasboard = () => {
             <img
               src={logo}
               alt="Yonkopa"
-              style={{ width: "36px", height: "36px", borderRadius: "8px", objectFit: "cover" }}
+              style={{
+                width: "36px",
+                height: "36px",
+                borderRadius: "8px",
+                objectFit: "cover",
+              }}
             />
             <div>
-              <h2 style={{ margin: 0, fontSize: "20px", fontWeight: "700", color: "#1e293b" }}>
+              <h2
+                style={{
+                  margin: 0,
+                  fontSize: "20px",
+                  fontWeight: "700",
+                  color: "#1e293b",
+                }}
+              >
                 Yonkopa
               </h2>
-              <p style={{ margin: "4px 0 0", fontSize: "12px", color: "#64748b" }}>
+              <p
+                style={{
+                  margin: "4px 0 0",
+                  fontSize: "12px",
+                  color: "#64748b",
+                }}
+              >
                 Officer Portal
               </p>
             </div>
@@ -323,7 +371,9 @@ const Officerdasboard = () => {
                   fontWeight: isActive ? "600" : "500",
                 }}
               >
-                <span style={{ display: "flex", fontSize: "20px" }}>{item.icon}</span>
+                <span style={{ display: "flex", fontSize: "20px" }}>
+                  {item.icon}
+                </span>
                 <span>{item.label}</span>
               </button>
             );
@@ -364,8 +414,8 @@ const Officerdasboard = () => {
           width: isMobile ? "100%" : "auto",
           display: "flex",
           flexDirection: "column",
-          height: "100vh",          // full viewport height
-          overflowY: "auto",        // internal scrolling only
+          height: "100vh",
+          overflowY: "auto",
         }}
       >
         {/* Header (sticky) */}
@@ -405,9 +455,21 @@ const Officerdasboard = () => {
             <img
               src={logo}
               alt="Yonkopa"
-              style={{ width: "32px", height: "32px", borderRadius: "6px", objectFit: "cover" }}
+              style={{
+                width: "32px",
+                height: "32px",
+                borderRadius: "6px",
+                objectFit: "cover",
+              }}
             />
-            <h2 style={{ fontSize: "18px", fontWeight: "600", color: "#1e293b", margin: 0 }}>
+            <h2
+              style={{
+                fontSize: "18px",
+                fontWeight: "600",
+                color: "#1e293b",
+                margin: 0,
+              }}
+            >
               {pageTitle}
             </h2>
           </div>
@@ -448,6 +510,7 @@ const Officerdasboard = () => {
               </span>
             </button>
 
+            {/* Avatar */}
             <div
               style={{
                 width: "38px",
@@ -459,18 +522,31 @@ const Officerdasboard = () => {
                 justifyContent: "center",
                 color: "#2563eb",
                 fontWeight: "700",
+                fontSize: "14px",
               }}
             >
-              {(user?.full_name || user?.name || "O").charAt(0).toUpperCase()}
+              {userInitials}
             </div>
 
+            {/* User info - show only first name, hide username on mobile */}
             <div style={{ lineHeight: "1.3" }}>
-              <div style={{ fontSize: "14px", fontWeight: "600", color: "#1e293b" }}>
-                {displayName}
+              <div
+                style={{
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  color: "#1e293b",
+                }}
+              >
+                {firstName}
               </div>
-              <div style={{ fontSize: "12px", color: "#64748b" }}>
-                {loginName}
-              </div>
+              {/* Show second line only on desktop AND if it differs from firstName */}
+              {!isMobile && loginName !== firstName && (
+                <div
+                  style={{ fontSize: "12px", color: "#94a3b8" /* ash/gray */ }}
+                >
+                  {loginName}
+                </div>
+              )}
             </div>
           </div>
         </header>

@@ -39,7 +39,7 @@ const OfficerDashboardContent = ({
         <div
           style={{
             background: "linear-gradient(135deg, #bfdbfe, #a9caf0)", // lighter blue gradient
-            color: "#324e99", // dark blue text
+            color: "#6f90eb", // dark blue text
             borderRadius: "22px",
             padding: isMobile ? "24px" : "35px",
             display: "flex",

@@ -172,7 +172,7 @@ const OfficerApplications = ({ user }) => {
           onCancel={handleBack}
         />
       ) : showVerify ? (
-        <OfficerVerifyClient onVerify={handleVerifyClient} />
+      <OfficerVerifyClient onVerify={handleVerifyClient} />
       ) : (
         // Applications List
         <>
