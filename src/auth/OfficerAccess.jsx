@@ -10,7 +10,7 @@ import logo from "./image/yonko1.jpeg";
 import {
   saveOfflineAuth,
   getOfflineAuth,
-} from "../offlineAuth";
+} from "./offlineAuth";
 
 function OfficerAccess() {
   const [identifier, setIdentifier] = useState("");
