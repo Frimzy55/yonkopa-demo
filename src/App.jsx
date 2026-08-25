@@ -3,7 +3,7 @@ import {
   HashRouter as Router,
   Routes,
   Route,
-  Navigate,
+  //Navigate,
 } from "react-router-dom";
 
 import CustomerLanding from "./auth/CustomerLanding";
@@ -21,7 +21,7 @@ import LoanOfficerDashboard from "./loanofficerpage/LoanOfficerDashboard";
 import LoanSupervisorDashboard from "./supervisorpage/LoanSupervisorDashboard";
 import TellerDashboard from "./tellerpage/TellerDashboard";
 
-import Officerdasboard from "./officer/Officerdasboard";
+import Officerdasboard from "./officer/Officerdasboard"; // component named "Officer"
 
 import ProtectedRoute from "./ProtectedRoute";
 import AutoLogout from "./components/AutoLogout";
@@ -29,6 +29,7 @@ import AutoLogout from "./components/AutoLogout";
 import MaintenancePage from "./components/MaintenancePage";
 
 const MAINTENANCE_MODE = false;
+//  process.env.REACT_APP_MAINTENANCE_MODE === "true";
 
 function App() {
   useEffect(() => {
@@ -50,23 +51,10 @@ function App() {
         color: #1f1f1f;
       }
 
-      h1,
-      h2 {
-        font-weight: 600;
-      }
+      h1, h2 { font-weight: 600; }
+      h3, h4, h5, h6 { font-weight: 500; }
 
-      h3,
-      h4,
-      h5,
-      h6 {
-        font-weight: 500;
-      }
-
-      p,
-      span,
-      div {
-        font-weight: 300;
-      }
+      p, span, div { font-weight: 300; }
 
       button {
         font-weight: 500;
@@ -92,49 +80,25 @@ function App() {
 
   return (
     <Router>
+      {" "}
+      {/* ✅ basename prop removed – no more "/yonkopa-demo" */}
       <AutoLogout />
-
       <div className="App">
         <Routes>
-          {/* DEFAULT ROUTE */}
-          <Route
-            path="/"
-            element={
-              <Navigate
-                to="/officer-access"
-                replace
-              />
-            }
-          />
+          {/* DEFAULT ROUTE 
+          <Route path="/" element={<Navigate to="/demo" replace />} />   */}
 
           {/* PUBLIC ROUTES */}
-          <Route
-            path="/apply"
-            element={<CustomerLanding />}
-          />
-
-          <Route
-            path="/demo"
-            element={<LoginPage />}
-          />
-
-          <Route
-            path="/signup"
-            element={<DefaultSuper />}
-          />
-
-          <Route
-            path="/officer-access"
-            element={<OfficerAccess />}
-          />
+          <Route path="/apply" element={<CustomerLanding />} />
+          <Route path="/demo" element={<LoginPage />} />
+          <Route path="/signup" element={<DefaultSuper />} />
+          <Route path="/officer-access" element={<OfficerAccess />} />
 
           {/* CUSTOMER */}
           <Route
             path="/customer-page"
             element={
-              <ProtectedRoute
-                allowedRoles={["customer"]}
-              >
+              <ProtectedRoute allowedRoles={["customer"]}>
                 <Customerview />
               </ProtectedRoute>
             }
@@ -144,9 +108,7 @@ function App() {
           <Route
             path="/admin-dashboard"
             element={
-              <ProtectedRoute
-                allowedRoles={["admin"]}
-              >
+              <ProtectedRoute allowedRoles={["admin"]}>
                 <AdminDashboard />
               </ProtectedRoute>
             }
@@ -156,9 +118,7 @@ function App() {
           <Route
             path="/loan-manager"
             element={
-              <ProtectedRoute
-                allowedRoles={["manager"]}
-              >
+              <ProtectedRoute allowedRoles={["manager"]}>
                 <ManagerDashboard />
               </ProtectedRoute>
             }
@@ -168,33 +128,25 @@ function App() {
           <Route
             path="/loan-officer-dashboard"
             element={
-              <ProtectedRoute
-                allowedRoles={["loan_officer"]}
-              >
+              <ProtectedRoute allowedRoles={["loan_officer"]}>
                 <LoanOfficerDashboard />
               </ProtectedRoute>
             }
           />
 
-          {/* OFFICER */}
           <Route
             path="/officer-dashboard"
             element={
-              <ProtectedRoute
-                allowedRoles={["loan_officer"]}
-              >
+              <ProtectedRoute allowedRoles={["loan_officer"]}>
                 <Officerdasboard />
               </ProtectedRoute>
             }
           />
-
           {/* SUPERVISOR */}
           <Route
             path="/loan-supervisor"
             element={
-              <ProtectedRoute
-                allowedRoles={["supervisor"]}
-              >
+              <ProtectedRoute allowedRoles={["supervisor"]}>
                 <LoanSupervisorDashboard />
               </ProtectedRoute>
             }
@@ -204,15 +156,12 @@ function App() {
           <Route
             path="/teller-dashboard"
             element={
-              <ProtectedRoute
-                allowedRoles={["teller"]}
-              >
+              <ProtectedRoute allowedRoles={["teller"]}>
                 <TellerDashboard />
               </ProtectedRoute>
             }
           />
 
-          {/* EXPLICIT 404 PAGE */}
           <Route
             path="/server-error"
             element={
@@ -224,17 +173,8 @@ function App() {
             }
           />
 
-          {/* CATCH-ALL 404 */}
-          <Route
-            path="*"
-            element={
-              <ServerError
-                code={404}
-                title="Page Not Found"
-                message="Sorry, the page you're looking for doesn't exist or may have been moved."
-              />
-            }
-          />
+          {/* CATCH ALL 
+          <Route path="*" element={<Navigate to="/demo" replace />} />  */}
         </Routes>
       </div>
     </Router>
