@@ -1,11 +1,11 @@
-/*import React from "react";
+import React from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
 import App from "./App";
 import reportWebVitals from "./reportWebVitals";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
-import * as serviceWorkerRegistration from "./serviceWorkerRegistration";
+
 
 const root = ReactDOM.createRoot(
   document.getElementById("root")
@@ -17,45 +17,13 @@ root.render(
   </React.StrictMode>
 );
 
-serviceWorkerRegistration.register();
 
-reportWebVitals();*/
-
-
-
-
-
-
-
-
-import React from "react";
-import ReactDOM from "react-dom/client";
-import "./index.css";
-import App from "./App";
-import reportWebVitals from "./reportWebVitals";
-import "bootstrap/dist/css/bootstrap.min.css";
-import "bootstrap-icons/font/bootstrap-icons.css";
-import * as serviceWorkerRegistration from "./serviceWorkerRegistration";
-
-const root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
-
-// ✅ Register with update handler
-serviceWorkerRegistration.register({
-  onUpdate: (registration) => {
-    // Show a notification or reload automatically
-    if (window.confirm("A new version is available. Reload now?")) {
-      registration.waiting?.postMessage({ type: "SKIP_WAITING" });
-      window.location.reload();
-    }
-  },
-  onSuccess: () => {
-    console.log("App ready offline.");
-  },
-});
 
 reportWebVitals();
+
+
+
+
+
+
+
