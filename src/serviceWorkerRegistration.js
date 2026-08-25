@@ -4,145 +4,81 @@ const isLocalhost = Boolean(
     window.location.hostname === "[::1]"
 );
 
+// Use a version from env (e.g., REACT_APP_VERSION) or fallback to a timestamp
+const SW_VERSION = process.env.REACT_APP_VERSION || Date.now();
+
 export function register(config) {
-  if (
-    process.env.NODE_ENV === "production" &&
-    "serviceWorker" in navigator
-  ) {
+  if (process.env.NODE_ENV === "production" && "serviceWorker" in navigator) {
     window.addEventListener("load", () => {
-      const swUrl = `${process.env.PUBLIC_URL}/service-worker.js`;
+      // ✅ Add version query parameter to bust the cache
+      const swUrl = `${process.env.PUBLIC_URL}/service-worker.js?v=${SW_VERSION}`;
 
       if (isLocalhost) {
-        checkValidServiceWorker(
-          swUrl,
-          config
-        );
+        checkValidServiceWorker(swUrl, config);
       } else {
-        registerValidSW(
-          swUrl,
-          config
-        );
+        registerValidSW(swUrl, config);
       }
     });
   }
 }
 
-function registerValidSW(
-  swUrl,
-  config
-) {
+function registerValidSW(swUrl, config) {
   navigator.serviceWorker
-    .register(swUrl, {
-      updateViaCache: "none",
-    })
+    .register(swUrl)
     .then((registration) => {
       registration.onupdatefound = () => {
-        const installingWorker =
-          registration.installing;
+        const installingWorker = registration.installing;
+        if (!installingWorker) return;
 
-        if (!installingWorker) {
-          return;
-        }
-
-        installingWorker.onstatechange =
-          () => {
-            if (
-              installingWorker.state ===
-              "installed"
-            ) {
-              if (
-                navigator.serviceWorker
-                  .controller
-              ) {
-                console.log(
-                  "A new version of Yonkopa is available."
-                );
-
-                if (config?.onUpdate) {
-                  config.onUpdate(
-                    registration
-                  );
-                }
-              } else {
-                console.log(
-                  "Yonkopa is ready to work offline."
-                );
-
-                if (config?.onSuccess) {
-                  config.onSuccess(
-                    registration
-                  );
-                }
+        installingWorker.onstatechange = () => {
+          if (installingWorker.state === "installed") {
+            if (navigator.serviceWorker.controller) {
+              // New version available
+              console.log("A new version of Yonkopa is available.");
+              if (config?.onUpdate) {
+                config.onUpdate(registration);
+              }
+            } else {
+              console.log("Yonkopa is ready to work offline.");
+              if (config?.onSuccess) {
+                config.onSuccess(registration);
               }
             }
-          };
+          }
+        };
       };
     })
     .catch((error) => {
-      console.error(
-        "Service worker registration failed:",
-        error
-      );
+      console.error("Service worker registration failed:", error);
     });
 }
 
-function checkValidServiceWorker(
-  swUrl,
-  config
-) {
-  fetch(swUrl, {
-    headers: {
-      "Service-Worker": "script",
-    },
-    cache: "no-store",
-  })
+function checkValidServiceWorker(swUrl, config) {
+  fetch(swUrl, { headers: { "Service-Worker": "script" } })
     .then((response) => {
-      const contentType =
-        response.headers.get(
-          "content-type"
-        );
-
+      const contentType = response.headers.get("content-type");
       if (
         response.status === 404 ||
-        (contentType &&
-          !contentType.includes(
-            "javascript"
-          ))
+        (contentType && !contentType.includes("javascript"))
       ) {
         navigator.serviceWorker.ready
-          .then((registration) => {
-            registration.unregister();
-          })
-          .then(() => {
-            window.location.reload();
-          });
-
+          .then((registration) => registration.unregister())
+          .then(() => window.location.reload());
         return;
       }
-
-      registerValidSW(
-        swUrl,
-        config
-      );
+      registerValidSW(swUrl, config);
     })
     .catch(() => {
-      console.log(
-        "No internet connection. Using cached Yonkopa files."
-      );
+      console.log("No internet connection. Using cached Yonkopa files.");
     });
 }
 
 export function unregister() {
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.ready
-      .then((registration) => {
-        registration.unregister();
-      })
+      .then((registration) => registration.unregister())
       .catch((error) => {
-        console.error(
-          "Service worker unregister failed:",
-          error
-        );
+        console.error("Service worker unregister failed:", error);
       });
   }
 }
