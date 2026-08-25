@@ -13,7 +13,7 @@
       "type": "image/jpeg"
     }
   ],
-   "start_url": "/yonkopa-demo/#/officer-access",
+   "start_url": "/#/officer-access",
   "scope": "/",
   "display": "standalone",
   "theme_color": "#ffffff",
