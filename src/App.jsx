@@ -11,6 +11,7 @@ import LoginPage from "./auth/StaffLoginPage";
 import DefaultSuper from "./auth/DefaultSuper";
 import OfficerAccess from "./auth/OfficerAccess";
 
+import ServerError from "./ServerError";
 
 import Customerview from "./customerpage/CustomerPage";
 import AdminDashboard from "./AdminDashboard";
@@ -27,15 +28,10 @@ import AutoLogout from "./components/AutoLogout";
 
 import MaintenancePage from "./components/MaintenancePage";
 
-
-
-const MAINTENANCE_MODE =false;
+const MAINTENANCE_MODE = false;
 //  process.env.REACT_APP_MAINTENANCE_MODE === "true";
 
-
 function App() {
-
-
   useEffect(() => {
     const style = document.createElement("style");
 
@@ -78,9 +74,7 @@ function App() {
     };
   }, []);
 
-
-  
-   if (MAINTENANCE_MODE) {
+  if (MAINTENANCE_MODE) {
     return <MaintenancePage />;
   }
 
@@ -168,7 +162,16 @@ function App() {
             }
           />
 
-
+          <Route
+            path="/server-error"
+            element={
+              <ServerError
+                code={404}
+                title="Page Not Found"
+                message="Sorry, the page you're looking for doesn't exist or may have been moved."
+              />
+            }
+          />
 
           {/* CATCH ALL 
           <Route path="*" element={<Navigate to="/demo" replace />} />  */}

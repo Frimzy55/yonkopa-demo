@@ -1,13 +1,16 @@
 import React from "react";
 import {
   FaUserShield,
-  FaTasks,
-  FaClock,
   FaClipboardCheck,
-  FaArrowRight,
+  FaTasks,
 } from "react-icons/fa";
 
-const OfficerDashboardContent = ({ user, isMobile }) => {
+const OfficerDashboardContent = ({ 
+  user, 
+  isMobile, 
+  applicationsCount = 0, 
+  draftCount = 0 
+}) => {
   const currentDate = new Date().toLocaleDateString("en-GB", {
     weekday: "long",
     day: "numeric",
@@ -32,11 +35,11 @@ const OfficerDashboardContent = ({ user, isMobile }) => {
       }}
     >
       <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
-        {/* Welcome Banner */}
+        {/* Welcome Banner – text is now blue */}
         <div
           style={{
-            background: "linear-gradient(135deg, #99b8fcd8, #92caffd8)",
-            color: "#fff",
+            background: "linear-gradient(135deg, #bfdbfe, #a9caf0)", // lighter blue gradient
+            color: "#324e99", // dark blue text
             borderRadius: "22px",
             padding: isMobile ? "24px" : "35px",
             display: "flex",
@@ -44,51 +47,52 @@ const OfficerDashboardContent = ({ user, isMobile }) => {
             justifyContent: "space-between",
             alignItems: "center",
             gap: "20px",
-            boxShadow: "0 15px 40px rgba(37,99,235,0.25)",
+            boxShadow: "0 15px 40px rgba(37,99,235,0.15)",
           }}
         >
           <div>
             <p
               style={{
                 margin: 0,
-                opacity: 0.9,
+                opacity: 0.8,
                 fontSize: "14px",
+                color: "#1e3a8a", // blue
               }}
             >
               {currentDate}
             </p>
-
             <h1
               style={{
                 margin: "10px 0",
                 fontSize: isMobile ? "28px" : "36px",
                 fontWeight: "700",
+                color: "#1e3a8a", // blue
               }}
             >
               Welcome, {user?.fullName || "Officer"}
             </h1>
-
             <p
               style={{
                 margin: 0,
-                opacity: 0.95,
+                opacity: 0.85,
                 fontSize: "15px",
+                color: "#1e3a8a", // blue
               }}
             >
               Manage customer requests, verify records, and complete assigned
               officer tasks from your dashboard.
             </p>
-
             <div
               style={{
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "8px",
-                background: "rgba(255,255,255,0.15)",
+                background: "rgba(255,255,255,0.4)",
                 padding: "8px 14px",
                 borderRadius: "999px",
                 marginTop: "18px",
                 backdropFilter: "blur(8px)",
+                color: "#1e3a8a",
               }}
             >
               <FaUserShield />
@@ -97,8 +101,6 @@ const OfficerDashboardContent = ({ user, isMobile }) => {
               </span>
             </div>
           </div>
-
-          {/* Avatar circle removed */}
         </div>
 
         {/* Stats Cards */}
@@ -112,156 +114,70 @@ const OfficerDashboardContent = ({ user, isMobile }) => {
             marginTop: "28px",
           }}
         >
-          {[
-            {
-              title: "Assigned Tasks",
-              value: "--",
-              icon: <FaTasks color="#2563eb" size={24} />,
-            },
-            {
-              title: "Pending Reviews",
-              value: "--",
-              icon: <FaClipboardCheck color="#0ea5e9" size={24} />,
-            },
-            {
-              title: "Today's Activity",
-              value: "--",
-              icon: <FaClock color="#14b8a6" size={24} />,
-            },
-          ].map((item, index) => (
-            <div key={index} style={cardStyle}>
+          {/* Total Applications */}
+          <div style={cardStyle}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <div>
+                <p style={{ margin: 0, color: "#64748b", fontSize: "14px" }}>
+                  Total Applications
+                </p>
+                <h2 style={{ margin: "8px 0 0", color: "#0f172a", fontSize: "30px" }}>
+                  {applicationsCount}
+                </h2>
+              </div>
               <div
                 style={{
+                  width: "52px",
+                  height: "52px",
+                  borderRadius: "14px",
+                  background: "#eff6ff",
                   display: "flex",
-                  justifyContent: "space-between",
                   alignItems: "center",
+                  justifyContent: "center",
                 }}
               >
-                <div>
-                  <p
-                    style={{
-                      margin: 0,
-                      color: "#64748b",
-                      fontSize: "14px",
-                    }}
-                  >
-                    {item.title}
-                  </p>
-
-                  <h2
-                    style={{
-                      margin: "8px 0 0",
-                      color: "#0f172a",
-                      fontSize: "30px",
-                    }}
-                  >
-                    {item.value}
-                  </h2>
-                </div>
-
-                <div
-                  style={{
-                    width: "52px",
-                    height: "52px",
-                    borderRadius: "14px",
-                    background: "#eff6ff",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  {item.icon}
-                </div>
+                <FaClipboardCheck color="#2563eb" size={24} />
               </div>
             </div>
-          ))}
-        </div>
+          </div>
 
-        {/* Quick Actions */}
-        <div style={{ marginTop: "34px" }}>
-          <h3
-            style={{
-              color: "#0f172a",
-              marginBottom: "18px",
-              fontSize: "20px",
-            }}
-          >
-            Quick Actions
-          </h3>
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: isMobile
-                ? "1fr"
-                : "repeat(auto-fit,minmax(250px,1fr))",
-              gap: "20px",
-            }}
-          >
-            {[
-              {
-                title: "Customer Verification",
-                desc: "Review and verify customer information.",
-              },
-              {
-                title: "Pending Approvals",
-                desc: "Check applications awaiting officer action.",
-              },
-              {
-                title: "Officer Reports",
-                desc: "View today's work summary and reports.",
-              },
-            ].map((action, index) => (
+          {/* Total Drafts */}
+          <div style={cardStyle}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <div>
+                <p style={{ margin: 0, color: "#64748b", fontSize: "14px" }}>
+                  Total Drafts
+                </p>
+                <h2 style={{ margin: "8px 0 0", color: "#0f172a", fontSize: "30px" }}>
+                  {draftCount}
+                </h2>
+              </div>
               <div
-                key={index}
                 style={{
-                  ...cardStyle,
-                  cursor: "pointer",
-                  transition: "0.3s",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translateY(-4px)";
-                  e.currentTarget.style.boxShadow =
-                    "0 16px 35px rgba(15,23,42,0.12)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow =
-                    "0 10px 30px rgba(15,23,42,0.08)";
+                  width: "52px",
+                  height: "52px",
+                  borderRadius: "14px",
+                  background: "#eff6ff",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
               >
-                <h4
-                  style={{
-                    margin: "0 0 10px",
-                    color: "#0f172a",
-                  }}
-                >
-                  {action.title}
-                </h4>
-
-                <p
-                  style={{
-                    color: "#64748b",
-                    marginBottom: "18px",
-                    fontSize: "14px",
-                  }}
-                >
-                  {action.desc}
-                </p>
-
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    color: "#95b3f5",
-                    fontWeight: "600",
-                  }}
-                >
-                  Open <FaArrowRight size={12} />
-                </div>
+                <FaTasks color="#0ea5e9" size={24} />
               </div>
-            ))}
+            </div>
           </div>
         </div>
 
