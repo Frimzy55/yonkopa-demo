@@ -112,6 +112,19 @@ const Officerdasboard = () => {
   const loginName = user?.username || user?.email || fullName;
   const userInitials = getInitials(firstName);
 
+  // ─── Handlers ────────────────────────────────────────────────────
+  /*const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("role");
+    sessionStorage.removeItem("loginRoute");
+    navigate("/officer-access", {
+      replace: true,
+      state: { message: "You have been logged out." },
+    });
+  };*/
+
+
   const handleLogout = async () => {
   try {
     await clearOfflineAuth();
@@ -146,6 +159,9 @@ const Officerdasboard = () => {
     setActivePage("kyc");
     if (isMobile) setSidebarOpen(false);
   };
+
+
+
 
   const handleBackFromKyc = () => {
     setSelectedDraft(null);

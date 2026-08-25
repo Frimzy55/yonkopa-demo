@@ -90,37 +90,76 @@ function OfficerAccess() {
   // ONLINE / OFFLINE LOGIN
   // ============================================================
   const handleLogin = async (e) => {
-    e.preventDefault();
-    setErrorMessage("");
+  e.preventDefault();
+  setErrorMessage("");
 
-    if (!identifier.trim()) {
-      setErrorMessage("Please enter your username.");
-      return;
-    }
+  if (!identifier.trim()) {
+    setErrorMessage("Please enter your username.");
+    return;
+  }
 
-    if (!password.trim()) {
-      setErrorMessage("Please enter your password.");
-      return;
-    }
+  if (!password.trim()) {
+    setErrorMessage("Please enter your password.");
+    return;
+  }
 
-    setIsLoading(true);
+  setIsLoading(true);
 
+  try {
     // ==========================================================
-    // OFFLINE
+    // OFFLINE LOGIN
     // ==========================================================
     if (!navigator.onLine) {
-      await loginOffline();
-      setIsLoading(false);
+      const result = await verifyOfflinePassword(
+        identifier,
+        password
+      );
+
+      if (!result.success) {
+        setErrorMessage(
+          result.message || "Offline login failed."
+        );
+        return;
+      }
+
+      const offlineUser = result.user;
+
+      localStorage.setItem(
+        "user",
+        JSON.stringify(offlineUser)
+      );
+
+      localStorage.setItem(
+        "role",
+        "loan_officer"
+      );
+
+      localStorage.setItem(
+        "offlineMode",
+        "true"
+      );
+
+      sessionStorage.setItem(
+        "loginRoute",
+        "/officer-access"
+      );
+
+      navigate("/officer-dashboard", {
+        replace: true,
+      });
+
       return;
     }
 
     // ==========================================================
-    // ONLINE
+    // ONLINE LOGIN
     // ==========================================================
-    try {
-      const API_BASE_URL = process.env.REACT_APP_API_URL || "";
+    const API_BASE_URL =
+      process.env.REACT_APP_API_URL || "";
 
-      const response = await fetch(`${API_BASE_URL}/login2`, {
+    const response = await fetch(
+      `${API_BASE_URL}/login2`,
+      {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -129,140 +168,98 @@ function OfficerAccess() {
           identifier: identifier.trim(),
           password: password.trim(),
         }),
-      });
-
-      const contentType = response.headers.get("content-type");
-
-      if (!contentType || !contentType.includes("application/json")) {
-        throw new Error(
-          "Server returned an invalid response. Please check your API endpoint or proxy configuration.",
-        );
       }
+    );
 
-      const data = await response.json();
+    const data = await response.json();
 
-      console.log("========================================");
-
-      console.log("OFFICER LOGIN RESPONSE:", data);
-
-      console.log("========================================");
-
-      // ========================================================
-      // LOGIN ERROR
-      // ========================================================
-      if (!response.ok) {
-        if (response.status === 401) {
-          throw new Error("Invalid username or password. Please try again.");
-        }
-
-        if (response.status === 403) {
-          throw new Error(
-            "Your account has been deactivated. Please contact support.",
-          );
-        }
-
-        if (response.status === 404) {
-          throw new Error("User not found. Please check your username.");
-        }
-
-        throw new Error(data.message || "Login failed. Please try again.");
-      }
-
-      // ========================================================
-      // TOKEN VALIDATION
-      // ========================================================
-      if (!data.token) {
-        throw new Error(
-          "Login successful, but no authentication token was returned.",
-        );
-      }
-
-      // ========================================================
-      // USER VALIDATION
-      // ========================================================
-      if (!data.user) {
-        throw new Error(
-          "Login successful, but user information was not returned.",
-        );
-      }
-
-      // ========================================================
-      // ROLE VALIDATION
-      // ========================================================
-      const userRole = data.user?.role?.toString()?.trim()?.toLowerCase();
-
-      console.log("Logged-in user:", data.user);
-
-      console.log("Logged-in role:", userRole);
-
-      if (userRole !== "loan_officer") {
-        setErrorMessage(
-          `Access denied. This account has the role "${data.user?.role}". Loan Officer access is required.`,
-        );
-
-        return;
-      }
-
-      // ========================================================
-      // SAVE NORMAL ONLINE SESSION
-      // ========================================================
-      localStorage.setItem("token", data.token);
-
-      localStorage.setItem("user", JSON.stringify(data.user));
-
-      localStorage.setItem("role", "loan_officer");
-
-      localStorage.removeItem("offlineMode");
-
-      sessionStorage.setItem("loginRoute", "/officer-access");
-
-      // ========================================================
-      // CREATE / RENEW OFFLINE PASSWORD VERIFIER
-      // ========================================================
-      try {
-        await saveOfflineAuth(data.user, password);
-
-        console.log("Offline password authentication enabled for this device.");
-      } catch (offlineError) {
-        console.error("Could not save offline authentication:", offlineError);
-      }
-
-      console.log("========================================");
-
-      console.log("LOAN OFFICER LOGIN SUCCESSFUL");
-
-      console.log("Redirecting to /officer-dashboard");
-
-      console.log("Login route: /officer-access");
-
-      console.log("========================================");
-
-      navigate("/officer-dashboard", {
-        replace: true,
-      });
-    } catch (error) {
-      console.error("Officer login error:", error);
-
-      // ========================================================
-      // NETWORK ERROR
-      // ========================================================
-      if (
-        error?.name === "TypeError" ||
-        error?.message?.toLowerCase().includes("failed to fetch")
-      ) {
-        setErrorMessage(
-          "Unable to connect to the server. Please check your internet connection or use offline login if this device has been previously authorized.",
-        );
-      } else {
-        setErrorMessage(
-          error?.message ||
-            "An error occurred while logging in. Please try again.",
-        );
-      }
-    } finally {
-      setIsLoading(false);
+    if (!response.ok) {
+      throw new Error(
+        data.message || "Login failed."
+      );
     }
-  };
+
+    if (!data.token || !data.user) {
+      throw new Error(
+        "Invalid login response from server."
+      );
+    }
+
+    const userRole = data.user?.role
+      ?.toString()
+      ?.trim()
+      ?.toLowerCase();
+
+    if (userRole !== "loan_officer") {
+      setErrorMessage(
+        `Access denied. This account has the role "${data.user?.role}". Loan Officer access is required.`
+      );
+      return;
+    }
+
+    // ==========================================================
+    // SAVE ONLINE SESSION
+    // ==========================================================
+    localStorage.setItem(
+      "token",
+      data.token
+    );
+
+    localStorage.setItem(
+      "user",
+      JSON.stringify(data.user)
+    );
+
+    localStorage.setItem(
+      "role",
+      "loan_officer"
+    );
+
+    localStorage.removeItem(
+      "offlineMode"
+    );
+
+    sessionStorage.setItem(
+      "loginRoute",
+      "/officer-access"
+    );
+
+    // ==========================================================
+    // CREATE / RENEW 7-DAY OFFLINE AUTH
+    // ==========================================================
+    try {
+      await saveOfflineAuth(
+        data.user,
+        password
+      );
+
+      console.log(
+        "Offline password authentication enabled."
+      );
+    } catch (offlineError) {
+      console.error(
+        "Failed to create offline authentication:",
+        offlineError
+      );
+    }
+
+    navigate("/officer-dashboard", {
+      replace: true,
+    });
+  } catch (error) {
+    console.error(
+      "Officer login error:",
+      error
+    );
+
+    setErrorMessage(
+      error?.message ||
+        "An error occurred while logging in."
+    );
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <div
