@@ -1,7 +1,7 @@
 import { openDB } from "idb";
 
 const DB_NAME = "yonkopa_offline_db";
-const DB_VERSION = 3;
+const DB_VERSION = 2;
 const STORE_NAME = "kyc_drafts";
 
 const dbPromise = openDB(DB_NAME, DB_VERSION, {
