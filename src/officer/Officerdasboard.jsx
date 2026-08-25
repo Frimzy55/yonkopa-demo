@@ -113,7 +113,7 @@ const Officerdasboard = () => {
   const userInitials = getInitials(firstName);
 
   // ─── Handlers ────────────────────────────────────────────────────
-  /*const handleLogout = () => {
+  const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     localStorage.removeItem("role");
@@ -122,33 +122,8 @@ const Officerdasboard = () => {
       replace: true,
       state: { message: "You have been logged out." },
     });
-  };*/
+  };
 
-
-  const handleLogout = async () => {
-  try {
-    await clearOfflineAuth();
-  } catch (error) {
-    console.error(
-      "Failed to clear offline authentication:",
-      error
-    );
-  }
-
-  localStorage.removeItem("token");
-  localStorage.removeItem("user");
-  localStorage.removeItem("role");
-  localStorage.removeItem("offlineMode");
-
-  sessionStorage.removeItem("loginRoute");
-
-  navigate("/officer-access", {
-    replace: true,
-    state: {
-      message: "You have been logged out.",
-    },
-  });
-};
 
   const handleViewDraft = (draft) => {
     if (!draft?.draftUuid) {

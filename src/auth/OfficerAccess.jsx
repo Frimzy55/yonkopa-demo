@@ -7,7 +7,6 @@ import {
   MdVisibilityOff,
 } from "react-icons/md";
 import logo from "../image/yonko1.jpeg";
-import { saveOfflineAuth, verifyOfflinePassword } from "./offlineAuth";
 
 function OfficerAccess() {
   const [identifier, setIdentifier] = useState("");
@@ -20,7 +19,6 @@ function OfficerAccess() {
 
   useEffect(() => {
     const card = document.querySelector(".light-card");
-
     if (card) {
       card.style.opacity = "1";
       card.style.transform = "translateY(0)";
@@ -36,130 +34,45 @@ function OfficerAccess() {
     const handleOffline = () => {
       setIsOffline(true);
       setErrorMessage(
-        "You are offline. You can use offline login if this device was previously authenticated.",
+        "You are offline. Please connect to the internet to login."
       );
     };
 
     window.addEventListener("online", handleOnline);
-
     window.addEventListener("offline", handleOffline);
 
     return () => {
       window.removeEventListener("online", handleOnline);
-
       window.removeEventListener("offline", handleOffline);
     };
   }, []);
 
-  // ============================================================
-  // OFFLINE LOGIN
-  // ============================================================
-  const loginOffline = async () => {
-    try {
-      const result = await verifyOfflinePassword(identifier, password);
-
-      if (!result.success) {
-        setErrorMessage(result.message || "Offline login failed.");
-        return;
-      }
-
-      const offlineUser = result.user;
-
-      localStorage.setItem("user", JSON.stringify(offlineUser));
-
-      localStorage.setItem("role", "loan_officer");
-
-      localStorage.setItem("offlineMode", "true");
-
-      sessionStorage.setItem("loginRoute", "/officer-access");
-
-      navigate("/officer-dashboard", {
-        replace: true,
-      });
-    } catch (error) {
-      console.error("Offline login error:", error);
-
-      setErrorMessage(
-        error?.message ||
-          "Offline login failed. Please connect to the internet and try again.",
-      );
-    }
-  };
-
-  // ============================================================
-  // ONLINE / OFFLINE LOGIN
-  // ============================================================
+  // ─── LOGIN (online only) ──────────────────────────────────────
   const handleLogin = async (e) => {
-  e.preventDefault();
-  setErrorMessage("");
+    e.preventDefault();
+    setErrorMessage("");
 
-  if (!identifier.trim()) {
-    setErrorMessage("Please enter your username.");
-    return;
-  }
-
-  if (!password.trim()) {
-    setErrorMessage("Please enter your password.");
-    return;
-  }
-
-  setIsLoading(true);
-
-  try {
-    // ==========================================================
-    // OFFLINE LOGIN
-    // ==========================================================
+    // Check network first
     if (!navigator.onLine) {
-      const result = await verifyOfflinePassword(
-        identifier,
-        password
-      );
-
-      if (!result.success) {
-        setErrorMessage(
-          result.message || "Offline login failed."
-        );
-        return;
-      }
-
-      const offlineUser = result.user;
-
-      localStorage.setItem(
-        "user",
-        JSON.stringify(offlineUser)
-      );
-
-      localStorage.setItem(
-        "role",
-        "loan_officer"
-      );
-
-      localStorage.setItem(
-        "offlineMode",
-        "true"
-      );
-
-      sessionStorage.setItem(
-        "loginRoute",
-        "/officer-access"
-      );
-
-      navigate("/officer-dashboard", {
-        replace: true,
-      });
-
+      setErrorMessage("No internet connection. Please go online to login.");
       return;
     }
 
-    // ==========================================================
-    // ONLINE LOGIN
-    // ==========================================================
-    const API_BASE_URL =
-      process.env.REACT_APP_API_URL || "";
+    if (!identifier.trim()) {
+      setErrorMessage("Please enter your username.");
+      return;
+    }
 
-    const response = await fetch(
-      `${API_BASE_URL}/login2`,
-      {
+    if (!password.trim()) {
+      setErrorMessage("Please enter your password.");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const API_BASE_URL = process.env.REACT_APP_API_URL || "";
+      const response = await fetch(`${API_BASE_URL}/login2`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -168,98 +81,42 @@ function OfficerAccess() {
           identifier: identifier.trim(),
           password: password.trim(),
         }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Login failed.");
       }
-    );
 
-    const data = await response.json();
+      if (!data.token || !data.user) {
+        throw new Error("Invalid login response from server.");
+      }
 
-    if (!response.ok) {
-      throw new Error(
-        data.message || "Login failed."
-      );
+      const userRole = data.user?.role?.toString()?.trim()?.toLowerCase();
+
+      if (userRole !== "loan_officer") {
+        setErrorMessage(
+          `Access denied. This account has the role "${data.user?.role}". Loan Officer access is required.`
+        );
+        return;
+      }
+
+      // Save session
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("role", "loan_officer");
+      localStorage.removeItem("offlineMode");
+      sessionStorage.setItem("loginRoute", "/officer-access");
+
+      navigate("/officer-dashboard", { replace: true });
+    } catch (error) {
+      console.error("Officer login error:", error);
+      setErrorMessage(error?.message || "An error occurred while logging in.");
+    } finally {
+      setIsLoading(false);
     }
-
-    if (!data.token || !data.user) {
-      throw new Error(
-        "Invalid login response from server."
-      );
-    }
-
-    const userRole = data.user?.role
-      ?.toString()
-      ?.trim()
-      ?.toLowerCase();
-
-    if (userRole !== "loan_officer") {
-      setErrorMessage(
-        `Access denied. This account has the role "${data.user?.role}". Loan Officer access is required.`
-      );
-      return;
-    }
-
-    // ==========================================================
-    // SAVE ONLINE SESSION
-    // ==========================================================
-    localStorage.setItem(
-      "token",
-      data.token
-    );
-
-    localStorage.setItem(
-      "user",
-      JSON.stringify(data.user)
-    );
-
-    localStorage.setItem(
-      "role",
-      "loan_officer"
-    );
-
-    localStorage.removeItem(
-      "offlineMode"
-    );
-
-    sessionStorage.setItem(
-      "loginRoute",
-      "/officer-access"
-    );
-
-    // ==========================================================
-    // CREATE / RENEW 7-DAY OFFLINE AUTH
-    // ==========================================================
-    try {
-      await saveOfflineAuth(
-        data.user,
-        password
-      );
-
-      console.log(
-        "Offline password authentication enabled."
-      );
-    } catch (offlineError) {
-      console.error(
-        "Failed to create offline authentication:",
-        offlineError
-      );
-    }
-
-    navigate("/officer-dashboard", {
-      replace: true,
-    });
-  } catch (error) {
-    console.error(
-      "Officer login error:",
-      error
-    );
-
-    setErrorMessage(
-      error?.message ||
-        "An error occurred while logging in."
-    );
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
   return (
     <div
@@ -297,9 +154,7 @@ function OfficerAccess() {
           boxSizing: "border-box",
         }}
       >
-        {/* =====================================================
-            HEADER
-        ====================================================== */}
+        {/* HEADER */}
         <div
           style={{
             textAlign: "center",
@@ -369,21 +224,15 @@ function OfficerAccess() {
                 fontWeight: "500",
               }}
             >
-              Offline Mode
+              Offline Mode – Login disabled
             </div>
           )}
         </div>
 
-        {/* =====================================================
-            LOGIN FORM
-        ====================================================== */}
+        {/* LOGIN FORM */}
         <form onSubmit={handleLogin}>
-          {/* USERNAME */}
-          <div
-            style={{
-              marginBottom: "24px",
-            }}
-          >
+          {/* Username */}
+          <div style={{ marginBottom: "24px" }}>
             <label
               htmlFor="identifier"
               style={{
@@ -398,12 +247,7 @@ function OfficerAccess() {
             >
               Username
             </label>
-
-            <div
-              style={{
-                position: "relative",
-              }}
-            >
+            <div style={{ position: "relative" }}>
               <span
                 style={{
                   position: "absolute",
@@ -419,7 +263,6 @@ function OfficerAccess() {
               >
                 <MdPerson />
               </span>
-
               <input
                 id="identifier"
                 type="text"
@@ -428,7 +271,7 @@ function OfficerAccess() {
                 placeholder="Enter your username"
                 required
                 autoComplete="username"
-                disabled={isLoading}
+                disabled={isLoading || isOffline}
                 style={{
                   width: "100%",
                   padding: "14px 16px 14px 48px",
@@ -440,31 +283,24 @@ function OfficerAccess() {
                   outline: "none",
                   transition: "all 0.3s ease",
                   boxSizing: "border-box",
+                  opacity: isOffline ? 0.6 : 1,
                 }}
                 onFocus={(e) => {
                   e.target.style.borderColor = "#818cf8";
-
                   e.target.style.boxShadow = "0 0 0 4px rgba(129,140,248,0.12)";
-
                   e.target.style.background = "#ffffff";
                 }}
                 onBlur={(e) => {
                   e.target.style.borderColor = "#e2e8f0";
-
                   e.target.style.boxShadow = "none";
-
                   e.target.style.background = "#f8fafc";
                 }}
               />
             </div>
           </div>
 
-          {/* PASSWORD */}
-          <div
-            style={{
-              marginBottom: "24px",
-            }}
-          >
+          {/* Password */}
+          <div style={{ marginBottom: "24px" }}>
             <div
               style={{
                 display: "flex",
@@ -485,12 +321,11 @@ function OfficerAccess() {
               >
                 Password
               </label>
-
               <button
                 type="button"
                 onClick={() =>
                   setErrorMessage(
-                    "Please contact your administrator to reset your password.",
+                    "Please contact your administrator to reset your password."
                   )
                 }
                 style={{
@@ -506,12 +341,7 @@ function OfficerAccess() {
                 Forgot?
               </button>
             </div>
-
-            <div
-              style={{
-                position: "relative",
-              }}
-            >
+            <div style={{ position: "relative" }}>
               <span
                 style={{
                   position: "absolute",
@@ -527,7 +357,6 @@ function OfficerAccess() {
               >
                 <MdLock />
               </span>
-
               <input
                 id="password"
                 type={showPassword ? "text" : "password"}
@@ -535,7 +364,7 @@ function OfficerAccess() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 autoComplete="current-password"
-                disabled={isLoading}
+                disabled={isLoading || isOffline}
                 style={{
                   width: "100%",
                   padding: "14px 52px 14px 48px",
@@ -547,27 +376,23 @@ function OfficerAccess() {
                   outline: "none",
                   transition: "all 0.3s ease",
                   boxSizing: "border-box",
+                  opacity: isOffline ? 0.6 : 1,
                 }}
                 onFocus={(e) => {
                   e.target.style.borderColor = "#818cf8";
-
                   e.target.style.boxShadow = "0 0 0 4px rgba(129,140,248,0.12)";
-
                   e.target.style.background = "#ffffff";
                 }}
                 onBlur={(e) => {
                   e.target.style.borderColor = "#e2e8f0";
-
                   e.target.style.boxShadow = "none";
-
                   e.target.style.background = "#f8fafc";
                 }}
               />
-
               <button
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
-                disabled={isLoading}
+                disabled={isLoading || isOffline}
                 aria-label={showPassword ? "Hide password" : "Show password"}
                 style={{
                   position: "absolute",
@@ -589,7 +414,7 @@ function OfficerAccess() {
             </div>
           </div>
 
-          {/* ERROR MESSAGE */}
+          {/* Error message */}
           {errorMessage && (
             <div
               role="alert"
@@ -608,22 +433,23 @@ function OfficerAccess() {
             </div>
           )}
 
-          {/* LOGIN BUTTON */}
+          {/* Login Button */}
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || isOffline}
             style={{
               width: "100%",
               padding: "16px",
-              background: isLoading
-                ? "#c7d2fe"
-                : "linear-gradient(135deg, #0474cf 0%, #2b6dfc 100%)",
+              background:
+                isLoading || isOffline
+                  ? "#c7d2fe"
+                  : "linear-gradient(135deg, #0474cf 0%, #2b6dfc 100%)",
               color: "#fff",
               border: "none",
               borderRadius: "14px",
               fontSize: "16px",
               fontWeight: "600",
-              cursor: isLoading ? "not-allowed" : "pointer",
+              cursor: isLoading || isOffline ? "not-allowed" : "pointer",
               transition: "all 0.3s ease",
               boxShadow: "0 8px 30px rgba(99,102,241,0.25)",
               position: "relative",
@@ -633,20 +459,18 @@ function OfficerAccess() {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
+              opacity: isOffline ? 0.6 : 1,
             }}
             onMouseEnter={(e) => {
-              if (!isLoading) {
-                e.currentTarget.style.transform =
-                  "translateY(-3px) scale(1.02)";
-
+              if (!isLoading && !isOffline) {
+                e.currentTarget.style.transform = "translateY(-3px) scale(1.02)";
                 e.currentTarget.style.boxShadow =
                   "0 12px 40px rgba(99,102,241,0.35)";
               }
             }}
             onMouseLeave={(e) => {
-              if (!isLoading) {
+              if (!isLoading && !isOffline) {
                 e.currentTarget.style.transform = "translateY(0) scale(1)";
-
                 e.currentTarget.style.boxShadow =
                   "0 8px 30px rgba(99,102,241,0.25)";
               }
@@ -665,14 +489,14 @@ function OfficerAccess() {
                 }}
               />
             ) : isOffline ? (
-              "Login Offline →"
+              "No Internet"
             ) : (
               "Login →"
             )}
           </button>
         </form>
 
-        {/* FOOTER */}
+        {/* Footer */}
         <div
           style={{
             marginTop: "32px",
@@ -691,19 +515,12 @@ function OfficerAccess() {
       <style>
         {`
           @keyframes floatLogo {
-            0%, 100% {
-              transform: translateY(0);
-            }
-
-            50% {
-              transform: translateY(-6px);
-            }
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
           }
 
           @keyframes spin {
-            to {
-              transform: rotate(360deg);
-            }
+            to { transform: rotate(360deg); }
           }
 
           .shape {
@@ -746,29 +563,14 @@ function OfficerAccess() {
           }
 
           @keyframes floatShape {
-            0%, 100% {
-              transform: translate(0, 0) scale(1);
-            }
-
-            33% {
-              transform: translate(40px, -50px) scale(1.1);
-            }
-
-            66% {
-              transform: translate(-30px, 30px) scale(0.9);
-            }
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(40px, -50px) scale(1.1); }
+            66% { transform: translate(-30px, 30px) scale(0.9); }
           }
 
           @keyframes cardAppear {
-            0% {
-              opacity: 0;
-              transform: translateY(40px) scale(0.96);
-            }
-
-            100% {
-              opacity: 1;
-              transform: translateY(0) scale(1);
-            }
+            0% { opacity: 0; transform: translateY(40px) scale(0.96); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
           }
 
           @media (max-width: 520px) {
