@@ -59,7 +59,6 @@ const Officerdasboard = () => {
       setDraftCount((data.drafts || []).length);
     } catch (err) {
       console.error("Error fetching draft count:", err);
-      // Keep previous count; do not set to 0 to avoid flicker
     }
   };
 
@@ -81,6 +80,14 @@ const Officerdasboard = () => {
     const handleResize = () => setWindowWidth(window.innerWidth);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // ─── Prevent body scroll, allow only main content scroll ──────
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "auto";
+    };
   }, []);
 
   const isMobile = windowWidth < 768;
@@ -112,11 +119,8 @@ const Officerdasboard = () => {
     if (isMobile) setSidebarOpen(false);
   };
 
-  // ─── Callback when a draft is deleted ──────────────────────────
   const handleDraftDeleted = () => {
-    // Decrement count by 1 (optimistic) or refetch
     setDraftCount((prev) => Math.max(0, prev - 1));
-    // Optionally refetch to stay in sync, but decrement is fine.
   };
 
   const renderPage = () => {
@@ -201,14 +205,13 @@ const Officerdasboard = () => {
     { id: "pendingResubmission", label: "Pending Resubmission", icon: <MdPendingActions /> },
     {
       id: "draft",
-      label: `Drafts (${draftCount})`, // ← dynamic count
+      label: `Drafts (${draftCount})`,
       icon: <MdDescription />,
     },
   ];
 
   const closeSidebar = () => setSidebarOpen(false);
 
-  // Determine display name and login name
   const displayName = user?.full_name || user?.name || "Officer";
   const loginName = user?.username || user?.email || displayName;
 
@@ -230,7 +233,7 @@ const Officerdasboard = () => {
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar (fixed) */}
       <aside
         style={{
           width: "250px",
@@ -352,7 +355,7 @@ const Officerdasboard = () => {
         </div>
       </aside>
 
-      {/* Main content */}
+      {/* ─── MAIN CONTENT ─── */}
       <main
         style={{
           flex: 1,
@@ -361,10 +364,11 @@ const Officerdasboard = () => {
           width: isMobile ? "100%" : "auto",
           display: "flex",
           flexDirection: "column",
-          minHeight: "100vh",
+          height: "100vh",          // full viewport height
+          overflowY: "auto",        // internal scrolling only
         }}
       >
-        {/* ─── TOP BAR ─── */}
+        {/* Header (sticky) */}
         <header
           style={{
             height: "72px",
@@ -471,6 +475,7 @@ const Officerdasboard = () => {
           </div>
         </header>
 
+        {/* Page content */}
         <section
           style={{
             flex: 1,
