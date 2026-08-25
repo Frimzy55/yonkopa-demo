@@ -1,6 +1,6 @@
 /* eslint-disable no-restricted-globals */
 
-const CACHE_NAME = "yonkopa-pwa-v1";
+const CACHE_NAME = "yonkopa-pwa-v2";
 const OFFLINE_URL = "/index.html";
 
 self.addEventListener("install", (event) => {

@@ -13,17 +13,28 @@ export function register(config) {
       const swUrl = `${process.env.PUBLIC_URL}/service-worker.js`;
 
       if (isLocalhost) {
-        checkValidServiceWorker(swUrl, config);
+        checkValidServiceWorker(
+          swUrl,
+          config
+        );
       } else {
-        registerValidSW(swUrl, config);
+        registerValidSW(
+          swUrl,
+          config
+        );
       }
     });
   }
 }
 
-function registerValidSW(swUrl, config) {
+function registerValidSW(
+  swUrl,
+  config
+) {
   navigator.serviceWorker
-    .register(swUrl)
+    .register(swUrl, {
+      updateViaCache: "none",
+    })
     .then((registration) => {
       registration.onupdatefound = () => {
         const installingWorker =
@@ -33,32 +44,38 @@ function registerValidSW(swUrl, config) {
           return;
         }
 
-        installingWorker.onstatechange = () => {
-          if (
-            installingWorker.state ===
-            "installed"
-          ) {
+        installingWorker.onstatechange =
+          () => {
             if (
-              navigator.serviceWorker.controller
+              installingWorker.state ===
+              "installed"
             ) {
-              console.log(
-                "A new version of Yonkopa is available."
-              );
+              if (
+                navigator.serviceWorker
+                  .controller
+              ) {
+                console.log(
+                  "A new version of Yonkopa is available."
+                );
 
-              if (config?.onUpdate) {
-                config.onUpdate(registration);
-              }
-            } else {
-              console.log(
-                "Yonkopa is ready to work offline."
-              );
+                if (config?.onUpdate) {
+                  config.onUpdate(
+                    registration
+                  );
+                }
+              } else {
+                console.log(
+                  "Yonkopa is ready to work offline."
+                );
 
-              if (config?.onSuccess) {
-                config.onSuccess(registration);
+                if (config?.onSuccess) {
+                  config.onSuccess(
+                    registration
+                  );
+                }
               }
             }
-          }
-        };
+          };
       };
     })
     .catch((error) => {
@@ -77,6 +94,7 @@ function checkValidServiceWorker(
     headers: {
       "Service-Worker": "script",
     },
+    cache: "no-store",
   })
     .then((response) => {
       const contentType =
@@ -102,7 +120,10 @@ function checkValidServiceWorker(
         return;
       }
 
-      registerValidSW(swUrl, config);
+      registerValidSW(
+        swUrl,
+        config
+      );
     })
     .catch(() => {
       console.log(
