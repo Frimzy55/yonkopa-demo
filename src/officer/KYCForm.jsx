@@ -9,13 +9,6 @@ import Step6GuarantorDetails from "./steps/Step6GuarantorDetails";
 import Step7GuarantorDocuments from "./steps/Step7GuarantorDocuments";
 import Step8LoanHistory from "./steps/Step8LoanHistory";
 
-import {
-  saveOfflineDraft,
-  getOfflineDraft,
-  getPendingOfflineDrafts,
-  markDraftSynced,
-} from "./offlineKycDb";
-
 const API_BASE = process.env.REACT_APP_API_URL
   ? `${process.env.REACT_APP_API_URL}/api/kyc/client`
   : "/api/kyc/client";
@@ -74,12 +67,10 @@ const KYCForm = ({
 
   const [internalDraftUuid] = useState(() => {
     let uuid = localStorage.getItem("client_kyc_draft_uuid");
-
     if (!uuid) {
       uuid = createUuid();
       localStorage.setItem("client_kyc_draft_uuid", uuid);
     }
-
     return uuid;
   });
 
@@ -94,42 +85,25 @@ const KYCForm = ({
   const [error, setError] = useState(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  // ============================================================
   // SINGLE FILES
-  // ============================================================
-
   const [clientPhotoFile, setClientPhotoFile] = useState(null);
-
   const [clientPhotoPreview, setClientPhotoPreview] = useState(
     parentPhotoPreview || null,
   );
-
   const [guarantorPhotoFile, setGuarantorPhotoFile] = useState(null);
-
   const [guarantorPhotoPreview, setGuarantorPhotoPreview] = useState(null);
 
-  // ============================================================
   // MULTIPLE COLLATERAL / OWNERSHIP FILES
-  // ============================================================
-
   const [collateralPhotos, setCollateralPhotos] = useState([]);
-
   const [ownershipDocuments, setOwnershipDocuments] = useState([]);
 
-  // ============================================================
   // OTHER MULTIPLE DOCUMENTS
-  // ============================================================
-
   const [clientDocuments, setClientDocuments] = useState([]);
-
   const [guarantorDocuments, setGuarantorDocuments] = useState([]);
 
   const [employeeType, setEmployeeType] = useState("");
 
-  // ============================================================
   // SERVER-SAVED FILE METADATA
-  // ============================================================
-
   const [draftFiles, setDraftFiles] = useState({
     clientPhoto: null,
     guarantorPhoto: null,
@@ -142,10 +116,8 @@ const KYCForm = ({
   // ============================================================
   // FILE URL
   // ============================================================
-
   const getFileUrl = useCallback((filePath) => {
     if (!filePath) return null;
-
     if (
       filePath.startsWith("http://") ||
       filePath.startsWith("https://") ||
@@ -153,7 +125,6 @@ const KYCForm = ({
     ) {
       return filePath;
     }
-
     return `${FILE_BASE_URL}/uploads/${filePath
       .replace(/^\/+/, "")
       .replace(/^uploads\/+/i, "")}`;
@@ -162,25 +133,16 @@ const KYCForm = ({
   // ============================================================
   // FILE SIZE
   // ============================================================
-
   const formatSize = (bytes) => {
     if (!bytes) return "0 B";
-
-    if (bytes < 1024) {
-      return `${bytes} B`;
-    }
-
-    if (bytes < 1048576) {
-      return `${(bytes / 1024).toFixed(1)} KB`;
-    }
-
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1048576) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / 1048576).toFixed(1)} MB`;
   };
 
   // ============================================================
   // NETWORK
   // ============================================================
-
   const isNetworkAvailable = () => {
     return typeof navigator !== "undefined" && navigator.onLine;
   };
@@ -188,10 +150,8 @@ const KYCForm = ({
   // ============================================================
   // FILE APPENDER
   // ============================================================
-
   const appendFileToFormData = (fd, fieldName, file) => {
     if (!file) return;
-
     if (file instanceof File || file instanceof Blob) {
       fd.append(fieldName, file, file.name || "file");
     }
@@ -200,7 +160,6 @@ const KYCForm = ({
   // ============================================================
   // BUILD DRAFT FORMDATA
   // ============================================================
-
   const buildDraftFormData = ({
     userId,
     draftUuid,
@@ -219,32 +178,26 @@ const KYCForm = ({
     fd.append("userId", String(userId));
     fd.append("draftUuid", String(draftUuid));
     fd.append("currentStep", String(currentStep));
-
     fd.append("formData", JSON.stringify(formData || {}));
 
     const draftFilesPayload = {
       clientPhoto: draftFiles?.clientPhoto || null,
-
       guarantorPhoto: draftFiles?.guarantorPhoto || null,
-
       collateralPhotos: (collateralPhotos || []).map((doc) => ({
         name: doc?.name || "Photo",
         fileSize: doc?.size || doc?.fileSize || 0,
         filePath: doc?.filePath || null,
       })),
-
       ownershipDocuments: (ownershipDocuments || []).map((doc) => ({
         name: doc?.name || "Document",
         fileSize: doc?.size || doc?.fileSize || 0,
         filePath: doc?.filePath || null,
       })),
-
       clientDocuments: (clientDocuments || []).map((doc) => ({
         name: doc?.name || doc?.originalFilename || "Document",
         fileSize: doc?.size || doc?.fileSize || 0,
         filePath: doc?.filePath || null,
       })),
-
       guarantorDocuments: (guarantorDocuments || []).map((doc) => ({
         name: doc?.name || doc?.originalFilename || "Document",
         fileSize: doc?.size || doc?.fileSize || 0,
@@ -254,97 +207,57 @@ const KYCForm = ({
 
     fd.append("draftFiles", JSON.stringify(draftFilesPayload));
 
-    // ========================================================
-    // CLIENT PHOTO - SINGLE
-    // ========================================================
-
+    // CLIENT PHOTO
     appendFileToFormData(fd, "clientPhoto", clientPhotoFile);
 
-    // ========================================================
-    // GUARANTOR PHOTO - SINGLE
-    // ========================================================
-
+    // GUARANTOR PHOTO
     appendFileToFormData(fd, "guarantorPhoto", guarantorPhotoFile);
 
-    // ========================================================
-    // COLLATERAL PHOTOS - MULTIPLE
-    // ========================================================
-
+    // COLLATERAL PHOTOS
     (collateralPhotos || []).forEach((doc, index) => {
       if (doc?.file) {
         appendFileToFormData(fd, `collateralPhotos[${index}][file]`, doc.file);
       }
-
-      fd.append(
-        `collateralPhotos[${index}][name]`,
-        doc?.name || `Photo ${index + 1}`,
-      );
-
+      fd.append(`collateralPhotos[${index}][name]`, doc?.name || `Photo ${index + 1}`);
       if (doc?.filePath) {
         fd.append(`collateralPhotos[${index}][filePath]`, doc.filePath);
       }
     });
 
-    // ========================================================
-    // OWNERSHIP DOCUMENTS - MULTIPLE
-    // ========================================================
-
+    // OWNERSHIP DOCUMENTS
     (ownershipDocuments || []).forEach((doc, index) => {
       if (doc?.file) {
-        appendFileToFormData(
-          fd,
-          `ownershipDocuments[${index}][file]`,
-          doc.file,
-        );
+        appendFileToFormData(fd, `ownershipDocuments[${index}][file]`, doc.file);
       }
-
-      fd.append(
-        `ownershipDocuments[${index}][name]`,
-        doc?.name || `Document ${index + 1}`,
-      );
-
+      fd.append(`ownershipDocuments[${index}][name]`, doc?.name || `Document ${index + 1}`);
       if (doc?.filePath) {
         fd.append(`ownershipDocuments[${index}][filePath]`, doc.filePath);
       }
     });
 
-    // ========================================================
-    // CLIENT DOCUMENTS - MULTIPLE
-    // ========================================================
-
+    // CLIENT DOCUMENTS
     (clientDocuments || []).forEach((doc, index) => {
       if (doc?.file) {
         appendFileToFormData(fd, `clientDocuments[${index}][file]`, doc.file);
       }
-
       fd.append(
         `clientDocuments[${index}][name]`,
-        doc?.name || doc?.originalFilename || `Document ${index + 1}`,
+        doc?.name || doc?.originalFilename || `Document ${index + 1}`
       );
-
       if (doc?.filePath) {
         fd.append(`clientDocuments[${index}][filePath]`, doc.filePath);
       }
     });
 
-    // ========================================================
-    // GUARANTOR DOCUMENTS - MULTIPLE
-    // ========================================================
-
+    // GUARANTOR DOCUMENTS
     (guarantorDocuments || []).forEach((doc, index) => {
       if (doc?.file) {
-        appendFileToFormData(
-          fd,
-          `guarantorDocuments[${index}][file]`,
-          doc.file,
-        );
+        appendFileToFormData(fd, `guarantorDocuments[${index}][file]`, doc.file);
       }
-
       fd.append(
         `guarantorDocuments[${index}][name]`,
-        doc?.name || doc?.originalFilename || `Document ${index + 1}`,
+        doc?.name || doc?.originalFilename || `Document ${index + 1}`
       );
-
       if (doc?.filePath) {
         fd.append(`guarantorDocuments[${index}][filePath]`, doc.filePath);
       }
@@ -356,26 +269,20 @@ const KYCForm = ({
   // ============================================================
   // CLIENT PHOTO
   // ============================================================
-
   const handleClientPhotoChange = (file) => {
     if (file) {
       const reader = new FileReader();
-
       reader.onloadend = () => {
         setClientPhotoPreview(reader.result);
-
         if (parentOnFileChange) {
           parentOnFileChange(file);
         }
       };
-
       reader.readAsDataURL(file);
-
       setClientPhotoFile(file);
     } else {
       setClientPhotoPreview(null);
       setClientPhotoFile(null);
-
       if (parentOnFileChange) {
         parentOnFileChange(null);
       }
@@ -385,17 +292,13 @@ const KYCForm = ({
   // ============================================================
   // GUARANTOR PHOTO
   // ============================================================
-
   const handleGuarantorPhotoChange = (file) => {
     if (file) {
       const reader = new FileReader();
-
       reader.onloadend = () => {
         setGuarantorPhotoPreview(reader.result);
       };
-
       reader.readAsDataURL(file);
-
       setGuarantorPhotoFile(file);
     } else {
       setGuarantorPhotoPreview(null);
@@ -406,7 +309,6 @@ const KYCForm = ({
   // ============================================================
   // STEP NAVIGATION
   // ============================================================
-
   const handleNext = (currentStep) => {
     if (currentStep < totalSteps) {
       setStep(currentStep + 1);
@@ -418,14 +320,12 @@ const KYCForm = ({
     if (step > 1) {
       setStep(step - 1);
     }
-
     setError(null);
   };
 
   // ============================================================
-  // SAVE DRAFT - OFFLINE FIRST
+  // SAVE DRAFT - SERVER ONLY
   // ============================================================
-
   const saveDraft = useCallback(async () => {
     if (!userId || !draftUuid) {
       setDraftStatus(!userId ? "User not logged in" : "Draft ID missing");
@@ -436,39 +336,13 @@ const KYCForm = ({
       return;
     }
 
+    if (!isNetworkAvailable()) {
+      setDraftStatus("No internet – draft not saved");
+      return;
+    }
+
     try {
-      setDraftStatus("...");
-
-      // ======================================================
-      // ALWAYS SAVE TO INDEXEDDB FIRST
-      // ======================================================
-
-      await saveOfflineDraft({
-        userId,
-        draftUuid,
-        formData,
-        currentStep: step,
-        draftFiles,
-        clientPhotoFile,
-        guarantorPhotoFile,
-        collateralPhotos,
-        ownershipDocuments,
-        clientDocuments,
-        guarantorDocuments,
-      });
-
-      // ======================================================
-      // NO INTERNET
-      // ======================================================
-
-      if (!isNetworkAvailable()) {
-        setDraftStatus("Saved offline");
-        return;
-      }
-
-      // ======================================================
-      // INTERNET AVAILABLE
-      // ======================================================
+      setDraftStatus("Saving...");
 
       const fd = buildDraftFormData({
         userId,
@@ -499,16 +373,7 @@ const KYCForm = ({
         throw new Error(data.message || "Draft save failed");
       }
 
-      // ======================================================
-      // MARK LOCAL COPY AS SYNCED
-      // ======================================================
-
-      await markDraftSynced(userId, draftUuid);
-
-      // ======================================================
-      // UPDATE SERVER FILE METADATA
-      // ======================================================
-
+      // Update server file metadata
       if (data.draftFiles) {
         setDraftFiles(data.draftFiles);
 
@@ -516,7 +381,6 @@ const KYCForm = ({
           setCollateralPhotos((prev) =>
             data.draftFiles.collateralPhotos.map((savedDoc, index) => {
               const current = prev[index] || {};
-
               return {
                 ...current,
                 ...savedDoc,
@@ -524,7 +388,7 @@ const KYCForm = ({
                 size: savedDoc.fileSize ?? current.size ?? 0,
                 file: null,
               };
-            }),
+            })
           );
         }
 
@@ -532,7 +396,6 @@ const KYCForm = ({
           setOwnershipDocuments((prev) =>
             data.draftFiles.ownershipDocuments.map((savedDoc, index) => {
               const current = prev[index] || {};
-
               return {
                 ...current,
                 ...savedDoc,
@@ -540,7 +403,7 @@ const KYCForm = ({
                 size: savedDoc.fileSize ?? current.size ?? 0,
                 file: null,
               };
-            }),
+            })
           );
         }
 
@@ -548,7 +411,6 @@ const KYCForm = ({
           setClientDocuments((prev) =>
             data.draftFiles.clientDocuments.map((savedDoc, index) => {
               const current = prev[index] || {};
-
               return {
                 ...current,
                 ...savedDoc,
@@ -556,7 +418,7 @@ const KYCForm = ({
                 size: savedDoc.fileSize ?? current.size ?? 0,
                 file: null,
               };
-            }),
+            })
           );
         }
 
@@ -564,7 +426,6 @@ const KYCForm = ({
           setGuarantorDocuments((prev) =>
             data.draftFiles.guarantorDocuments.map((savedDoc, index) => {
               const current = prev[index] || {};
-
               return {
                 ...current,
                 ...savedDoc,
@@ -572,7 +433,7 @@ const KYCForm = ({
                 size: savedDoc.fileSize ?? current.size ?? 0,
                 file: null,
               };
-            }),
+            })
           );
         }
 
@@ -580,11 +441,10 @@ const KYCForm = ({
         setGuarantorPhotoFile(null);
       }
 
-      setDraftStatus(` ${new Date().toLocaleTimeString()}`);
+      setDraftStatus(`Saved ${new Date().toLocaleTimeString()}`);
     } catch (err) {
-      console.error("Online draft save failed. Keeping offline copy:", err);
-
-      setDraftStatus("Saved offline - waiting for internet");
+      console.error("Draft save error:", err);
+      setDraftStatus("Save failed");
     }
   }, [
     userId,
@@ -603,7 +463,6 @@ const KYCForm = ({
   // ============================================================
   // AUTOSAVE EVERY 2 SECONDS AFTER CHANGES
   // ============================================================
-
   useEffect(() => {
     if (!userId || !draftLoadedRef.current || loadingDraftRef.current) {
       return;
@@ -623,13 +482,8 @@ const KYCForm = ({
   }, [saveDraft, userId]);
 
   // ============================================================
-  // LOAD DRAFT
-  //
-  // PRIORITY:
-  // 1. IndexedDB
-  // 2. Server
+  // LOAD DRAFT FROM SERVER
   // ============================================================
-
   useEffect(() => {
     if (draftLoadedRef.current || !userId || !draftUuid) {
       return;
@@ -638,310 +492,110 @@ const KYCForm = ({
     loadingDraftRef.current = true;
 
     const loadDraft = async () => {
-      let loaded = false;
+      if (!isNetworkAvailable()) {
+        setDraftStatus("Offline – cannot load draft");
+        draftLoadedRef.current = true;
+        loadingDraftRef.current = false;
+        return;
+      }
 
       try {
-        // ======================================================
-        // 1. CHECK INDEXEDDB FIRST
-        // ======================================================
-
-        const offlineDraft = await getOfflineDraft(userId, draftUuid);
-
-        if (offlineDraft) {
-          console.log("Loading KYC draft from IndexedDB");
-
-          const savedFormData = offlineDraft.formData || {};
-
-          if (parentFormData) {
-            Object.entries(savedFormData).forEach(([key, value]) => {
-              parentOnChange?.({
-                target: {
-                  name: key,
-                  value,
-                },
-              });
-            });
-          } else {
-            setLocalFormData(savedFormData);
-          }
-
-          if (offlineDraft.currentStep) {
-            setStep(Number(offlineDraft.currentStep));
-          }
-
-          const savedFiles = offlineDraft.draftFiles || {
-            clientPhoto: null,
-            guarantorPhoto: null,
-            collateralPhotos: [],
-            ownershipDocuments: [],
-            clientDocuments: [],
-            guarantorDocuments: [],
-          };
-
-          setDraftFiles(savedFiles);
-
-          // ====================================================
-          // CLIENT PHOTO
-          // ====================================================
-
-          if (offlineDraft.clientPhotoFile) {
-            const url = URL.createObjectURL(offlineDraft.clientPhotoFile);
-
-            setClientPhotoPreview(url);
-          } else if (savedFiles.clientPhoto?.filePath) {
-            setClientPhotoPreview(getFileUrl(savedFiles.clientPhoto.filePath));
-          }
-
-          // ====================================================
-          // GUARANTOR PHOTO
-          // ====================================================
-
-          if (offlineDraft.guarantorPhotoFile) {
-            const url = URL.createObjectURL(offlineDraft.guarantorPhotoFile);
-
-            setGuarantorPhotoPreview(url);
-          } else if (savedFiles.guarantorPhoto?.filePath) {
-            setGuarantorPhotoPreview(
-              getFileUrl(savedFiles.guarantorPhoto.filePath),
-            );
-          }
-
-          // ====================================================
-          // COLLATERAL PHOTOS
-          // ====================================================
-
-          if (
-            Array.isArray(offlineDraft.collateralPhotos) &&
-            offlineDraft.collateralPhotos.length
-          ) {
-            setCollateralPhotos(
-              offlineDraft.collateralPhotos.map((doc) => ({
-                ...doc,
-                name: doc.name || "Photo",
-                size: doc.size || doc.fileSize || 0,
-                file: doc.file || null,
-              })),
-            );
-          } else if (Array.isArray(savedFiles.collateralPhotos)) {
-            setCollateralPhotos(
-              savedFiles.collateralPhotos.map((doc) => ({
-                ...doc,
-                name: doc.name || "Photo",
-                size: doc.fileSize || 0,
-                file: null,
-              })),
-            );
-          }
-
-          // ====================================================
-          // OWNERSHIP DOCUMENTS
-          // ====================================================
-
-          if (
-            Array.isArray(offlineDraft.ownershipDocuments) &&
-            offlineDraft.ownershipDocuments.length
-          ) {
-            setOwnershipDocuments(
-              offlineDraft.ownershipDocuments.map((doc) => ({
-                ...doc,
-                name: doc.name || "Document",
-                size: doc.size || doc.fileSize || 0,
-                file: doc.file || null,
-              })),
-            );
-          } else if (Array.isArray(savedFiles.ownershipDocuments)) {
-            setOwnershipDocuments(
-              savedFiles.ownershipDocuments.map((doc) => ({
-                ...doc,
-                name: doc.name || "Document",
-                size: doc.fileSize || 0,
-                file: null,
-              })),
-            );
-          }
-
-          // ====================================================
-          // CLIENT DOCUMENTS
-          // ====================================================
-
-          if (
-            Array.isArray(offlineDraft.clientDocuments) &&
-            offlineDraft.clientDocuments.length
-          ) {
-            setClientDocuments(
-              offlineDraft.clientDocuments.map((doc) => ({
-                ...doc,
-                name: doc.name || doc.originalFilename || "Document",
-                size: doc.size || doc.fileSize || 0,
-                file: doc.file || null,
-              })),
-            );
-          } else if (Array.isArray(savedFiles.clientDocuments)) {
-            setClientDocuments(
-              savedFiles.clientDocuments.map((doc) => ({
-                ...doc,
-                name: doc.name || doc.originalFilename || "Document",
-                size: doc.fileSize || 0,
-                file: null,
-              })),
-            );
-          }
-
-          // ====================================================
-          // GUARANTOR DOCUMENTS
-          // ====================================================
-
-          if (
-            Array.isArray(offlineDraft.guarantorDocuments) &&
-            offlineDraft.guarantorDocuments.length
-          ) {
-            setGuarantorDocuments(
-              offlineDraft.guarantorDocuments.map((doc) => ({
-                ...doc,
-                name: doc.name || doc.originalFilename || "Document",
-                size: doc.size || doc.fileSize || 0,
-                file: doc.file || null,
-              })),
-            );
-          } else if (Array.isArray(savedFiles.guarantorDocuments)) {
-            setGuarantorDocuments(
-              savedFiles.guarantorDocuments.map((doc) => ({
-                ...doc,
-                name: doc.name || doc.originalFilename || "Document",
-                size: doc.fileSize || 0,
-                file: null,
-              })),
-            );
-          }
-
-          if (savedFormData.guarantorEmployeeType) {
-            setEmployeeType(savedFormData.guarantorEmployeeType);
-          }
-
-          setDraftStatus(
-            offlineDraft.synced ? "Draft loaded" : "Offline draft loaded",
-          );
-
-          loaded = true;
-        }
-
-        // ======================================================
-        // 2. IF NO LOCAL DRAFT, LOAD SERVER DRAFT
-        // ======================================================
-
-        if (!loaded && isNetworkAvailable()) {
-          const res = await fetch(
-            `${API_BASE}/draft/${draftUuid}?userId=${encodeURIComponent(
-              userId,
-            )}`,
-          );
-
-          if (res.ok) {
-            const data = await res.json();
-
-            if (data.success && data.draft) {
-              const savedFormData = data.draft.formData || {};
-
-              if (parentFormData) {
-                Object.entries(savedFormData).forEach(([key, value]) => {
-                  parentOnChange?.({
-                    target: {
-                      name: key,
-                      value,
-                    },
-                  });
-                });
-              } else {
-                setLocalFormData(savedFormData);
-              }
-
-              if (data.draft.currentStep) {
-                setStep(Number(data.draft.currentStep));
-              }
-
-              const savedFiles = data.draft.draftFiles || {};
-
-              setDraftFiles(savedFiles);
-
-              if (savedFiles.clientPhoto?.filePath) {
-                setClientPhotoPreview(
-                  getFileUrl(savedFiles.clientPhoto.filePath),
-                );
-              }
-
-              if (savedFiles.guarantorPhoto?.filePath) {
-                setGuarantorPhotoPreview(
-                  getFileUrl(savedFiles.guarantorPhoto.filePath),
-                );
-              }
-
-              if (Array.isArray(savedFiles.collateralPhotos)) {
-                setCollateralPhotos(
-                  savedFiles.collateralPhotos.map((doc) => ({
-                    ...doc,
-                    name: doc.name || "Photo",
-                    size: doc.fileSize || 0,
-                    file: null,
-                  })),
-                );
-              }
-
-              if (Array.isArray(savedFiles.ownershipDocuments)) {
-                setOwnershipDocuments(
-                  savedFiles.ownershipDocuments.map((doc) => ({
-                    ...doc,
-                    name: doc.name || "Document",
-                    size: doc.fileSize || 0,
-                    file: null,
-                  })),
-                );
-              }
-
-              if (Array.isArray(savedFiles.clientDocuments)) {
-                setClientDocuments(
-                  savedFiles.clientDocuments.map((doc) => ({
-                    ...doc,
-                    name: doc.name || doc.originalFilename || "Document",
-                    size: doc.fileSize || 0,
-                    file: null,
-                  })),
-                );
-              }
-
-              if (Array.isArray(savedFiles.guarantorDocuments)) {
-                setGuarantorDocuments(
-                  savedFiles.guarantorDocuments.map((doc) => ({
-                    ...doc,
-                    name: doc.name || doc.originalFilename || "Document",
-                    size: doc.fileSize || 0,
-                    file: null,
-                  })),
-                );
-              }
-
-              if (savedFormData.guarantorEmployeeType) {
-                setEmployeeType(savedFormData.guarantorEmployeeType);
-              }
-
-              setDraftStatus("Draft loaded");
-
-              loaded = true;
-            }
-          } else if (res.status !== 404) {
-            console.error("Server draft loading failed");
-          }
-        }
-
-        draftLoadedRef.current = true;
-      } catch (err) {
-        console.error("Load draft error:", err);
-
-        setDraftStatus(
-          loaded ? "Offline draft loaded" : "Unable to load draft",
+        const res = await fetch(
+          `${API_BASE}/draft/${draftUuid}?userId=${encodeURIComponent(userId)}`
         );
 
-        draftLoadedRef.current = true;
+        if (res.ok) {
+          const data = await res.json();
+
+          if (data.success && data.draft) {
+            const savedFormData = data.draft.formData || {};
+
+            if (parentFormData) {
+              Object.entries(savedFormData).forEach(([key, value]) => {
+                parentOnChange?.({
+                  target: {
+                    name: key,
+                    value,
+                  },
+                });
+              });
+            } else {
+              setLocalFormData(savedFormData);
+            }
+
+            if (data.draft.currentStep) {
+              setStep(Number(data.draft.currentStep));
+            }
+
+            const savedFiles = data.draft.draftFiles || {};
+            setDraftFiles(savedFiles);
+
+            if (savedFiles.clientPhoto?.filePath) {
+              setClientPhotoPreview(getFileUrl(savedFiles.clientPhoto.filePath));
+            }
+
+            if (savedFiles.guarantorPhoto?.filePath) {
+              setGuarantorPhotoPreview(getFileUrl(savedFiles.guarantorPhoto.filePath));
+            }
+
+            if (Array.isArray(savedFiles.collateralPhotos)) {
+              setCollateralPhotos(
+                savedFiles.collateralPhotos.map((doc) => ({
+                  ...doc,
+                  name: doc.name || "Photo",
+                  size: doc.fileSize || 0,
+                  file: null,
+                }))
+              );
+            }
+
+            if (Array.isArray(savedFiles.ownershipDocuments)) {
+              setOwnershipDocuments(
+                savedFiles.ownershipDocuments.map((doc) => ({
+                  ...doc,
+                  name: doc.name || "Document",
+                  size: doc.fileSize || 0,
+                  file: null,
+                }))
+              );
+            }
+
+            if (Array.isArray(savedFiles.clientDocuments)) {
+              setClientDocuments(
+                savedFiles.clientDocuments.map((doc) => ({
+                  ...doc,
+                  name: doc.name || doc.originalFilename || "Document",
+                  size: doc.fileSize || 0,
+                  file: null,
+                }))
+              );
+            }
+
+            if (Array.isArray(savedFiles.guarantorDocuments)) {
+              setGuarantorDocuments(
+                savedFiles.guarantorDocuments.map((doc) => ({
+                  ...doc,
+                  name: doc.name || doc.originalFilename || "Document",
+                  size: doc.fileSize || 0,
+                  file: null,
+                }))
+              );
+            }
+
+            if (savedFormData.guarantorEmployeeType) {
+              setEmployeeType(savedFormData.guarantorEmployeeType);
+            }
+
+            setDraftStatus("Draft loaded");
+          }
+        } else if (res.status !== 404) {
+          console.error("Server draft loading failed");
+        }
+      } catch (err) {
+        console.error("Load draft error:", err);
+        setDraftStatus("Unable to load draft");
       } finally {
+        draftLoadedRef.current = true;
         loadingDraftRef.current = false;
       }
     };
@@ -950,107 +604,8 @@ const KYCForm = ({
   }, [userId, draftUuid, getFileUrl, parentFormData, parentOnChange]);
 
   // ============================================================
-  // AUTOMATIC OFFLINE DRAFT SYNC
-  // ============================================================
-
-  useEffect(() => {
-    const syncPendingDrafts = async () => {
-      if (!isNetworkAvailable()) {
-        return;
-      }
-
-      try {
-        const pendingDrafts = await getPendingOfflineDrafts();
-
-        if (!pendingDrafts.length) {
-          return;
-        }
-
-        console.log(`Found ${pendingDrafts.length} pending offline draft(s)`);
-
-        for (const draft of pendingDrafts) {
-          try {
-            const fd = buildDraftFormData({
-              userId: draft.userId,
-              draftUuid: draft.draftUuid,
-              currentStep: draft.currentStep,
-              formData: draft.formData,
-              draftFiles: draft.draftFiles || {},
-              clientPhotoFile: draft.clientPhotoFile,
-              guarantorPhotoFile: draft.guarantorPhotoFile,
-              collateralPhotos: draft.collateralPhotos || [],
-              ownershipDocuments: draft.ownershipDocuments || [],
-              clientDocuments: draft.clientDocuments || [],
-              guarantorDocuments: draft.guarantorDocuments || [],
-            });
-
-            const res = await fetch(`${API_BASE}/save-draft`, {
-              method: "POST",
-              body: fd,
-            });
-
-            if (!res.ok) {
-              throw new Error(`Server returned ${res.status}`);
-            }
-
-            const data = await res.json();
-
-            if (!data.success) {
-              throw new Error(data.message || "Server rejected draft");
-            }
-
-            await markDraftSynced(draft.userId, draft.draftUuid);
-
-            console.log(`Draft ${draft.draftUuid} synced successfully`);
-
-            if (
-              String(draft.userId) === String(userId) &&
-              String(draft.draftUuid) === String(draftUuid)
-            ) {
-              setDraftStatus("Offline draft synced");
-            }
-
-            if (
-              data.draftFiles &&
-              String(draft.userId) === String(userId) &&
-              String(draft.draftUuid) === String(draftUuid)
-            ) {
-              setDraftFiles(data.draftFiles);
-            }
-          } catch (err) {
-            console.error(`Failed to sync draft ${draft.draftUuid}:`, err);
-
-            if (!isNetworkAvailable()) {
-              break;
-            }
-          }
-        }
-      } catch (err) {
-        console.error("Offline draft sync error:", err);
-      }
-    };
-
-    const handleOnline = () => {
-      console.log("Internet connection restored. Syncing drafts...");
-
-      syncPendingDrafts();
-    };
-
-    window.addEventListener("online", handleOnline);
-
-    if (isNetworkAvailable()) {
-      syncPendingDrafts();
-    }
-
-    return () => {
-      window.removeEventListener("online", handleOnline);
-    };
-  }, [userId, draftUuid]);
-
-  // ============================================================
   // SUBMIT ALL
   // ============================================================
-
   const submitAll = async () => {
     if (!userId) {
       setError("User not authenticated");
@@ -1062,34 +617,27 @@ const KYCForm = ({
 
     try {
       const fd = new FormData();
-
       fd.append("userId", String(userId));
-
       fd.append("draftUuid", draftUuid);
 
       const draftFilesPayload = {
         clientPhoto: draftFiles.clientPhoto,
-
         guarantorPhoto: draftFiles.guarantorPhoto,
-
         collateralPhotos: collateralPhotos.map((doc) => ({
           name: doc.name,
           fileSize: doc.size,
           filePath: doc.filePath || null,
         })),
-
         ownershipDocuments: ownershipDocuments.map((doc) => ({
           name: doc.name,
           fileSize: doc.size,
           filePath: doc.filePath || null,
         })),
-
         clientDocuments: clientDocuments.map((doc) => ({
           name: doc.name,
           fileSize: doc.size,
           filePath: doc.filePath || null,
         })),
-
         guarantorDocuments: guarantorDocuments.map((doc) => ({
           name: doc.name,
           fileSize: doc.size,
@@ -1099,10 +647,7 @@ const KYCForm = ({
 
       fd.append("draftFiles", JSON.stringify(draftFilesPayload));
 
-      // ========================================================
       // TEXT FIELDS
-      // ========================================================
-
       const textFields = {
         // Step 1
         firstName: formData.firstName,
@@ -1235,121 +780,77 @@ const KYCForm = ({
         }
       });
 
-      // ========================================================
       // REFERENCES
-      // ========================================================
-
       const references = formData.references || [];
-
       if (references.length > 0) {
         fd.append("references", JSON.stringify(references));
       }
 
-      // ========================================================
       // LOAN HISTORY
-      // ========================================================
-
       const loans = formData.loans || [];
-
       if (loans.length > 0) {
         fd.append("loans", JSON.stringify(loans));
       }
 
-      // ========================================================
       // CLIENT PHOTO
-      // ========================================================
-
       if (clientPhotoFile instanceof File) {
         fd.append("clientPhoto", clientPhotoFile);
       }
 
-      // ========================================================
       // GUARANTOR PHOTO
-      // ========================================================
-
       if (guarantorPhotoFile instanceof File) {
         fd.append("guarantorPhoto", guarantorPhotoFile);
       }
 
-      // ========================================================
       // COLLATERAL PHOTOS
-      // ========================================================
-
       collateralPhotos.forEach((doc, index) => {
         if (doc?.file instanceof File) {
           fd.append(`collateralPhotos[${index}][file]`, doc.file);
         }
-
-        fd.append(
-          `collateralPhotos[${index}][name]`,
-          doc.name || `Photo ${index + 1}`,
-        );
-
+        fd.append(`collateralPhotos[${index}][name]`, doc.name || `Photo ${index + 1}`);
         if (doc?.filePath) {
           fd.append(`collateralPhotos[${index}][filePath]`, doc.filePath);
         }
       });
 
-      // ========================================================
       // OWNERSHIP DOCUMENTS
-      // ========================================================
-
       ownershipDocuments.forEach((doc, index) => {
         if (doc?.file instanceof File) {
           fd.append(`ownershipDocuments[${index}][file]`, doc.file);
         }
-
-        fd.append(
-          `ownershipDocuments[${index}][name]`,
-          doc.name || `Document ${index + 1}`,
-        );
-
+        fd.append(`ownershipDocuments[${index}][name]`, doc.name || `Document ${index + 1}`);
         if (doc?.filePath) {
           fd.append(`ownershipDocuments[${index}][filePath]`, doc.filePath);
         }
       });
 
-      // ========================================================
       // CLIENT DOCUMENTS
-      // ========================================================
-
       clientDocuments.forEach((doc, index) => {
         if (doc?.file instanceof File) {
           fd.append(`clientDocuments[${index}][file]`, doc.file);
         }
-
         fd.append(
           `clientDocuments[${index}][name]`,
-          doc?.name || doc?.originalFilename || `Document ${index + 1}`,
+          doc?.name || doc?.originalFilename || `Document ${index + 1}`
         );
-
         if (doc?.filePath) {
           fd.append(`clientDocuments[${index}][filePath]`, doc.filePath);
         }
       });
 
-      // ========================================================
       // GUARANTOR DOCUMENTS
-      // ========================================================
-
       guarantorDocuments.forEach((doc, index) => {
         if (doc?.file instanceof File) {
           fd.append(`guarantorDocuments[${index}][file]`, doc.file);
         }
-
         fd.append(
           `guarantorDocuments[${index}][name]`,
-          doc?.name || doc?.originalFilename || `Document ${index + 1}`,
+          doc?.name || doc?.originalFilename || `Document ${index + 1}`
         );
-
         if (doc?.filePath) {
           fd.append(`guarantorDocuments[${index}][filePath]`, doc.filePath);
         }
       });
-
-      // ========================================================
-      // SUBMIT
-      // ========================================================
 
       const res = await fetch(`${API_BASE}/submit`, {
         method: "POST",
@@ -1362,10 +863,7 @@ const KYCForm = ({
         throw new Error(data.error || data.message || "Submission failed");
       }
 
-      // ========================================================
       // REMOVE DRAFT UUID
-      // ========================================================
-
       if (
         !selectedDraftUuid &&
         localStorage.getItem("client_kyc_draft_uuid") === draftUuid
@@ -1373,14 +871,9 @@ const KYCForm = ({
         localStorage.removeItem("client_kyc_draft_uuid");
       }
 
-      // ========================================================
-      // SUCCESS
-      // ========================================================
-
       setShowSuccessModal(true);
     } catch (err) {
       console.error("KYC submission error:", err);
-
       setError(err.message || "Submission failed");
     } finally {
       setSaving(false);
@@ -1390,10 +883,8 @@ const KYCForm = ({
   // ============================================================
   // SUCCESS MODAL
   // ============================================================
-
   const closeSuccessModal = () => {
     setShowSuccessModal(false);
-
     if (onCancel) {
       onCancel();
     }
@@ -1402,7 +893,6 @@ const KYCForm = ({
   // ============================================================
   // STYLES
   // ============================================================
-
   const inputStyle = {
     width: "100%",
     padding: "10px 12px",
@@ -1435,7 +925,6 @@ const KYCForm = ({
   // ============================================================
   // COMMON STEP PROPS
   // ============================================================
-
   const stepProps = {
     formData,
     onChange,
@@ -1448,9 +937,8 @@ const KYCForm = ({
   };
 
   // ============================================================
-  // STEP 1
+  // STEP PROPS
   // ============================================================
-
   const step1Props = {
     ...stepProps,
     photoPreview: clientPhotoPreview,
@@ -1459,36 +947,21 @@ const KYCForm = ({
     onCancel,
   };
 
-  // ============================================================
-  // STEP 2
-  // ============================================================
-
   const step2Props = {
     ...stepProps,
     onBack: handleBack,
     onNext: () => handleNext(2),
   };
 
-  // ============================================================
-  // STEP 3
-  // ============================================================
-
   const step3Props = {
     ...stepProps,
     onBack: handleBack,
     onNext: () => handleNext(3),
-
     collateralPhotos,
     ownershipDocuments,
-
     onCollateralPhotosChange: setCollateralPhotos,
-
     onOwnershipDocumentsChange: setOwnershipDocuments,
   };
-
-  // ============================================================
-  // STEP 4
-  // ============================================================
 
   const step4Props = {
     ...stepProps,
@@ -1496,22 +969,12 @@ const KYCForm = ({
     onNext: () => handleNext(4),
   };
 
-  // ============================================================
-  // STEP 5
-  // ============================================================
-
   const step5Props = {
     ...stepProps,
-
     clientDocuments,
-
     handleAddClientDocuments: (e) => {
       const files = Array.from(e.target.files || []);
-
-      if (!files.length) {
-        return;
-      }
-
+      if (!files.length) return;
       setClientDocuments((prev) => [
         ...prev,
         ...files.map((file) => ({
@@ -1520,55 +983,31 @@ const KYCForm = ({
           size: file.size,
         })),
       ]);
-
       e.target.value = "";
     },
-
     removeClientDocument: (index) =>
       setClientDocuments((prev) => prev.filter((_, i) => i !== index)),
-
     renameClientDocument: (index, newName) => {
       setClientDocuments((prev) => {
         const updated = [...prev];
-
-        if (!updated[index]) {
-          return prev;
-        }
-
-        updated[index] = {
-          ...updated[index],
-          name: newName,
-        };
-
+        if (!updated[index]) return prev;
+        updated[index] = { ...updated[index], name: newName };
         return updated;
       });
     },
-
     formatSize,
-
     onBack: handleBack,
-
     onNext: () => handleNext(5),
   };
 
-  // ============================================================
-  // STEP 6
-  // ============================================================
-
   const step6Props = {
     ...stepProps,
-
     guarantorPhotoPreview,
-
     handleGuarantorPhotoChange,
-
     employeeType,
-
     handleEmployeeTypeChange: (e) => {
       const value = e.target.value;
-
       setEmployeeType(value);
-
       onChange({
         target: {
           name: "guarantorEmployeeType",
@@ -1576,28 +1015,16 @@ const KYCForm = ({
         },
       });
     },
-
     onBack: handleBack,
-
     onNext: () => handleNext(6),
   };
 
-  // ============================================================
-  // STEP 7
-  // ============================================================
-
   const step7Props = {
     ...stepProps,
-
     guarantorDocuments,
-
     handleAddGuarantorDocuments: (e) => {
       const files = Array.from(e.target.files || []);
-
-      if (!files.length) {
-        return;
-      }
-
+      if (!files.length) return;
       setGuarantorDocuments((prev) => [
         ...prev,
         ...files.map((file) => ({
@@ -1606,40 +1033,22 @@ const KYCForm = ({
           size: file.size,
         })),
       ]);
-
       e.target.value = "";
     },
-
     removeGuarantorDocument: (index) =>
       setGuarantorDocuments((prev) => prev.filter((_, i) => i !== index)),
-
     renameGuarantorDocument: (index, newName) => {
       setGuarantorDocuments((prev) => {
         const updated = [...prev];
-
-        if (!updated[index]) {
-          return prev;
-        }
-
-        updated[index] = {
-          ...updated[index],
-          name: newName,
-        };
-
+        if (!updated[index]) return prev;
+        updated[index] = { ...updated[index], name: newName };
         return updated;
       });
     },
-
     formatSize,
-
     onBack: handleBack,
-
     onNext: () => handleNext(7),
   };
-
-  // ============================================================
-  // STEP 8
-  // ============================================================
 
   const step8Props = {
     ...stepProps,
@@ -1650,7 +1059,6 @@ const KYCForm = ({
   // ============================================================
   // RENDER
   // ============================================================
-
   return (
     <>
       <div
@@ -1681,10 +1089,7 @@ const KYCForm = ({
           Back to applications
         </button>
 
-        {/* =====================================================
-            STEP INDICATOR
-        ====================================================== */}
-
+        {/* STEP INDICATOR */}
         <div
           style={{
             display: "flex",
@@ -1698,9 +1103,7 @@ const KYCForm = ({
         >
           {stepLabels.map((label, index) => {
             const stepNumber = index + 1;
-
             const isActive = step === stepNumber;
-
             const isCompleted = step > stepNumber;
 
             return (
@@ -1708,38 +1111,27 @@ const KYCForm = ({
                 <span
                   style={{
                     fontSize: isMobile ? "10px" : "13px",
-
                     fontWeight: isActive ? "700" : isCompleted ? "500" : "400",
-
                     color: isActive
                       ? "#1e293b"
                       : isCompleted
                         ? "#f37712"
                         : "#94a3b8",
-
                     borderBottom: isActive ? "2px solid #fc821f" : "none",
-
                     paddingBottom: "4px",
-
                     textTransform: "uppercase",
-
                     letterSpacing: "0.3px",
-
                     whiteSpace: "nowrap",
                   }}
                 >
                   {label}
                 </span>
-
                 {index < totalSteps - 1 && (
                   <span
                     style={{
                       color: step > index + 1 ? "#090efa" : "#e2e8f0",
-
                       fontWeight: "300",
-
                       fontSize: isMobile ? "12px" : "16px",
-
                       flexShrink: 0,
                     }}
                   >
@@ -1751,26 +1143,15 @@ const KYCForm = ({
           })}
         </div>
 
-        {/* =====================================================
-            OFFLINE/SAVE STATUS
-        ====================================================== */}
-
+        {/* DRAFT STATUS */}
         {draftStatus && (
           <div
             style={{
               marginBottom: "16px",
               padding: "9px 12px",
               borderRadius: "8px",
-              background:
-                draftStatus.includes("offline") ||
-                draftStatus.includes("Offline")
-                  ? "#fff7ed"
-                  : "#f8fafc",
-              color:
-                draftStatus.includes("offline") ||
-                draftStatus.includes("Offline")
-                  ? "#c2410c"
-                  : "#64748b",
+              background: "#f8fafc",
+              color: "#64748b",
               fontSize: "13px",
               textAlign: "center",
             }}
@@ -1779,10 +1160,7 @@ const KYCForm = ({
           </div>
         )}
 
-        {/* =====================================================
-            ERROR
-        ====================================================== */}
-
+        {/* ERROR */}
         {error && (
           <div
             style={{
@@ -1797,10 +1175,7 @@ const KYCForm = ({
           </div>
         )}
 
-        {/* =====================================================
-            SUBMIT SAVING
-        ====================================================== */}
-
+        {/* SAVING INDICATOR */}
         {saving && (
           <div
             style={{
@@ -1815,27 +1190,17 @@ const KYCForm = ({
 
         <form onSubmit={(e) => e.preventDefault()}>
           {step === 1 && <Step1KYC {...step1Props} />}
-
           {step === 2 && <Step2Business {...step2Props} />}
-
           {step === 3 && <Step3Loan {...step3Props} />}
-
           {step === 4 && <Step4Reference {...step4Props} />}
-
           {step === 5 && <Step5ClientDocuments {...step5Props} />}
-
           {step === 6 && <Step6GuarantorDetails {...step6Props} />}
-
           {step === 7 && <Step7GuarantorDocuments {...step7Props} />}
-
           {step === 8 && <Step8LoanHistory {...step8Props} />}
         </form>
       </div>
 
-      {/* =======================================================
-          SUCCESS MODAL
-      ======================================================== */}
-
+      {/* SUCCESS MODAL */}
       {showSuccessModal && (
         <div
           style={{
@@ -1937,7 +1302,6 @@ const KYCForm = ({
               opacity: 0;
               transform: translateY(20px) scale(0.95);
             }
-
             to {
               opacity: 1;
               transform: translateY(0) scale(1);
