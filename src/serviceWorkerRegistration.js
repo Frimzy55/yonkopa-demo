@@ -5,7 +5,10 @@ const isLocalhost = Boolean(
 );
 
 export function register(config) {
-  if (process.env.NODE_ENV === "production" && "serviceWorker" in navigator) {
+  if (
+    process.env.NODE_ENV === "production" &&
+    "serviceWorker" in navigator
+  ) {
     window.addEventListener("load", () => {
       const swUrl = `${process.env.PUBLIC_URL}/service-worker.js`;
 
@@ -22,18 +25,32 @@ function registerValidSW(swUrl, config) {
   navigator.serviceWorker
     .register(swUrl)
     .then((registration) => {
+      console.log("Service worker registered.");
+
+      registration.update();
+
       registration.onupdatefound = () => {
         const installingWorker = registration.installing;
 
-        if (!installingWorker) return;
+        if (!installingWorker) {
+          return;
+        }
 
         installingWorker.onstatechange = () => {
           if (installingWorker.state === "installed") {
             if (navigator.serviceWorker.controller) {
-              console.log("New version available.");
+              console.log(
+                "New version available. Reloading..."
+              );
+
               config?.updated?.();
+
+              window.location.reload();
             } else {
-              console.log("PWA content cached for offline use.");
+              console.log(
+                "PWA content cached for offline use."
+              );
+
               config?.success?.();
             }
           }
@@ -41,39 +58,52 @@ function registerValidSW(swUrl, config) {
       };
     })
     .catch((error) => {
-      console.error("Service worker registration failed:", error);
+      console.error(
+        "Service worker registration failed:",
+        error
+      );
     });
 }
 
 function checkValidServiceWorker(swUrl, config) {
   fetch(swUrl, {
-    headers: { "Service-Worker": "script" },
+    headers: {
+      "Service-Worker": "script",
+    },
   })
     .then((response) => {
-      const contentType = response.headers.get("content-type");
+      const contentType =
+        response.headers.get("content-type");
 
       if (
         response.status === 404 ||
-        (contentType && !contentType.includes("javascript"))
+        (contentType &&
+          !contentType.includes("javascript"))
       ) {
-        navigator.serviceWorker.ready.then((registration) => {
-          registration.unregister().then(() => {
-            window.location.reload();
-          });
-        });
+        navigator.serviceWorker.ready.then(
+          (registration) => {
+            registration.unregister().then(() => {
+              window.location.reload();
+            });
+          }
+        );
       } else {
         registerValidSW(swUrl, config);
       }
     })
     .catch(() => {
-      console.log("No internet connection. Running offline.");
+      console.log(
+        "No internet connection. Running offline."
+      );
     });
 }
 
 export function unregister() {
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.ready.then((registration) => {
-      registration.unregister();
-    });
+    navigator.serviceWorker.ready.then(
+      (registration) => {
+        registration.unregister();
+      }
+    );
   }
 }
