@@ -1,78 +1,84 @@
-// draftStorage.js
-const DB_NAME = 'KycDraftsDB';
-const STORE_NAME = 'drafts';
-const DB_VERSION = 1;
+import { openDB } from "idb";
 
-function openDB() {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
-    request.onupgradeneeded = (e) => {
-      const db = e.target.result;
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME, { keyPath: 'draftUuid' });
-      }
-    };
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
-  });
+const DB_NAME = "yonkopa_offline_db";
+const DB_VERSION = 3;
+
+const DRAFT_STORE = "drafts";
+
+const dbPromise = openDB(DB_NAME, DB_VERSION, {
+  upgrade(db) {
+    if (!db.objectStoreNames.contains("offline_auth")) {
+      db.createObjectStore("offline_auth", {
+        keyPath: "identifier",
+      });
+    }
+
+    if (!db.objectStoreNames.contains(DRAFT_STORE)) {
+      db.createObjectStore(DRAFT_STORE, {
+        keyPath: "draftUuid",
+      });
+    }
+  },
+});
+
+export async function saveDraftToIndexedDB(
+  draftUuid,
+  data
+) {
+  if (!draftUuid) {
+    throw new Error(
+      "draftUuid is required."
+    );
+  }
+
+  const db = await dbPromise;
+
+  const record = {
+    draftUuid,
+    ...data,
+    updatedAt: Date.now(),
+  };
+
+  await db.put(
+    DRAFT_STORE,
+    record
+  );
 }
 
-// Save draft (formData, files metadata, step, etc.)
-export async function saveDraftToIndexedDB(draftUuid, data) {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, 'readwrite');
-    const store = tx.objectStore(STORE_NAME);
-    const record = { draftUuid, ...data, updatedAt: Date.now() };
-    const request = store.put(record);
-    request.onsuccess = () => resolve();
-    request.onerror = () => reject(request.error);
-    tx.oncomplete = () => db.close();
-  });
+export async function loadDraftFromIndexedDB(
+  draftUuid
+) {
+  if (!draftUuid) {
+    return null;
+  }
+
+  const db = await dbPromise;
+
+  return await db.get(
+    DRAFT_STORE,
+    draftUuid
+  );
 }
 
-// Load draft
-export async function loadDraftFromIndexedDB(draftUuid) {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, 'readonly');
-    const store = tx.objectStore(STORE_NAME);
-    const request = store.get(draftUuid);
-    request.onsuccess = () => resolve(request.result || null);
-    request.onerror = () => reject(request.error);
-    tx.oncomplete = () => db.close();
-  });
+export async function deleteDraftFromIndexedDB(
+  draftUuid
+) {
+  if (!draftUuid) {
+    return;
+  }
+
+  const db = await dbPromise;
+
+  await db.delete(
+    DRAFT_STORE,
+    draftUuid
+  );
 }
 
-// Delete draft
-export async function deleteDraftFromIndexedDB(draftUuid) {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, 'readwrite');
-    const store = tx.objectStore(STORE_NAME);
-    const request = store.delete(draftUuid);
-    request.onsuccess = () => resolve();
-    request.onerror = () => reject(request.error);
-    tx.oncomplete = () => db.close();
-  });
-}
-
-
-
-
-
-
-
-
-// 🟢 NEW: Get all drafts from IndexedDB
 export async function getAllDraftsFromIndexedDB() {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, 'readonly');
-    const store = tx.objectStore(STORE_NAME);
-    const request = store.getAll();
-    request.onsuccess = () => resolve(request.result || []);
-    request.onerror = () => reject(request.error);
-    tx.oncomplete = () => db.close();
-  });
+  const db = await dbPromise;
+
+  return await db.getAll(
+    DRAFT_STORE
+  );
 }
