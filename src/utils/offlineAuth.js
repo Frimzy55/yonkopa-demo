@@ -1,7 +1,7 @@
 import { openDB } from "idb";
 
 const DB_NAME = "yonkopa_offline_db";
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 
 const AUTH_STORE = "offline_auth";
 
