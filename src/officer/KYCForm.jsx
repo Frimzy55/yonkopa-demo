@@ -235,7 +235,7 @@ const KYCForm = ({
       };
 
       await saveDraftToIndexedDB(draftUuid, draftData);
-      setDraftStatus(`Saved locally ${new Date().toLocaleTimeString()}`);
+      setDraftStatus(` ${new Date().toLocaleTimeString()}`);
     } catch (err) {
       console.error("IndexedDB save error:", err);
       setDraftStatus("Local save failed");
@@ -371,9 +371,9 @@ const KYCForm = ({
             setEmployeeType(saved.employeeType);
           }
 
-          setDraftStatus("Draft loaded from local storage");
+          setDraftStatus("");
         } else {
-          setDraftStatus("No local draft found");
+          setDraftStatus("");
         }
       } catch (err) {
         console.error("Load local draft error:", err);

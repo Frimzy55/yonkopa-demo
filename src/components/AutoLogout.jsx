@@ -6,28 +6,65 @@ const AutoLogout = () => {
   const location = useLocation();
 
   useEffect(() => {
-    const timeout = 15 * 60 * 1000;
+    const currentPath = location.pathname;
+
+    // Public pages should not have an auto-logout timer.
+    const publicRoutes = [
+      "/",
+      "/apply",
+      "/demo",
+      "/signup",
+      "/officer-access",
+      "/server-error",
+    ];
+
+    if (publicRoutes.includes(currentPath)) {
+      return;
+    }
+
+    const timeout = 1 * 60 * 1000;
     let timer;
 
     const getLoginRoute = () => {
-      const currentPath = location.pathname;
-      const loginRoutes = ["/officer-access", "/demo", "/signup"];
-
-      // If we're already on a login page, stay there
-      if (loginRoutes.includes(currentPath)) {
-        return currentPath;
+      // Admin and manager use StaffLoginPage
+      if (
+        currentPath === "/admin-dashboard" ||
+        currentPath === "/loan-manager"
+      ) {
+        return "/demo";
       }
 
-      // Fallback to saved route or /demo
-      const savedRoute = sessionStorage.getItem("loginRoute");
-      return savedRoute || "/demo";
+      // Officer-related dashboards use OfficerAccess
+      if (
+        currentPath === "/loan-officer-dashboard" ||
+        currentPath === "/officer-dashboard" ||
+        currentPath === "/loan-supervisor" ||
+        currentPath === "/teller-dashboard"
+      ) {
+        return "/officer-access";
+      }
+
+      // Safe fallback
+      return "/officer-access";
     };
 
     const logout = () => {
+      const loginRoute = getLoginRoute();
+
       localStorage.removeItem("token");
       localStorage.removeItem("user");
+      localStorage.removeItem("role");
+      localStorage.removeItem("offlineMode");
+
       sessionStorage.removeItem("loginRoute");
-      navigate(getLoginRoute(), { replace: true });
+
+      navigate(loginRoute, {
+        replace: true,
+        state: {
+          message:
+            "You have been logged out due to inactivity.",
+        },
+      });
     };
 
     const resetTimer = () => {
@@ -52,6 +89,7 @@ const AutoLogout = () => {
 
     return () => {
       clearTimeout(timer);
+
       events.forEach((event) => {
         window.removeEventListener(event, resetTimer);
       });
