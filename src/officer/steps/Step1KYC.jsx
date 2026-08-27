@@ -13,9 +13,28 @@ const Step1KYC = ({
   blurStyle,
   onNext,
   onCancel,
+  officerFullName,   // <-- new prop
 }) => {
   return (
     <>
+      {/* --- OFFICER NAME BANNER --- */}
+      {officerFullName && (
+        <div
+          style={{
+            marginBottom: "20px",
+            padding: "12px 16px",
+            background: "#eff6ff",
+            border: "1px solid #bfdbfe",
+            borderRadius: "8px",
+            fontSize: "14px",
+            color: "#1e3a8a",
+            textAlign: "center",
+          }}
+        >
+          <strong>Processing Officer:</strong> {officerFullName}
+        </div>
+      )}
+
       {/* --- PROFILE PICTURE --- */}
       <div style={{ marginBottom: "24px", textAlign: "center" }}>
         <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#334155", marginBottom: "12px" }}>

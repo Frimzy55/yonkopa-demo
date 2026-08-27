@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   MdDashboard,
   MdAssignment,
@@ -11,12 +11,12 @@ import {
 } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 
-
 import logo from "../image/yonko1.jpeg";
 import OfficerApplications from "./OfficerApplications";
 import OfficerDashboardContent from "./OfficerDashboardContent";
 import OfficerDrafts from "./OfficerDrafts";
 import KYCForm from "./KYCForm";
+import { getAllDraftsFromIndexedDB } from "../utils/draftStorage"; // 👈 NEW
 
 const API_BASE = process.env.REACT_APP_API_URL
   ? `${process.env.REACT_APP_API_URL}/api/kyc`
@@ -26,7 +26,7 @@ const Officerdasboard = () => {
   const navigate = useNavigate();
 
   const [activePage, setActivePage] = useState("dashboard");
-  const [selectedDraft, setSelectedDraft] = useState(null);
+  const [selectedDraftUuid, setSelectedDraftUuid] = useState(null); // 👈 changed to UUID string
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
@@ -38,31 +38,23 @@ const Officerdasboard = () => {
     }
   });
 
-  // ─── Draft count ──────────────────────────────────────────────────
+  // ─── Draft count from IndexedDB ──────────────────────────────────
   const [draftCount, setDraftCount] = useState(0);
 
-  const fetchDraftCount = async () => {
+  const refreshDraftCount = useCallback(async () => {
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(`${API_BASE}/officer/drafts`, {
-        headers: { Authorization: token ? `Bearer ${token}` : "" },
-      });
-      if (!response.ok) throw new Error("Failed to fetch draft count");
-      const data = await response.json();
-      setDraftCount((data.drafts || []).length);
+      const allDrafts = await getAllDraftsFromIndexedDB();
+      setDraftCount(allDrafts.length);
     } catch (err) {
-      console.error("Error fetching draft count:", err);
+      console.error("Error fetching local draft count:", err);
     }
-  };
-
-  useEffect(() => {
-    if (user) fetchDraftCount();
-  }, [user]);
+  }, []);
 
   // ─── Authentication check ────────────────────────────────────────
   useEffect(() => {
     if (!user) navigate("/officer-access", { replace: true });
-  }, [user, navigate]);
+    else refreshDraftCount(); // load initial count
+  }, [user, navigate, refreshDraftCount]);
 
   // ─── Window resize ───────────────────────────────────────────────
   useEffect(() => {
@@ -81,7 +73,7 @@ const Officerdasboard = () => {
 
   const isMobile = windowWidth < 768;
 
-  // ─── Helpers to get full name and first name ──────────────────
+  // ─── Helpers ──────────────────────────────────────────────────────
   const getFullName = (user) => {
     if (!user) return "Officer";
     if (user.full_name) return user.full_name;
@@ -124,28 +116,27 @@ const Officerdasboard = () => {
     });
   };
 
-
-  const handleViewDraft = (draft) => {
-    if (!draft?.draftUuid) {
-      console.error("Cannot open draft: draftUuid is missing", draft);
+  // 👇 Updated: accept only the draftUuid (string)
+  const handleViewDraft = (draftUuid) => {
+    if (!draftUuid) {
+      console.error("Cannot open draft: draftUuid is missing");
       return;
     }
-    setSelectedDraft(draft);
+    setSelectedDraftUuid(draftUuid);
     setActivePage("kyc");
     if (isMobile) setSidebarOpen(false);
   };
 
-
-
-
   const handleBackFromKyc = () => {
-    setSelectedDraft(null);
+    setSelectedDraftUuid(null);
     setActivePage("draft");
+    refreshDraftCount(); // update draft count after possible deletion/submission
     if (isMobile) setSidebarOpen(false);
   };
 
+  // Called when a draft is deleted from the list
   const handleDraftDeleted = () => {
-    setDraftCount((prev) => Math.max(0, prev - 1));
+    refreshDraftCount();
   };
 
   // ─── Render page content ────────────────────────────────────────
@@ -184,7 +175,7 @@ const Officerdasboard = () => {
           />
         );
       case "kyc":
-        if (!selectedDraft?.draftUuid) {
+        if (!selectedDraftUuid) {
           return (
             <div
               style={{ padding: "40px", textAlign: "center", color: "#64748b" }}
@@ -213,8 +204,9 @@ const Officerdasboard = () => {
         return (
           <KYCForm
             userId={user?.userId || user?.id}
-            draftUuid={selectedDraft.draftUuid}
+            draftUuid={selectedDraftUuid} // 👈 pass UUID only
             onCancel={handleBackFromKyc}
+            officerFullName={fullName}
           />
         );
       default:
@@ -355,7 +347,7 @@ const Officerdasboard = () => {
                 key={item.id}
                 type="button"
                 onClick={() => {
-                  if (item.id !== "kyc") setSelectedDraft(null);
+                  if (item.id !== "kyc") setSelectedDraftUuid(null);
                   setActivePage(item.id);
                   if (isMobile) closeSidebar();
                 }}
@@ -423,7 +415,7 @@ const Officerdasboard = () => {
           overflowY: "auto",
         }}
       >
-        {/* Header (sticky) */}
+        {/* Header */}
         <header
           style={{
             height: "72px",
@@ -515,7 +507,6 @@ const Officerdasboard = () => {
               </span>
             </button>
 
-            {/* Avatar */}
             <div
               style={{
                 width: "38px",
@@ -533,7 +524,6 @@ const Officerdasboard = () => {
               {userInitials}
             </div>
 
-            {/* User info - show only first name, hide username on mobile */}
             <div style={{ lineHeight: "1.3" }}>
               <div
                 style={{
@@ -544,10 +534,9 @@ const Officerdasboard = () => {
               >
                 {firstName}
               </div>
-              {/* Show second line only on desktop AND if it differs from firstName */}
               {!isMobile && loginName !== firstName && (
                 <div
-                  style={{ fontSize: "12px", color: "#94a3b8" /* ash/gray */ }}
+                  style={{ fontSize: "12px", color: "#94a3b8" }}
                 >
                   {loginName}
                 </div>

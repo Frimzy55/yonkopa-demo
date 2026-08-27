@@ -6,10 +6,11 @@ import {
   MdVisibility,
   MdClose,
 } from "react-icons/md";
-
-const API_BASE = process.env.REACT_APP_API_URL
-  ? `${process.env.REACT_APP_API_URL}/api/kyc`
-  : "/api/kyc";
+import {
+  getAllDraftsFromIndexedDB,
+  deleteDraftFromIndexedDB,
+  loadDraftFromIndexedDB,
+} from "../utils/draftStorage"; // adjust path as needed
 
 const OfficerDrafts = ({ user, onViewDraft, onDraftDeleted }) => {
   const [drafts, setDrafts] = useState([]);
@@ -30,25 +31,19 @@ const OfficerDrafts = ({ user, onViewDraft, onDraftDeleted }) => {
 
   const isMobile = windowWidth < 768;
 
+  // ─── Fetch drafts from IndexedDB ─────────────────────────────
   const fetchDrafts = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(`${API_BASE}/officer/drafts`, {
-        headers: {
-          Authorization: token ? `Bearer ${token}` : "",
-        },
-      });
-      if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.message || "Failed to fetch drafts");
-      }
-      const data = await response.json();
-      setDrafts(data.drafts || []);
+      const allDrafts = await getAllDraftsFromIndexedDB();
+      // each draft object: { draftUuid, formData, currentStep, ... }
+      // We'll sort by updatedAt (newest first)
+      const sorted = allDrafts.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+      setDrafts(sorted);
     } catch (err) {
-      console.error("Fetch drafts error:", err);
-      setError(err.message || "Could not load drafts");
+      console.error("Fetch local drafts error:", err);
+      setError("Could not load local drafts");
     } finally {
       setLoading(false);
     }
@@ -64,62 +59,41 @@ const OfficerDrafts = ({ user, onViewDraft, onDraftDeleted }) => {
     setShowDeleteModal(true);
   };
 
-  // ─── Execute delete ───────────────────────────────────────────
+  // ─── Execute delete from IndexedDB ───────────────────────────
   const handleDelete = async () => {
     if (!draftToDelete) return;
     setActionLoading(draftToDelete);
     setShowDeleteModal(false);
     try {
-      const token = localStorage.getItem("token");
-      const userId = user?.userId || user?.id;
-      if (!userId) {
-        alert("User ID not found. Please log in again.");
-        setActionLoading(null);
-        setDraftToDelete(null);
-        return;
-      }
-
-      const response = await fetch(
-        `${API_BASE}/client/draft/${draftToDelete}?userId=${encodeURIComponent(userId)}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: token ? `Bearer ${token}` : "",
-          },
-        }
-      );
-
-      if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.message || "Delete failed");
-      }
-
+      await deleteDraftFromIndexedDB(draftToDelete);
       // Remove from UI
       setDrafts((prev) => prev.filter((d) => d.draftUuid !== draftToDelete));
-      // Notify parent to update sidebar count
+      // Notify parent if needed
       if (onDraftDeleted) onDraftDeleted();
     } catch (err) {
-      console.error("Delete draft error:", err);
-      alert(err.message || "Could not delete draft");
+      console.error("Delete local draft error:", err);
+      alert("Could not delete draft");
     } finally {
       setActionLoading(null);
       setDraftToDelete(null);
     }
   };
 
-  const handleView = (draft) => {
+  // ─── View draft ──────────────────────────────────────────────
+  const handleView = async (draft) => {
+    // We can simply pass the draftUuid to the parent.
+    // The parent component (e.g., KYCForm) will load it from IndexedDB.
     if (onViewDraft) {
-      onViewDraft(draft);
+      onViewDraft(draft.draftUuid); // pass the UUID
     }
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return "—";
+  const formatDate = (timestamp) => {
+    if (!timestamp) return "—";
     try {
-      const date = new Date(dateString);
-      return date.toLocaleString();
+      return new Date(timestamp).toLocaleString();
     } catch {
-      return dateString;
+      return "—";
     }
   };
 
@@ -138,7 +112,7 @@ const OfficerDrafts = ({ user, onViewDraft, onDraftDeleted }) => {
   if (loading) {
     return (
       <div style={{ padding: "40px", textAlign: "center", color: "#64748b" }}>
-        Loading drafts...
+        Loading local drafts...
       </div>
     );
   }
@@ -167,9 +141,9 @@ const OfficerDrafts = ({ user, onViewDraft, onDraftDeleted }) => {
   if (drafts.length === 0) {
     return (
       <div style={{ padding: "60px 20px", textAlign: "center", color: "#94a3b8" }}>
-        <p style={{ fontSize: "18px", margin: 0 }}>No drafts found</p>
+        <p style={{ fontSize: "18px", margin: 0 }}>No local drafts found</p>
         <p style={{ fontSize: "14px", marginTop: "8px" }}>
-          Drafts are created when officers save KYC forms.
+          Drafts are saved only in your current browser.
         </p>
       </div>
     );
@@ -189,7 +163,7 @@ const OfficerDrafts = ({ user, onViewDraft, onDraftDeleted }) => {
             }}
           >
             <h2 style={{ margin: 0, fontSize: "20px", fontWeight: "700", color: "#1e293b" }}>
-              Drafts
+              Local Drafts
             </h2>
             <button
               onClick={fetchDrafts}
@@ -238,12 +212,11 @@ const OfficerDrafts = ({ user, onViewDraft, onDraftDeleted }) => {
                     borderRadius: "20px",
                     fontSize: "12px",
                     fontWeight: "500",
-                    background: draft.status === "submitted" ? "#dcfce7" : "#fef9c3",
-                    color: draft.status === "submitted" ? "#166534" : "#854d0e",
-                    whiteSpace: "nowrap",
+                    background: "#fef9c3",
+                    color: "#854d0e",
                   }}
                 >
-                  {draft.status || "draft"}
+                  draft
                 </span>
               </div>
 
@@ -273,30 +246,28 @@ const OfficerDrafts = ({ user, onViewDraft, onDraftDeleted }) => {
                 >
                   <MdVisibility size={18} /> View
                 </button>
-                {draft.status !== "submitted" && (
-                  <button
-                    onClick={() => confirmDelete(draft.draftUuid)}
-                    disabled={actionLoading === draft.draftUuid}
-                    style={{
-                      flex: 1,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: "6px",
-                      padding: "8px 12px",
-                      background: "#fee2e2",
-                      border: "none",
-                      borderRadius: "8px",
-                      color: "#b91c1c",
-                      fontSize: "14px",
-                      fontWeight: "500",
-                      cursor: actionLoading === draft.draftUuid ? "not-allowed" : "pointer",
-                      opacity: actionLoading === draft.draftUuid ? 0.6 : 1,
-                    }}
-                  >
-                    <MdDeleteOutline size={18} /> Delete
-                  </button>
-                )}
+                <button
+                  onClick={() => confirmDelete(draft.draftUuid)}
+                  disabled={actionLoading === draft.draftUuid}
+                  style={{
+                    flex: 1,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "6px",
+                    padding: "8px 12px",
+                    background: "#fee2e2",
+                    border: "none",
+                    borderRadius: "8px",
+                    color: "#b91c1c",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                    cursor: actionLoading === draft.draftUuid ? "not-allowed" : "pointer",
+                    opacity: actionLoading === draft.draftUuid ? 0.6 : 1,
+                  }}
+                >
+                  <MdDeleteOutline size={18} /> Delete
+                </button>
               </div>
             </div>
           ))}
@@ -422,7 +393,7 @@ const OfficerDrafts = ({ user, onViewDraft, onDraftDeleted }) => {
           }}
         >
           <h2 style={{ margin: 0, fontSize: "24px", fontWeight: "700", color: "#1e293b" }}>
-            Drafts
+            Local Drafts
           </h2>
           <button
             onClick={fetchDrafts}
@@ -468,9 +439,6 @@ const OfficerDrafts = ({ user, onViewDraft, onDraftDeleted }) => {
                 <th style={{ padding: "12px 16px", textAlign: "left", fontSize: "12px", fontWeight: "600", color: "#64748b", textTransform: "uppercase" }}>
                   Updated
                 </th>
-                <th style={{ padding: "12px 16px", textAlign: "left", fontSize: "12px", fontWeight: "600", color: "#64748b", textTransform: "uppercase" }}>
-                  Status
-                </th>
                 <th style={{ padding: "12px 16px", textAlign: "center", fontSize: "12px", fontWeight: "600", color: "#64748b", textTransform: "uppercase" }}>
                   Actions
                 </th>
@@ -496,21 +464,6 @@ const OfficerDrafts = ({ user, onViewDraft, onDraftDeleted }) => {
                   <td style={{ padding: "12px 16px", fontSize: "14px", color: "#64748b" }}>
                     {formatDate(draft.updatedAt)}
                   </td>
-                  <td style={{ padding: "12px 16px", fontSize: "14px" }}>
-                    <span
-                      style={{
-                        display: "inline-block",
-                        padding: "2px 12px",
-                        borderRadius: "20px",
-                        fontSize: "12px",
-                        fontWeight: "500",
-                        background: draft.status === "submitted" ? "#dcfce7" : "#fef9c3",
-                        color: draft.status === "submitted" ? "#166534" : "#854d0e",
-                      }}
-                    >
-                      {draft.status || "draft"}
-                    </span>
-                  </td>
                   <td style={{ padding: "12px 16px", textAlign: "center" }}>
                     <div style={{ display: "flex", justifyContent: "center", gap: "8px" }}>
                       <button
@@ -530,27 +483,25 @@ const OfficerDrafts = ({ user, onViewDraft, onDraftDeleted }) => {
                       >
                         <MdVisibility />
                       </button>
-                      {draft.status !== "submitted" && (
-                        <button
-                          onClick={() => confirmDelete(draft.draftUuid)}
-                          disabled={actionLoading === draft.draftUuid}
-                          style={{
-                            background: "transparent",
-                            border: "none",
-                            color: "#ef4444",
-                            cursor: actionLoading === draft.draftUuid ? "not-allowed" : "pointer",
-                            padding: "4px",
-                            borderRadius: "4px",
-                            display: "inline-flex",
-                            alignItems: "center",
-                            fontSize: "18px",
-                            opacity: actionLoading === draft.draftUuid ? 0.5 : 1,
-                          }}
-                          title="Delete draft"
-                        >
-                          <MdDeleteOutline />
-                        </button>
-                      )}
+                      <button
+                        onClick={() => confirmDelete(draft.draftUuid)}
+                        disabled={actionLoading === draft.draftUuid}
+                        style={{
+                          background: "transparent",
+                          border: "none",
+                          color: "#ef4444",
+                          cursor: actionLoading === draft.draftUuid ? "not-allowed" : "pointer",
+                          padding: "4px",
+                          borderRadius: "4px",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          fontSize: "18px",
+                          opacity: actionLoading === draft.draftUuid ? 0.5 : 1,
+                        }}
+                        title="Delete draft"
+                      >
+                        <MdDeleteOutline />
+                      </button>
                     </div>
                   </td>
                 </tr>

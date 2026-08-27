@@ -170,6 +170,7 @@ const OfficerApplications = ({ user }) => {
           formData={formData}
           onChange={handleInputChange}
           onCancel={handleBack}
+          officerFullName={user?.fullName || ''}
         />
       ) : showVerify ? (
       <OfficerVerifyClient onVerify={handleVerifyClient} />

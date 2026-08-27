@@ -9,6 +9,13 @@ import Step6GuarantorDetails from "./steps/Step6GuarantorDetails";
 import Step7GuarantorDocuments from "./steps/Step7GuarantorDocuments";
 import Step8LoanHistory from "./steps/Step8LoanHistory";
 
+// 🟢 CHANGED: Import IndexedDB helpers instead of using server API
+import {
+  saveDraftToIndexedDB,
+  loadDraftFromIndexedDB,
+  deleteDraftFromIndexedDB,
+} from "../utils/draftStorage";
+
 const API_BASE = process.env.REACT_APP_API_URL
   ? `${process.env.REACT_APP_API_URL}/api/kyc/client`
   : "/api/kyc/client";
@@ -23,6 +30,7 @@ const KYCForm = ({
   onFileChange: parentOnFileChange,
   userId,
   draftUuid: selectedDraftUuid,
+  officerFullName,
 }) => {
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
@@ -85,7 +93,7 @@ const KYCForm = ({
   const [error, setError] = useState(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  // SINGLE FILES
+  // ─── SINGLE FILES ──────────────────────────────────────────────
   const [clientPhotoFile, setClientPhotoFile] = useState(null);
   const [clientPhotoPreview, setClientPhotoPreview] = useState(
     parentPhotoPreview || null,
@@ -93,46 +101,38 @@ const KYCForm = ({
   const [guarantorPhotoFile, setGuarantorPhotoFile] = useState(null);
   const [guarantorPhotoPreview, setGuarantorPhotoPreview] = useState(null);
 
-  // MULTIPLE COLLATERAL / OWNERSHIP FILES
+  // ─── MULTIPLE FILES ────────────────────────────────────────────
+  // Each item: { file: File|Blob, name: string, size: number }
   const [collateralPhotos, setCollateralPhotos] = useState([]);
   const [ownershipDocuments, setOwnershipDocuments] = useState([]);
-
-  // OTHER MULTIPLE DOCUMENTS
   const [clientDocuments, setClientDocuments] = useState([]);
   const [guarantorDocuments, setGuarantorDocuments] = useState([]);
 
   const [employeeType, setEmployeeType] = useState("");
 
-  // SERVER-SAVED FILE METADATA
-  const [draftFiles, setDraftFiles] = useState({
-    clientPhoto: null,
-    guarantorPhoto: null,
-    collateralPhotos: [],
-    ownershipDocuments: [],
-    clientDocuments: [],
-    guarantorDocuments: [],
-  });
+  // 🔴 REMOVED: `draftFiles` server‑sync state – no longer needed
 
-  // ============================================================
-  // FILE URL
-  // ============================================================
-  const getFileUrl = useCallback((filePath) => {
-    if (!filePath) return null;
-    if (
-      filePath.startsWith("http://") ||
-      filePath.startsWith("https://") ||
-      filePath.startsWith("data:")
-    ) {
-      return filePath;
+  // ─── FILE URL HELPERS ──────────────────────────────────────────
+  const getFileUrl = useCallback((file) => {
+    if (!file) return null;
+    if (file instanceof File || file instanceof Blob) {
+      return URL.createObjectURL(file);
     }
-    return `${FILE_BASE_URL}/uploads/${filePath
-      .replace(/^\/+/, "")
-      .replace(/^uploads\/+/i, "")}`;
+    if (typeof file === "string") {
+      if (
+        file.startsWith("http://") ||
+        file.startsWith("https://") ||
+        file.startsWith("data:")
+      ) {
+        return file;
+      }
+      return `${FILE_BASE_URL}/uploads/${file
+        .replace(/^\/+/, "")
+        .replace(/^uploads\/+/i, "")}`;
+    }
+    return null;
   }, []);
 
-  // ============================================================
-  // FILE SIZE
-  // ============================================================
   const formatSize = (bytes) => {
     if (!bytes) return "0 B";
     if (bytes < 1024) return `${bytes} B`;
@@ -140,135 +140,7 @@ const KYCForm = ({
     return `${(bytes / 1048576).toFixed(1)} MB`;
   };
 
-  // ============================================================
-  // NETWORK
-  // ============================================================
-  const isNetworkAvailable = () => {
-    return typeof navigator !== "undefined" && navigator.onLine;
-  };
-
-  // ============================================================
-  // FILE APPENDER
-  // ============================================================
-  const appendFileToFormData = (fd, fieldName, file) => {
-    if (!file) return;
-    if (file instanceof File || file instanceof Blob) {
-      fd.append(fieldName, file, file.name || "file");
-    }
-  };
-
-  // ============================================================
-  // BUILD DRAFT FORMDATA
-  // ============================================================
-  const buildDraftFormData = ({
-    userId,
-    draftUuid,
-    currentStep,
-    formData,
-    draftFiles,
-    clientPhotoFile,
-    guarantorPhotoFile,
-    collateralPhotos,
-    ownershipDocuments,
-    clientDocuments,
-    guarantorDocuments,
-  }) => {
-    const fd = new FormData();
-
-    fd.append("userId", String(userId));
-    fd.append("draftUuid", String(draftUuid));
-    fd.append("currentStep", String(currentStep));
-    fd.append("formData", JSON.stringify(formData || {}));
-
-    const draftFilesPayload = {
-      clientPhoto: draftFiles?.clientPhoto || null,
-      guarantorPhoto: draftFiles?.guarantorPhoto || null,
-      collateralPhotos: (collateralPhotos || []).map((doc) => ({
-        name: doc?.name || "Photo",
-        fileSize: doc?.size || doc?.fileSize || 0,
-        filePath: doc?.filePath || null,
-      })),
-      ownershipDocuments: (ownershipDocuments || []).map((doc) => ({
-        name: doc?.name || "Document",
-        fileSize: doc?.size || doc?.fileSize || 0,
-        filePath: doc?.filePath || null,
-      })),
-      clientDocuments: (clientDocuments || []).map((doc) => ({
-        name: doc?.name || doc?.originalFilename || "Document",
-        fileSize: doc?.size || doc?.fileSize || 0,
-        filePath: doc?.filePath || null,
-      })),
-      guarantorDocuments: (guarantorDocuments || []).map((doc) => ({
-        name: doc?.name || doc?.originalFilename || "Document",
-        fileSize: doc?.size || doc?.fileSize || 0,
-        filePath: doc?.filePath || null,
-      })),
-    };
-
-    fd.append("draftFiles", JSON.stringify(draftFilesPayload));
-
-    // CLIENT PHOTO
-    appendFileToFormData(fd, "clientPhoto", clientPhotoFile);
-
-    // GUARANTOR PHOTO
-    appendFileToFormData(fd, "guarantorPhoto", guarantorPhotoFile);
-
-    // COLLATERAL PHOTOS
-    (collateralPhotos || []).forEach((doc, index) => {
-      if (doc?.file) {
-        appendFileToFormData(fd, `collateralPhotos[${index}][file]`, doc.file);
-      }
-      fd.append(`collateralPhotos[${index}][name]`, doc?.name || `Photo ${index + 1}`);
-      if (doc?.filePath) {
-        fd.append(`collateralPhotos[${index}][filePath]`, doc.filePath);
-      }
-    });
-
-    // OWNERSHIP DOCUMENTS
-    (ownershipDocuments || []).forEach((doc, index) => {
-      if (doc?.file) {
-        appendFileToFormData(fd, `ownershipDocuments[${index}][file]`, doc.file);
-      }
-      fd.append(`ownershipDocuments[${index}][name]`, doc?.name || `Document ${index + 1}`);
-      if (doc?.filePath) {
-        fd.append(`ownershipDocuments[${index}][filePath]`, doc.filePath);
-      }
-    });
-
-    // CLIENT DOCUMENTS
-    (clientDocuments || []).forEach((doc, index) => {
-      if (doc?.file) {
-        appendFileToFormData(fd, `clientDocuments[${index}][file]`, doc.file);
-      }
-      fd.append(
-        `clientDocuments[${index}][name]`,
-        doc?.name || doc?.originalFilename || `Document ${index + 1}`
-      );
-      if (doc?.filePath) {
-        fd.append(`clientDocuments[${index}][filePath]`, doc.filePath);
-      }
-    });
-
-    // GUARANTOR DOCUMENTS
-    (guarantorDocuments || []).forEach((doc, index) => {
-      if (doc?.file) {
-        appendFileToFormData(fd, `guarantorDocuments[${index}][file]`, doc.file);
-      }
-      fd.append(
-        `guarantorDocuments[${index}][name]`,
-        doc?.name || doc?.originalFilename || `Document ${index + 1}`
-      );
-      if (doc?.filePath) {
-        fd.append(`guarantorDocuments[${index}][filePath]`, doc.filePath);
-      }
-    });
-
-    return fd;
-  };
-
-  // ============================================================
-  // CLIENT PHOTO
-  // ============================================================
+  // ─── CLIENT PHOTO ──────────────────────────────────────────────
   const handleClientPhotoChange = (file) => {
     if (file) {
       const reader = new FileReader();
@@ -289,9 +161,7 @@ const KYCForm = ({
     }
   };
 
-  // ============================================================
-  // GUARANTOR PHOTO
-  // ============================================================
+  // ─── GUARANTOR PHOTO ────────────────────────────────────────────
   const handleGuarantorPhotoChange = (file) => {
     if (file) {
       const reader = new FileReader();
@@ -306,9 +176,7 @@ const KYCForm = ({
     }
   };
 
-  // ============================================================
-  // STEP NAVIGATION
-  // ============================================================
+  // ─── STEP NAVIGATION ────────────────────────────────────────────
   const handleNext = (currentStep) => {
     if (currentStep < totalSteps) {
       setStep(currentStep + 1);
@@ -323,146 +191,70 @@ const KYCForm = ({
     setError(null);
   };
 
-  // ============================================================
-  // SAVE DRAFT - SERVER ONLY
-  // ============================================================
-  const saveDraft = useCallback(async () => {
+  // ─── 🟢 CHANGED: SAVE DRAFT LOCALLY (IndexedDB) ──────────────
+  const saveDraftLocally = useCallback(async () => {
     if (!userId || !draftUuid) {
       setDraftStatus(!userId ? "User not logged in" : "Draft ID missing");
       return;
     }
 
-    if (loadingDraftRef.current) {
-      return;
-    }
-
-    if (!isNetworkAvailable()) {
-      setDraftStatus("No internet – draft not saved");
-      return;
-    }
+    if (loadingDraftRef.current) return;
 
     try {
-      setDraftStatus("Saving...");
+      setDraftStatus("...");
 
-      const fd = buildDraftFormData({
-        userId,
-        draftUuid,
+      // Build a serializable structure.
+      // For files, we store the actual Blob/File object (IndexedDB supports it).
+      const draftData = {
+        formData: formData,
         currentStep: step,
-        formData,
-        draftFiles,
-        clientPhotoFile,
-        guarantorPhotoFile,
-        collateralPhotos,
-        ownershipDocuments,
-        clientDocuments,
-        guarantorDocuments,
-      });
+        clientPhoto: clientPhotoFile instanceof File ? clientPhotoFile : null,
+        guarantorPhoto:
+          guarantorPhotoFile instanceof File ? guarantorPhotoFile : null,
+        collateralPhotos: collateralPhotos.map((item) => ({
+          file: item.file instanceof File ? item.file : null,
+          name: item.name || "Photo",
+          size: item.size || 0,
+        })),
+        ownershipDocuments: ownershipDocuments.map((item) => ({
+          file: item.file instanceof File ? item.file : null,
+          name: item.name || "Document",
+          size: item.size || 0,
+        })),
+        clientDocuments: clientDocuments.map((item) => ({
+          file: item.file instanceof File ? item.file : null,
+          name: item.name || "Document",
+          size: item.size || 0,
+        })),
+        guarantorDocuments: guarantorDocuments.map((item) => ({
+          file: item.file instanceof File ? item.file : null,
+          name: item.name || "Document",
+          size: item.size || 0,
+        })),
+        employeeType: employeeType,
+      };
 
-      const res = await fetch(`${API_BASE}/save-draft`, {
-        method: "POST",
-        body: fd,
-      });
-
-      if (!res.ok) {
-        throw new Error(`Server returned ${res.status}`);
-      }
-
-      const data = await res.json();
-
-      if (!data.success) {
-        throw new Error(data.message || "Draft save failed");
-      }
-
-      // Update server file metadata
-      if (data.draftFiles) {
-        setDraftFiles(data.draftFiles);
-
-        if (Array.isArray(data.draftFiles.collateralPhotos)) {
-          setCollateralPhotos((prev) =>
-            data.draftFiles.collateralPhotos.map((savedDoc, index) => {
-              const current = prev[index] || {};
-              return {
-                ...current,
-                ...savedDoc,
-                name: current.name || savedDoc.name,
-                size: savedDoc.fileSize ?? current.size ?? 0,
-                file: null,
-              };
-            })
-          );
-        }
-
-        if (Array.isArray(data.draftFiles.ownershipDocuments)) {
-          setOwnershipDocuments((prev) =>
-            data.draftFiles.ownershipDocuments.map((savedDoc, index) => {
-              const current = prev[index] || {};
-              return {
-                ...current,
-                ...savedDoc,
-                name: current.name || savedDoc.name,
-                size: savedDoc.fileSize ?? current.size ?? 0,
-                file: null,
-              };
-            })
-          );
-        }
-
-        if (Array.isArray(data.draftFiles.clientDocuments)) {
-          setClientDocuments((prev) =>
-            data.draftFiles.clientDocuments.map((savedDoc, index) => {
-              const current = prev[index] || {};
-              return {
-                ...current,
-                ...savedDoc,
-                name: current.name || savedDoc.name,
-                size: savedDoc.fileSize ?? current.size ?? 0,
-                file: null,
-              };
-            })
-          );
-        }
-
-        if (Array.isArray(data.draftFiles.guarantorDocuments)) {
-          setGuarantorDocuments((prev) =>
-            data.draftFiles.guarantorDocuments.map((savedDoc, index) => {
-              const current = prev[index] || {};
-              return {
-                ...current,
-                ...savedDoc,
-                name: current.name || savedDoc.name,
-                size: savedDoc.fileSize ?? current.size ?? 0,
-                file: null,
-              };
-            })
-          );
-        }
-
-        setClientPhotoFile(null);
-        setGuarantorPhotoFile(null);
-      }
-
-      setDraftStatus(`Saved ${new Date().toLocaleTimeString()}`);
+      await saveDraftToIndexedDB(draftUuid, draftData);
+      setDraftStatus(`Saved locally ${new Date().toLocaleTimeString()}`);
     } catch (err) {
-      console.error("Draft save error:", err);
-      setDraftStatus("Save failed");
+      console.error("IndexedDB save error:", err);
+      setDraftStatus("Local save failed");
     }
   }, [
     userId,
     draftUuid,
     formData,
     step,
-    draftFiles,
     clientPhotoFile,
     guarantorPhotoFile,
     collateralPhotos,
     ownershipDocuments,
     clientDocuments,
     guarantorDocuments,
+    employeeType,
   ]);
 
-  // ============================================================
-  // AUTOSAVE EVERY 2 SECONDS AFTER CHANGES
-  // ============================================================
+  // ─── AUTOSAVE (every 2s after changes) ─────────────────────────
   useEffect(() => {
     if (!userId || !draftLoadedRef.current || loadingDraftRef.current) {
       return;
@@ -472,18 +264,16 @@ const KYCForm = ({
       clearTimeout(saveTimeoutRef.current);
     }
 
-    saveTimeoutRef.current = setTimeout(saveDraft, 2000);
+    saveTimeoutRef.current = setTimeout(saveDraftLocally, 2000);
 
     return () => {
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [saveDraft, userId]);
+  }, [saveDraftLocally, userId]);
 
-  // ============================================================
-  // LOAD DRAFT FROM SERVER
-  // ============================================================
+  // ─── 🟢 CHANGED: LOAD DRAFT FROM INDEXEDDB ────────────────────
   useEffect(() => {
     if (draftLoadedRef.current || !userId || !draftUuid) {
       return;
@@ -492,108 +282,102 @@ const KYCForm = ({
     loadingDraftRef.current = true;
 
     const loadDraft = async () => {
-      if (!isNetworkAvailable()) {
-        setDraftStatus("Offline – cannot load draft");
-        draftLoadedRef.current = true;
-        loadingDraftRef.current = false;
-        return;
-      }
-
       try {
-        const res = await fetch(
-          `${API_BASE}/draft/${draftUuid}?userId=${encodeURIComponent(userId)}`
-        );
+        const saved = await loadDraftFromIndexedDB(draftUuid);
 
-        if (res.ok) {
-          const data = await res.json();
+        if (saved) {
+          const savedFormData = saved.formData || {};
 
-          if (data.success && data.draft) {
-            const savedFormData = data.draft.formData || {};
-
-            if (parentFormData) {
-              Object.entries(savedFormData).forEach(([key, value]) => {
-                parentOnChange?.({
-                  target: {
-                    name: key,
-                    value,
-                  },
-                });
-              });
-            } else {
-              setLocalFormData(savedFormData);
-            }
-
-            if (data.draft.currentStep) {
-              setStep(Number(data.draft.currentStep));
-            }
-
-            const savedFiles = data.draft.draftFiles || {};
-            setDraftFiles(savedFiles);
-
-            if (savedFiles.clientPhoto?.filePath) {
-              setClientPhotoPreview(getFileUrl(savedFiles.clientPhoto.filePath));
-            }
-
-            if (savedFiles.guarantorPhoto?.filePath) {
-              setGuarantorPhotoPreview(getFileUrl(savedFiles.guarantorPhoto.filePath));
-            }
-
-            if (Array.isArray(savedFiles.collateralPhotos)) {
-              setCollateralPhotos(
-                savedFiles.collateralPhotos.map((doc) => ({
-                  ...doc,
-                  name: doc.name || "Photo",
-                  size: doc.fileSize || 0,
-                  file: null,
-                }))
-              );
-            }
-
-            if (Array.isArray(savedFiles.ownershipDocuments)) {
-              setOwnershipDocuments(
-                savedFiles.ownershipDocuments.map((doc) => ({
-                  ...doc,
-                  name: doc.name || "Document",
-                  size: doc.fileSize || 0,
-                  file: null,
-                }))
-              );
-            }
-
-            if (Array.isArray(savedFiles.clientDocuments)) {
-              setClientDocuments(
-                savedFiles.clientDocuments.map((doc) => ({
-                  ...doc,
-                  name: doc.name || doc.originalFilename || "Document",
-                  size: doc.fileSize || 0,
-                  file: null,
-                }))
-              );
-            }
-
-            if (Array.isArray(savedFiles.guarantorDocuments)) {
-              setGuarantorDocuments(
-                savedFiles.guarantorDocuments.map((doc) => ({
-                  ...doc,
-                  name: doc.name || doc.originalFilename || "Document",
-                  size: doc.fileSize || 0,
-                  file: null,
-                }))
-              );
-            }
-
-            if (savedFormData.guarantorEmployeeType) {
-              setEmployeeType(savedFormData.guarantorEmployeeType);
-            }
-
-            setDraftStatus("Draft loaded");
+          // Populate form data
+          if (parentFormData) {
+            Object.entries(savedFormData).forEach(([key, value]) => {
+              parentOnChange?.({ target: { name: key, value } });
+            });
+          } else {
+            setLocalFormData(savedFormData);
           }
-        } else if (res.status !== 404) {
-          console.error("Server draft loading failed");
+
+          if (saved.currentStep) {
+            setStep(Number(saved.currentStep));
+          }
+
+          // Restore single photos (Blob/File)
+          if (saved.clientPhoto instanceof Blob) {
+            const file = new File([saved.clientPhoto], "client_photo.jpg", {
+              type: saved.clientPhoto.type || "image/jpeg",
+            });
+            setClientPhotoFile(file);
+            const preview = URL.createObjectURL(file);
+            setClientPhotoPreview(preview);
+          } else {
+            setClientPhotoFile(null);
+            setClientPhotoPreview(null);
+          }
+
+          if (saved.guarantorPhoto instanceof Blob) {
+            const file = new File([saved.guarantorPhoto], "guarantor_photo.jpg", {
+              type: saved.guarantorPhoto.type || "image/jpeg",
+            });
+            setGuarantorPhotoFile(file);
+            const preview = URL.createObjectURL(file);
+            setGuarantorPhotoPreview(preview);
+          } else {
+            setGuarantorPhotoFile(null);
+            setGuarantorPhotoPreview(null);
+          }
+
+          // Restore multiple file arrays
+          if (Array.isArray(saved.collateralPhotos)) {
+            setCollateralPhotos(
+              saved.collateralPhotos.map((item) => ({
+                file: item.file instanceof Blob ? new File([item.file], item.name, { type: item.file.type }) : null,
+                name: item.name || "Photo",
+                size: item.size || 0,
+              }))
+            );
+          }
+
+          if (Array.isArray(saved.ownershipDocuments)) {
+            setOwnershipDocuments(
+              saved.ownershipDocuments.map((item) => ({
+                file: item.file instanceof Blob ? new File([item.file], item.name, { type: item.file.type }) : null,
+                name: item.name || "Document",
+                size: item.size || 0,
+              }))
+            );
+          }
+
+          if (Array.isArray(saved.clientDocuments)) {
+            setClientDocuments(
+              saved.clientDocuments.map((item) => ({
+                file: item.file instanceof Blob ? new File([item.file], item.name, { type: item.file.type }) : null,
+                name: item.name || "Document",
+                size: item.size || 0,
+              }))
+            );
+          }
+
+          if (Array.isArray(saved.guarantorDocuments)) {
+            setGuarantorDocuments(
+              saved.guarantorDocuments.map((item) => ({
+                file: item.file instanceof Blob ? new File([item.file], item.name, { type: item.file.type }) : null,
+                name: item.name || "Document",
+                size: item.size || 0,
+              }))
+            );
+          }
+
+          if (saved.employeeType) {
+            setEmployeeType(saved.employeeType);
+          }
+
+          setDraftStatus("Draft loaded from local storage");
+        } else {
+          setDraftStatus("No local draft found");
         }
       } catch (err) {
-        console.error("Load draft error:", err);
-        setDraftStatus("Unable to load draft");
+        console.error("Load local draft error:", err);
+        setDraftStatus("Unable to load local draft");
       } finally {
         draftLoadedRef.current = true;
         loadingDraftRef.current = false;
@@ -601,11 +385,10 @@ const KYCForm = ({
     };
 
     loadDraft();
-  }, [userId, draftUuid, getFileUrl, parentFormData, parentOnChange]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, draftUuid]); // Only run once on mount
 
-  // ============================================================
-  // SUBMIT ALL
-  // ============================================================
+  // ─── 🟢 CHANGED: SUBMIT (removed draftFiles JSON, added local cleanup) ──
   const submitAll = async () => {
     if (!userId) {
       setError("User not authenticated");
@@ -618,38 +401,13 @@ const KYCForm = ({
     try {
       const fd = new FormData();
       fd.append("userId", String(userId));
+      // We still send draftUuid so the backend can use it if needed (though we removed the DB update)
       fd.append("draftUuid", draftUuid);
 
-      const draftFilesPayload = {
-        clientPhoto: draftFiles.clientPhoto,
-        guarantorPhoto: draftFiles.guarantorPhoto,
-        collateralPhotos: collateralPhotos.map((doc) => ({
-          name: doc.name,
-          fileSize: doc.size,
-          filePath: doc.filePath || null,
-        })),
-        ownershipDocuments: ownershipDocuments.map((doc) => ({
-          name: doc.name,
-          fileSize: doc.size,
-          filePath: doc.filePath || null,
-        })),
-        clientDocuments: clientDocuments.map((doc) => ({
-          name: doc.name,
-          fileSize: doc.size,
-          filePath: doc.filePath || null,
-        })),
-        guarantorDocuments: guarantorDocuments.map((doc) => ({
-          name: doc.name,
-          fileSize: doc.size,
-          filePath: doc.filePath || null,
-        })),
-      };
+      // 🔴 REMOVED: fd.append("draftFiles", JSON.stringify(...)) – no longer needed
 
-      fd.append("draftFiles", JSON.stringify(draftFilesPayload));
-
-      // TEXT FIELDS
+      // ── TEXT FIELDS (unchanged) ──
       const textFields = {
-        // Step 1
         firstName: formData.firstName,
         surname: formData.surname,
         middleName: formData.middleName,
@@ -685,8 +443,7 @@ const KYCForm = ({
         churchLocation: formData.churchLocation,
         pastorName: formData.pastorName,
         pastorContact: formData.pastorContact,
-
-        // Step 2
+        officerName: officerFullName || "",
         businessName: formData.businessName,
         businessSector: formData.businessSector,
         typesOfBusiness: formData.typesOfBusiness,
@@ -700,8 +457,6 @@ const KYCForm = ({
         businessLandmark: formData.businessLandmark,
         minimumSale: formData.minimumSale,
         maximumSale: formData.maximumSale,
-
-        // Step 3
         loanAmount: formData.loanAmount,
         loanPurpose: formData.loanPurpose,
         loanTerm: formData.loanTerm,
@@ -751,8 +506,6 @@ const KYCForm = ({
         recommendedAmount: formData.recommendedAmount,
         recommendedTerm: formData.recommendedTerm,
         recommendationReason: formData.recommendationReason,
-
-        // Step 6
         guarantorEmployeeType: employeeType,
         guarantorRank: formData.guarantorRank,
         guarantorNameOfEmployer: formData.guarantorNameOfEmployer,
@@ -792,39 +545,34 @@ const KYCForm = ({
         fd.append("loans", JSON.stringify(loans));
       }
 
-      // CLIENT PHOTO
+      // ── APPEND FILES ──
+      // Client Photo
       if (clientPhotoFile instanceof File) {
         fd.append("clientPhoto", clientPhotoFile);
       }
 
-      // GUARANTOR PHOTO
+      // Guarantor Photo
       if (guarantorPhotoFile instanceof File) {
         fd.append("guarantorPhoto", guarantorPhotoFile);
       }
 
-      // COLLATERAL PHOTOS
+      // Collateral Photos
       collateralPhotos.forEach((doc, index) => {
         if (doc?.file instanceof File) {
           fd.append(`collateralPhotos[${index}][file]`, doc.file);
         }
         fd.append(`collateralPhotos[${index}][name]`, doc.name || `Photo ${index + 1}`);
-        if (doc?.filePath) {
-          fd.append(`collateralPhotos[${index}][filePath]`, doc.filePath);
-        }
       });
 
-      // OWNERSHIP DOCUMENTS
+      // Ownership Documents
       ownershipDocuments.forEach((doc, index) => {
         if (doc?.file instanceof File) {
           fd.append(`ownershipDocuments[${index}][file]`, doc.file);
         }
         fd.append(`ownershipDocuments[${index}][name]`, doc.name || `Document ${index + 1}`);
-        if (doc?.filePath) {
-          fd.append(`ownershipDocuments[${index}][filePath]`, doc.filePath);
-        }
       });
 
-      // CLIENT DOCUMENTS
+      // Client Documents
       clientDocuments.forEach((doc, index) => {
         if (doc?.file instanceof File) {
           fd.append(`clientDocuments[${index}][file]`, doc.file);
@@ -833,12 +581,9 @@ const KYCForm = ({
           `clientDocuments[${index}][name]`,
           doc?.name || doc?.originalFilename || `Document ${index + 1}`
         );
-        if (doc?.filePath) {
-          fd.append(`clientDocuments[${index}][filePath]`, doc.filePath);
-        }
       });
 
-      // GUARANTOR DOCUMENTS
+      // Guarantor Documents
       guarantorDocuments.forEach((doc, index) => {
         if (doc?.file instanceof File) {
           fd.append(`guarantorDocuments[${index}][file]`, doc.file);
@@ -847,9 +592,6 @@ const KYCForm = ({
           `guarantorDocuments[${index}][name]`,
           doc?.name || doc?.originalFilename || `Document ${index + 1}`
         );
-        if (doc?.filePath) {
-          fd.append(`guarantorDocuments[${index}][filePath]`, doc.filePath);
-        }
       });
 
       const res = await fetch(`${API_BASE}/submit`, {
@@ -863,7 +605,10 @@ const KYCForm = ({
         throw new Error(data.error || data.message || "Submission failed");
       }
 
-      // REMOVE DRAFT UUID
+      // 🟢 CHANGED: Delete local draft from IndexedDB
+      await deleteDraftFromIndexedDB(draftUuid);
+
+      // Remove UUID from localStorage if it's an internal draft
       if (
         !selectedDraftUuid &&
         localStorage.getItem("client_kyc_draft_uuid") === draftUuid
@@ -880,9 +625,7 @@ const KYCForm = ({
     }
   };
 
-  // ============================================================
-  // SUCCESS MODAL
-  // ============================================================
+  // ─── SUCCESS MODAL ──────────────────────────────────────────────
   const closeSuccessModal = () => {
     setShowSuccessModal(false);
     if (onCancel) {
@@ -890,9 +633,7 @@ const KYCForm = ({
     }
   };
 
-  // ============================================================
-  // STYLES
-  // ============================================================
+  // ─── STYLES ─────────────────────────────────────────────────────
   const inputStyle = {
     width: "100%",
     padding: "10px 12px",
@@ -922,9 +663,7 @@ const KYCForm = ({
     e.target.style.borderColor = "#e2e8f0";
   };
 
-  // ============================================================
-  // COMMON STEP PROPS
-  // ============================================================
+  // ─── COMMON STEP PROPS ──────────────────────────────────────────
   const stepProps = {
     formData,
     onChange,
@@ -936,15 +675,14 @@ const KYCForm = ({
     blurStyle,
   };
 
-  // ============================================================
-  // STEP PROPS
-  // ============================================================
+  // ─── STEP-SPECIFIC PROPS ────────────────────────────────────────
   const step1Props = {
     ...stepProps,
     photoPreview: clientPhotoPreview,
     onFileChange: handleClientPhotoChange,
     onNext: () => handleNext(1),
     onCancel,
+    officerFullName,
   };
 
   const step2Props = {
@@ -1054,11 +792,10 @@ const KYCForm = ({
     ...stepProps,
     onBack: handleBack,
     onSubmit: submitAll,
+    officerFullName,
   };
 
-  // ============================================================
-  // RENDER
-  // ============================================================
+  // ─── RENDER ──────────────────────────────────────────────────────
   return (
     <>
       <div

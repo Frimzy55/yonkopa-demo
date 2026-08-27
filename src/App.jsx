@@ -3,7 +3,7 @@ import {
   HashRouter as Router,
   Routes,
   Route,
-  //Navigate,
+  Navigate,
 } from "react-router-dom";
 
 import CustomerLanding from "./auth/CustomerLanding";
@@ -85,8 +85,8 @@ function App() {
       <AutoLogout />
       <div className="App">
         <Routes>
-          {/* DEFAULT ROUTE 
-          <Route path="/" element={<Navigate to="/demo" replace />} />   */}
+           
+          <Route path="/" element={<Navigate to="/demo" replace />} />   
 
           {/* PUBLIC ROUTES */}
           <Route path="/apply" element={<CustomerLanding />} />
@@ -173,8 +173,8 @@ function App() {
             }
           />
 
-          {/* CATCH ALL 
-          <Route path="*" element={<Navigate to="/demo" replace />} />  */}
+           
+          <Route path="*" element={<Navigate to="/demo" replace />} />  
         </Routes>
       </div>
     </Router>
