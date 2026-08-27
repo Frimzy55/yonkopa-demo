@@ -26,7 +26,7 @@ const Officerdasboard = () => {
   const navigate = useNavigate();
 
   const [activePage, setActivePage] = useState("dashboard");
-  const [selectedDraftUuid, setSelectedDraftUuid] = useState(null); // 👈 changed to UUID string
+  const [selectedDraftUuid, setSelectedDraftUuid] = useState(null); // 👈 changed to UUID strin
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 

@@ -9,7 +9,7 @@ import {
 import {
   getAllDraftsFromIndexedDB,
   deleteDraftFromIndexedDB,
-  loadDraftFromIndexedDB,
+  
 } from "../utils/draftStorage"; // adjust path as needed
 
 const OfficerDrafts = ({ user, onViewDraft, onDraftDeleted }) => {
