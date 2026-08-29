@@ -1,3 +1,4 @@
+// Officerdasboard.jsx (fully updated with draft count filter and fetchWithAuth)
 import React, { useState, useEffect, useCallback } from "react";
 import {
   MdDashboard,
@@ -8,7 +9,8 @@ import {
   MdMenu,
   MdClose,
   MdNotificationsNone,
-  MdSend, // 👈 NEW
+  MdSend,
+  MdPeople,
 } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 
@@ -18,6 +20,11 @@ import OfficerDashboardContent from "./OfficerDashboardContent";
 import OfficerDrafts from "./OfficerDrafts";
 import KYCForm from "./KYCForm";
 import { getAllDraftsFromIndexedDB } from "../utils/draftStorage";
+import OfficerSentApplications from "./OfficerSentApplications";
+import OfficerConnect from "./OfficerConnect";
+
+// 👇 Import the auth helper
+import { fetchWithAuth } from "../utils/api";
 
 const API_BASE = process.env.REACT_APP_API_URL
   ? `${process.env.REACT_APP_API_URL}/api/kyc`
@@ -39,35 +46,52 @@ const Officerdasboard = () => {
     }
   });
 
-  // ─── Draft count from IndexedDB ──────────────────────────────────
   const [draftCount, setDraftCount] = useState(0);
+  const [applicationsCount, setApplicationsCount] = useState(0);
 
-  const refreshDraftCount = useCallback(async () => {
+  // ─── Fetch submitted applications count (authenticated) ──────
+  const fetchApplicationsCount = useCallback(async () => {
     try {
-      const allDrafts = await getAllDraftsFromIndexedDB();
-      setDraftCount(allDrafts.length);
+      const data = await fetchWithAuth('/api/kyc/officer/submitted');
+      setApplicationsCount(data.length);
     } catch (err) {
-      console.error("Error fetching local draft count:", err);
+      console.error("Error fetching applications count:", err);
     }
   }, []);
 
-  // ─── Authentication check ────────────────────────────────────────
+  // ─── Refresh draft count (filtered by officer) ──────────────
+  const refreshDraftCount = useCallback(async () => {
+    try {
+      const allDrafts = await getAllDraftsFromIndexedDB();
+      const officerId = user?.userId || user?.id;
+      // Filter drafts belonging to this officer
+      const myDrafts = officerId
+        ? allDrafts.filter((draft) => draft.officerId === officerId)
+        : [];
+      setDraftCount(myDrafts.length);
+    } catch (err) {
+      console.error("Error fetching local draft count:", err);
+    }
+  }, [user]);
+
+  // ─── Authentication check & initial data ─────────────────────
   useEffect(() => {
     if (!user) {
       navigate("/officer-access", { replace: true });
     } else {
       refreshDraftCount();
+      fetchApplicationsCount();
     }
-  }, [user, navigate, refreshDraftCount]);
+  }, [user, navigate, refreshDraftCount, fetchApplicationsCount]);
 
-  // ─── Window resize ───────────────────────────────────────────────
+  // ─── Window resize ─────────────────────────────────────────────
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // ─── Prevent body scroll ────────────────────────────────────────
+  // ─── Prevent body scroll ──────────────────────────────────────
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => {
@@ -77,7 +101,7 @@ const Officerdasboard = () => {
 
   const isMobile = windowWidth < 768;
 
-  // ─── Helpers ─────────────────────────────────────────────────────
+  // ─── Helpers ────────────────────────────────────────────────────
   const getFullName = (user) => {
     if (!user) return "Officer";
     if (user.full_name) return user.full_name;
@@ -108,7 +132,7 @@ const Officerdasboard = () => {
   const loginName = user?.username || user?.email || fullName;
   const userInitials = getInitials(firstName);
 
-  // ─── Handlers ────────────────────────────────────────────────────
+  // ─── Handlers ──────────────────────────────────────────────────
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -142,7 +166,7 @@ const Officerdasboard = () => {
     refreshDraftCount();
   };
 
-  // ─── Render page content ─────────────────────────────────────────
+  // ─── Render page content ──────────────────────────────────────
   const renderPage = () => {
     switch (activePage) {
       case "dashboard":
@@ -150,7 +174,7 @@ const Officerdasboard = () => {
           <OfficerDashboardContent
             user={user}
             isMobile={isMobile}
-            applicationsCount={0}
+            applicationsCount={applicationsCount}
             draftCount={draftCount}
           />
         );
@@ -172,22 +196,8 @@ const Officerdasboard = () => {
           </div>
         );
 
-      case "sentApplications": // 👈 NEW CASE
-        return (
-          <div
-            style={{
-              padding: "40px 16px",
-              textAlign: "center",
-              color: "#64748b",
-            }}
-          >
-            <h2>Sent Applications</h2>
-            <p>All KYC applications that have been submitted will appear here.</p>
-            <p style={{ fontSize: "14px", marginTop: "8px" }}>
-              (You can later integrate this with your backend API.)
-            </p>
-          </div>
-        );
+      case "sentApplications":
+        return <OfficerSentApplications user={user} />;
 
       case "draft":
         return (
@@ -197,6 +207,9 @@ const Officerdasboard = () => {
             onDraftDeleted={handleDraftDeleted}
           />
         );
+
+      case "connect":
+        return <OfficerConnect user={user} />;
 
       case "kyc":
         if (!selectedDraftUuid) {
@@ -251,14 +264,17 @@ const Officerdasboard = () => {
       ? "Applications"
       : activePage === "pendingResubmission"
       ? "Pending Resubmission"
-      : activePage === "sentApplications" // 👈 NEW
+      : activePage === "sentApplications"
       ? "Sent Applications"
       : activePage === "draft"
       ? "Drafts"
+      : activePage === "connect"
+      ? "Officer's Connect"
       : activePage === "kyc"
       ? "Continue KYC"
       : "Dashboard";
 
+  // ─── Menu items ──────────────────────────────────────────────────
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: <MdDashboard /> },
     { id: "applications", label: "Applications", icon: <MdAssignment /> },
@@ -267,12 +283,14 @@ const Officerdasboard = () => {
       label: "Pending Resubmission",
       icon: <MdPendingActions />,
     },
-    { id: "sentApplications", label: "Sent Applications", icon: <MdSend /> }, // 👈 NEW
+    { id: "sentApplications", label: "Sent Applications", icon: <MdSend /> },
     { id: "draft", label: `Drafts (${draftCount})`, icon: <MdDescription /> },
+    { id: "connect", label: "Officer's Connect", icon: <MdPeople /> },
   ];
 
   const closeSidebar = () => setSidebarOpen(false);
 
+  // ─── Render layout ──────────────────────────────────────────────
   return (
     <div
       style={{
@@ -281,7 +299,6 @@ const Officerdasboard = () => {
         background: "#f8fafc",
       }}
     >
-      {/* Mobile overlay */}
       {isMobile && sidebarOpen && (
         <div
           onClick={closeSidebar}
@@ -297,7 +314,6 @@ const Officerdasboard = () => {
         />
       )}
 
-      {/* Sidebar */}
       <aside
         style={{
           width: "250px",
@@ -323,7 +339,6 @@ const Officerdasboard = () => {
           overflowY: "auto",
         }}
       >
-        {/* Logo & close */}
         <div
           style={{
             padding: "20px 20px",
@@ -447,7 +462,6 @@ const Officerdasboard = () => {
           })}
         </nav>
 
-        {/* Logout */}
         <div
           style={{
             padding: "16px 12px",
@@ -478,7 +492,6 @@ const Officerdasboard = () => {
         </div>
       </aside>
 
-      {/* MAIN CONTENT */}
       <main
         style={{
           flex: 1,
@@ -491,7 +504,6 @@ const Officerdasboard = () => {
           overflowY: "auto",
         }}
       >
-        {/* Header */}
         <header
           style={{
             height: "72px",
@@ -644,7 +656,6 @@ const Officerdasboard = () => {
           </div>
         </header>
 
-        {/* Page content */}
         <section
           style={{
             flex: 1,

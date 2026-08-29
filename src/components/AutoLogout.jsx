@@ -22,7 +22,7 @@ const AutoLogout = () => {
       return;
     }
 
-    const timeout = 1 * 60 * 1000;
+    const timeout = 15 * 60 * 1000;
     let timer;
 
     const getLoginRoute = () => {

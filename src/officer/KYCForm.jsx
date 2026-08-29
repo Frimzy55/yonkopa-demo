@@ -208,6 +208,7 @@ const KYCForm = ({
       const draftData = {
         formData: formData,
         currentStep: step,
+        officerId: userId,
         clientPhoto: clientPhotoFile instanceof File ? clientPhotoFile : null,
         guarantorPhoto:
           guarantorPhotoFile instanceof File ? guarantorPhotoFile : null,
@@ -315,9 +316,13 @@ const KYCForm = ({
           }
 
           if (saved.guarantorPhoto instanceof Blob) {
-            const file = new File([saved.guarantorPhoto], "guarantor_photo.jpg", {
-              type: saved.guarantorPhoto.type || "image/jpeg",
-            });
+            const file = new File(
+              [saved.guarantorPhoto],
+              "guarantor_photo.jpg",
+              {
+                type: saved.guarantorPhoto.type || "image/jpeg",
+              },
+            );
             setGuarantorPhotoFile(file);
             const preview = URL.createObjectURL(file);
             setGuarantorPhotoPreview(preview);
@@ -330,40 +335,52 @@ const KYCForm = ({
           if (Array.isArray(saved.collateralPhotos)) {
             setCollateralPhotos(
               saved.collateralPhotos.map((item) => ({
-                file: item.file instanceof Blob ? new File([item.file], item.name, { type: item.file.type }) : null,
+                file:
+                  item.file instanceof Blob
+                    ? new File([item.file], item.name, { type: item.file.type })
+                    : null,
                 name: item.name || "Photo",
                 size: item.size || 0,
-              }))
+              })),
             );
           }
 
           if (Array.isArray(saved.ownershipDocuments)) {
             setOwnershipDocuments(
               saved.ownershipDocuments.map((item) => ({
-                file: item.file instanceof Blob ? new File([item.file], item.name, { type: item.file.type }) : null,
+                file:
+                  item.file instanceof Blob
+                    ? new File([item.file], item.name, { type: item.file.type })
+                    : null,
                 name: item.name || "Document",
                 size: item.size || 0,
-              }))
+              })),
             );
           }
 
           if (Array.isArray(saved.clientDocuments)) {
             setClientDocuments(
               saved.clientDocuments.map((item) => ({
-                file: item.file instanceof Blob ? new File([item.file], item.name, { type: item.file.type }) : null,
+                file:
+                  item.file instanceof Blob
+                    ? new File([item.file], item.name, { type: item.file.type })
+                    : null,
                 name: item.name || "Document",
                 size: item.size || 0,
-              }))
+              })),
             );
           }
 
           if (Array.isArray(saved.guarantorDocuments)) {
             setGuarantorDocuments(
               saved.guarantorDocuments.map((item) => ({
-                file: item.file instanceof Blob ? new File([item.file], item.name, { type: item.file.type }) : null,
+                file:
+                  item.file instanceof Blob
+                    ? new File([item.file], item.name, { type: item.file.type })
+                    : null,
                 name: item.name || "Document",
                 size: item.size || 0,
-              }))
+              })),
             );
           }
 
@@ -561,7 +578,10 @@ const KYCForm = ({
         if (doc?.file instanceof File) {
           fd.append(`collateralPhotos[${index}][file]`, doc.file);
         }
-        fd.append(`collateralPhotos[${index}][name]`, doc.name || `Photo ${index + 1}`);
+        fd.append(
+          `collateralPhotos[${index}][name]`,
+          doc.name || `Photo ${index + 1}`,
+        );
       });
 
       // Ownership Documents
@@ -569,7 +589,10 @@ const KYCForm = ({
         if (doc?.file instanceof File) {
           fd.append(`ownershipDocuments[${index}][file]`, doc.file);
         }
-        fd.append(`ownershipDocuments[${index}][name]`, doc.name || `Document ${index + 1}`);
+        fd.append(
+          `ownershipDocuments[${index}][name]`,
+          doc.name || `Document ${index + 1}`,
+        );
       });
 
       // Client Documents
@@ -579,7 +602,7 @@ const KYCForm = ({
         }
         fd.append(
           `clientDocuments[${index}][name]`,
-          doc?.name || doc?.originalFilename || `Document ${index + 1}`
+          doc?.name || doc?.originalFilename || `Document ${index + 1}`,
         );
       });
 
@@ -590,12 +613,17 @@ const KYCForm = ({
         }
         fd.append(
           `guarantorDocuments[${index}][name]`,
-          doc?.name || doc?.originalFilename || `Document ${index + 1}`
+          doc?.name || doc?.originalFilename || `Document ${index + 1}`,
         );
       });
 
+      const token = localStorage.getItem("token");
+
       const res = await fetch(`${API_BASE}/submit`, {
         method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
         body: fd,
       });
 

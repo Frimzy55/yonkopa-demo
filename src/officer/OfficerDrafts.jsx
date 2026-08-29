@@ -5,12 +5,12 @@ import {
   MdDeleteOutline,
   MdVisibility,
   MdClose,
+  MdSend,
 } from "react-icons/md";
 import {
   getAllDraftsFromIndexedDB,
   deleteDraftFromIndexedDB,
-  
-} from "../utils/draftStorage"; // adjust path as needed
+} from "../utils/draftStorage";
 
 const OfficerDrafts = ({ user, onViewDraft, onDraftDeleted }) => {
   const [drafts, setDrafts] = useState([]);
@@ -19,10 +19,14 @@ const OfficerDrafts = ({ user, onViewDraft, onDraftDeleted }) => {
   const [actionLoading, setActionLoading] = useState(null);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
-  // ─── Modal state ──────────────────────────────────────────────
+  // ─── Modal states ─────────────────────────────────────────────
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [draftToDelete, setDraftToDelete] = useState(null);
 
+  const [showTransferModal, setShowTransferModal] = useState(false);
+  const [draftToTransfer, setDraftToTransfer] = useState(null);
+
+  // ─── Resize handler ──────────────────────────────────────────
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
     window.addEventListener("resize", handleResize);
@@ -31,15 +35,18 @@ const OfficerDrafts = ({ user, onViewDraft, onDraftDeleted }) => {
 
   const isMobile = windowWidth < 768;
 
-  // ─── Fetch drafts from IndexedDB ─────────────────────────────
+  // ─── Fetch drafts from IndexedDB and filter by officer ──────
   const fetchDrafts = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const allDrafts = await getAllDraftsFromIndexedDB();
-      // each draft object: { draftUuid, formData, currentStep, ... }
-      // We'll sort by updatedAt (newest first)
-      const sorted = allDrafts.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+      // ✅ Filter drafts belonging to this officer
+      const officerId = user?.userId || user?.id;
+      const myDrafts = officerId
+        ? allDrafts.filter((draft) => draft.officerId === officerId)
+        : []; // If no user ID, return empty
+      const sorted = myDrafts.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
       setDrafts(sorted);
     } catch (err) {
       console.error("Fetch local drafts error:", err);
@@ -47,28 +54,25 @@ const OfficerDrafts = ({ user, onViewDraft, onDraftDeleted }) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     fetchDrafts();
   }, [fetchDrafts]);
 
-  // ─── Open delete confirmation modal ──────────────────────────
+  // ─── Delete handlers ──────────────────────────────────────────
   const confirmDelete = (draftUuid) => {
     setDraftToDelete(draftUuid);
     setShowDeleteModal(true);
   };
 
-  // ─── Execute delete from IndexedDB ───────────────────────────
   const handleDelete = async () => {
     if (!draftToDelete) return;
     setActionLoading(draftToDelete);
     setShowDeleteModal(false);
     try {
       await deleteDraftFromIndexedDB(draftToDelete);
-      // Remove from UI
       setDrafts((prev) => prev.filter((d) => d.draftUuid !== draftToDelete));
-      // Notify parent if needed
       if (onDraftDeleted) onDraftDeleted();
     } catch (err) {
       console.error("Delete local draft error:", err);
@@ -79,15 +83,38 @@ const OfficerDrafts = ({ user, onViewDraft, onDraftDeleted }) => {
     }
   };
 
-  // ─── View draft ──────────────────────────────────────────────
-  const handleView = async (draft) => {
-    // We can simply pass the draftUuid to the parent.
-    // The parent component (e.g., KYCForm) will load it from IndexedDB.
-    if (onViewDraft) {
-      onViewDraft(draft.draftUuid); // pass the UUID
+  // ─── Transfer handlers ────────────────────────────────────────
+  const confirmTransfer = (draftUuid) => {
+    setDraftToTransfer(draftUuid);
+    setShowTransferModal(true);
+  };
+
+  const handleTransfer = async () => {
+    if (!draftToTransfer) return;
+    setActionLoading(draftToTransfer);
+    setShowTransferModal(false);
+    try {
+      // 🔁 Replace this with your actual transfer API call
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      alert(`Draft ${draftToTransfer} transferred (placeholder)`);
+      await fetchDrafts();
+    } catch (err) {
+      console.error("Transfer error:", err);
+      alert("Transfer failed");
+    } finally {
+      setActionLoading(null);
+      setDraftToTransfer(null);
     }
   };
 
+  // ─── View draft ──────────────────────────────────────────────
+  const handleView = async (draft) => {
+    if (onViewDraft) {
+      onViewDraft(draft.draftUuid);
+    }
+  };
+
+  // ─── Helper functions ────────────────────────────────────────
   const formatDate = (timestamp) => {
     if (!timestamp) return "—";
     try {
@@ -149,7 +176,7 @@ const OfficerDrafts = ({ user, onViewDraft, onDraftDeleted }) => {
     );
   }
 
-  // ─── Render cards (mobile) ─────────────────────────────────────
+  // ─── Render mobile cards ──────────────────────────────────────
   if (isMobile) {
     return (
       <>
@@ -225,45 +252,81 @@ const OfficerDrafts = ({ user, onViewDraft, onDraftDeleted }) => {
                 <span>Updated: {formatDate(draft.updatedAt)}</span>
               </div>
 
-              <div style={{ display: "flex", gap: "12px", marginTop: "12px", borderTop: "1px solid #f1f5f9", paddingTop: "12px" }}>
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "8px",
+                  marginTop: "12px",
+                  borderTop: "1px solid #f1f5f9",
+                  paddingTop: "12px",
+                }}
+              >
                 <button
                   onClick={() => handleView(draft)}
                   style={{
-                    flex: 1,
+                    flex: "1 0 calc(33% - 8px)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    gap: "6px",
-                    padding: "8px 12px",
+                    gap: "4px",
+                    padding: "8px 6px",
                     background: "#e0f2fe",
                     border: "none",
                     borderRadius: "8px",
                     color: "#0369a1",
-                    fontSize: "14px",
+                    fontSize: "13px",
                     fontWeight: "500",
                     cursor: "pointer",
+                    minWidth: "70px",
                   }}
                 >
                   <MdVisibility size={18} /> View
                 </button>
+
+                <button
+                  onClick={() => confirmTransfer(draft.draftUuid)}
+                  disabled={actionLoading === draft.draftUuid}
+                  style={{
+                    flex: "1 0 calc(33% - 8px)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "4px",
+                    padding: "8px 6px",
+                    background: "#dcfce7",
+                    border: "none",
+                    borderRadius: "8px",
+                    color: "#166534",
+                    fontSize: "13px",
+                    fontWeight: "500",
+                    cursor: actionLoading === draft.draftUuid ? "not-allowed" : "pointer",
+                    opacity: actionLoading === draft.draftUuid ? 0.6 : 1,
+                    minWidth: "70px",
+                  }}
+                >
+                  <MdSend size={18} /> Transfer
+                </button>
+
                 <button
                   onClick={() => confirmDelete(draft.draftUuid)}
                   disabled={actionLoading === draft.draftUuid}
                   style={{
-                    flex: 1,
+                    flex: "1 0 calc(33% - 8px)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    gap: "6px",
-                    padding: "8px 12px",
+                    gap: "4px",
+                    padding: "8px 6px",
                     background: "#fee2e2",
                     border: "none",
                     borderRadius: "8px",
                     color: "#b91c1c",
-                    fontSize: "14px",
+                    fontSize: "13px",
                     fontWeight: "500",
                     cursor: actionLoading === draft.draftUuid ? "not-allowed" : "pointer",
                     opacity: actionLoading === draft.draftUuid ? 0.6 : 1,
+                    minWidth: "70px",
                   }}
                 >
                   <MdDeleteOutline size={18} /> Delete
@@ -376,11 +439,111 @@ const OfficerDrafts = ({ user, onViewDraft, onDraftDeleted }) => {
             </div>
           </div>
         )}
+
+        {/* ─── Transfer Confirmation Modal ──────────────────────── */}
+        {showTransferModal && (
+          <div
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              width: "100vw",
+              height: "100vh",
+              background: "rgba(0,0,0,0.5)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 9999,
+              padding: "20px",
+            }}
+            onClick={() => setShowTransferModal(false)}
+          >
+            <div
+              style={{
+                background: "#fff",
+                borderRadius: "16px",
+                padding: "32px 24px 24px",
+                maxWidth: "400px",
+                width: "100%",
+                textAlign: "center",
+                boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+                position: "relative",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setShowTransferModal(false)}
+                style={{
+                  position: "absolute",
+                  top: "12px",
+                  right: "12px",
+                  background: "transparent",
+                  border: "none",
+                  fontSize: "24px",
+                  color: "#94a3b8",
+                  cursor: "pointer",
+                }}
+              >
+                <MdClose />
+              </button>
+              <div
+                style={{
+                  width: "64px",
+                  height: "64px",
+                  borderRadius: "50%",
+                  background: "#dcfce7",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  margin: "0 auto 16px",
+                }}
+              >
+                <MdSend size={32} color="#166534" />
+              </div>
+              <h3 style={{ margin: "0 0 8px", fontSize: "20px", fontWeight: "700", color: "#1e293b" }}>
+                Transfer Draft?
+              </h3>
+              <p style={{ margin: "0 0 24px", fontSize: "14px", color: "#64748b", lineHeight: "1.5" }}>
+                Are you sure you want to transfer this draft? This action will move it to another officer.
+              </p>
+              <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
+                <button
+                  onClick={() => setShowTransferModal(false)}
+                  style={{
+                    padding: "10px 24px",
+                    background: "#f1f5f9",
+                    border: "none",
+                    borderRadius: "8px",
+                    color: "#475569",
+                    fontWeight: "500",
+                    cursor: "pointer",
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleTransfer}
+                  style={{
+                    padding: "10px 24px",
+                    background: "#16a34a",
+                    border: "none",
+                    borderRadius: "8px",
+                    color: "#fff",
+                    fontWeight: "500",
+                    cursor: "pointer",
+                  }}
+                >
+                  Transfer
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </>
     );
   }
 
-  // ─── Render table (desktop) ──────────────────────────────────
+  // ─── Render desktop table ──────────────────────────────────────
   return (
     <>
       <div style={{ padding: "24px", maxWidth: "1200px", margin: "0 auto" }}>
@@ -483,6 +646,27 @@ const OfficerDrafts = ({ user, onViewDraft, onDraftDeleted }) => {
                       >
                         <MdVisibility />
                       </button>
+
+                      <button
+                        onClick={() => confirmTransfer(draft.draftUuid)}
+                        disabled={actionLoading === draft.draftUuid}
+                        style={{
+                          background: "transparent",
+                          border: "none",
+                          color: "#16a34a",
+                          cursor: actionLoading === draft.draftUuid ? "not-allowed" : "pointer",
+                          padding: "4px",
+                          borderRadius: "4px",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          fontSize: "18px",
+                          opacity: actionLoading === draft.draftUuid ? 0.5 : 1,
+                        }}
+                        title="Transfer draft"
+                      >
+                        <MdSend />
+                      </button>
+
                       <button
                         onClick={() => confirmDelete(draft.draftUuid)}
                         disabled={actionLoading === draft.draftUuid}
@@ -514,7 +698,7 @@ const OfficerDrafts = ({ user, onViewDraft, onDraftDeleted }) => {
         </div>
       </div>
 
-      {/* ─── Delete Confirmation Modal ────────────────────────── */}
+      {/* ─── Delete Confirmation Modal (desktop) ────────────────── */}
       {showDeleteModal && (
         <div
           style={{
@@ -608,6 +792,106 @@ const OfficerDrafts = ({ user, onViewDraft, onDraftDeleted }) => {
                 }}
               >
                 Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Transfer Confirmation Modal (desktop) ──────────────── */}
+      {showTransferModal && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            background: "rgba(0,0,0,0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+            padding: "20px",
+          }}
+          onClick={() => setShowTransferModal(false)}
+        >
+          <div
+            style={{
+              background: "#fff",
+              borderRadius: "16px",
+              padding: "32px 24px 24px",
+              maxWidth: "400px",
+              width: "100%",
+              textAlign: "center",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+              position: "relative",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowTransferModal(false)}
+              style={{
+                position: "absolute",
+                top: "12px",
+                right: "12px",
+                background: "transparent",
+                border: "none",
+                fontSize: "24px",
+                color: "#94a3b8",
+                cursor: "pointer",
+              }}
+            >
+              <MdClose />
+            </button>
+            <div
+              style={{
+                width: "64px",
+                height: "64px",
+                borderRadius: "50%",
+                background: "#dcfce7",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                margin: "0 auto 16px",
+              }}
+            >
+              <MdSend size={32} color="#166534" />
+            </div>
+            <h3 style={{ margin: "0 0 8px", fontSize: "20px", fontWeight: "700", color: "#1e293b" }}>
+              Transfer Draft?
+            </h3>
+            <p style={{ margin: "0 0 24px", fontSize: "14px", color: "#64748b", lineHeight: "1.5" }}>
+              Are you sure you want to transfer this draft? This action will move it to another officer.
+            </p>
+            <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
+              <button
+                onClick={() => setShowTransferModal(false)}
+                style={{
+                  padding: "10px 24px",
+                  background: "#f1f5f9",
+                  border: "none",
+                  borderRadius: "8px",
+                  color: "#475569",
+                  fontWeight: "500",
+                  cursor: "pointer",
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleTransfer}
+                style={{
+                  padding: "10px 24px",
+                  background: "#16a34a",
+                  border: "none",
+                  borderRadius: "8px",
+                  color: "#fff",
+                  fontWeight: "500",
+                  cursor: "pointer",
+                }}
+              >
+                Transfer
               </button>
             </div>
           </div>

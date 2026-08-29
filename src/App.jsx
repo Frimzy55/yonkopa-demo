@@ -28,6 +28,8 @@ import AutoLogout from "./components/AutoLogout";
 
 import MaintenancePage from "./components/MaintenancePage";
 
+//import { syncPendingDrafts } from "./utils/offlineSync";
+
 const MAINTENANCE_MODE = false;
 //  process.env.REACT_APP_MAINTENANCE_MODE === "true";
 
@@ -73,6 +75,13 @@ function App() {
       document.head.removeChild(style);
     };
   }, []);
+
+
+
+
+
+
+
 
   if (MAINTENANCE_MODE) {
     return <MaintenancePage />;
