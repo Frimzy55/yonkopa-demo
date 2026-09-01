@@ -95,11 +95,11 @@ function App() {
       <div className="App">
         <Routes>
            
-          <Route path="/" element={<Navigate to="/demo" replace />} />   
+          <Route path="/" element={<Navigate to="/access" replace />} />   
 
           {/* PUBLIC ROUTES */}
           <Route path="/apply" element={<CustomerLanding />} />
-          <Route path="/demo" element={<LoginPage />} />
+          <Route path="/access" element={<LoginPage />} />
           <Route path="/signup" element={<DefaultSuper />} />
           <Route path="/officer-access" element={<OfficerAccess />} />
 
@@ -183,7 +183,7 @@ function App() {
           />
 
            
-          <Route path="*" element={<Navigate to="/demo" replace />} />  
+          <Route path="*" element={<Navigate to="/access" replace />} />  
         </Routes>
       </div>
     </Router>
