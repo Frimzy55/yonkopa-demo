@@ -200,58 +200,65 @@ const Officerdasboard = () => {
         return <OfficerSentApplications user={user} />;
 
       case "draft":
-        return (
-          <OfficerDrafts
-            user={user}
-            onViewDraft={handleViewDraft}
-            onDraftDeleted={handleDraftDeleted}
-          />
-        );
+  return (
+    <OfficerDrafts
+      user={user}
+      onViewDraft={handleViewDraft}
+      onDraftDeleted={handleDraftDeleted}
+    />
+  );
 
-      case "connect":
-        return <OfficerConnect user={user} />;
+case "connect":
+  return (
+    <OfficerConnect
+      user={user}
+      onViewDraft={handleViewDraft}
+      onDraftDeleted={handleDraftDeleted}
+    />
+  );
 
-      case "kyc":
-        if (!selectedDraftUuid) {
-          return (
-            <div
-              style={{
-                padding: "40px",
-                textAlign: "center",
-                color: "#64748b",
-              }}
-            >
-              <h2>No Draft Selected</h2>
-              <p>Please return to Drafts and select a draft to continue.</p>
-              <button
-                type="button"
-                onClick={() => setActivePage("draft")}
-                style={{
-                  marginTop: "16px",
-                  padding: "10px 20px",
-                  border: "none",
-                  borderRadius: "8px",
-                  background: "#3b82f6",
-                  color: "#fff",
-                  cursor: "pointer",
-                  fontWeight: "500",
-                }}
-              >
-                Back to Drafts
-              </button>
-            </div>
-          );
-        }
+case "kyc":
+  if (!selectedDraftUuid) {
+    return (
+      <div
+        style={{
+          padding: "40px",
+          textAlign: "center",
+          color: "#64748b",
+        }}
+      >
+        <h2>No Draft Selected</h2>
+        <p>
+          Please return to Drafts and select a draft to continue.
+        </p>
+        <button
+          type="button"
+          onClick={() => setActivePage("draft")}
+          style={{
+            marginTop: "16px",
+            padding: "10px 20px",
+            border: "none",
+            borderRadius: "8px",
+            background: "#3b82f6",
+            color: "#fff",
+            cursor: "pointer",
+            fontWeight: "500",
+          }}
+        >
+          Back to Drafts
+        </button>
+      </div>
+    );
+  }
 
-        return (
-          <KYCForm
-            userId={user?.userId || user?.id}
-            draftUuid={selectedDraftUuid}
-            onCancel={handleBackFromKyc}
-            officerFullName={fullName}
-          />
-        );
-
+  return (
+    <KYCForm
+      userId={user?.userId || user?.id}
+      draftUuid={selectedDraftUuid}
+      onCancel={handleBackFromKyc}
+      officerFullName={fullName}
+    />
+  );
       default:
         return <OfficerDashboardContent user={user} isMobile={isMobile} />;
     }

@@ -192,8 +192,8 @@ export const TopNavbar = memo(({
             </div>
 
             {/* Notification Bell */}
-            <button className="btn btn-light position-relative rounded-circle p-2">
-              <i className="bi bi-bell fs-5"></i>
+            <button className="btn btn-light position-relative rounded-circle p-1">
+              <i className="bi bi-bell rounded-circle p-1 fs-5"></i>
               <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">3</span>
             </button>
 
