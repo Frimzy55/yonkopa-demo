@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Dropdown, ButtonGroup } from "react-bootstrap";
+import { Dropdown, ButtonGroup, Modal, Button } from "react-bootstrap";
 import KycFullDetailsModal from "./KycFullDetailsModal";
 
 const OfficerWebLoan = () => {
@@ -8,6 +8,15 @@ const OfficerWebLoan = () => {
   const [error, setError] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedLoan, setSelectedLoan] = useState(null);
+
+  // ----- State for confirmation modal -----
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [loanToReject, setLoanToReject] = useState(null);
+
+  // ----- State for notification modal -----
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const [notificationMessage, setNotificationMessage] = useState("");
+  const [notificationVariant, setNotificationVariant] = useState("success"); // "success" or "danger"
 
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
@@ -20,39 +29,41 @@ const OfficerWebLoan = () => {
     });
   };
 
-  useEffect(() => {
+  // ----- Reusable fetch function -----
+  const fetchLoans = async () => {
     const apiUrl = process.env.REACT_APP_API_URL;
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`${apiUrl}/api/officer-web-loans`);
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      const data = await res.json();
+      const mapped = data.map((row) => ({
+        id: row.client_id,
+        fullName:
+          row.full_name ||
+          (row.first_name && row.surname
+            ? `${row.first_name} ${row.surname}`
+            : "N/A"),
+        phone: row.phone || "N/A",
+        amount: row.loan_amount
+          ? `GHS ${Number(row.loan_amount).toLocaleString()}`
+          : "N/A",
+        status: row.security_verification || "Pending",
+        date: formatDate(row.applicant_created_at || row.applicant_created_at),
+        raw: row,
+      }));
+      setLoans(mapped);
+    } catch (err) {
+      console.error("Fetch error:", err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetch(`${apiUrl}/api/officer-web-loans`)
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        return res.json();
-      })
-      .then((data) => {
-        const mapped = data.map((row) => ({
-          id: row.client_id,
-          fullName:
-            row.full_name ||
-            (row.first_name && row.surname
-              ? `${row.first_name} ${row.surname}`
-              : "N/A"),
-          phone: row.phone || "N/A",
-          amount: row.loan_amount
-            ? `GHS ${Number(row.loan_amount).toLocaleString()}`
-            : "N/A",
-          status: row.security_verification || "Pending",
-          date: formatDate(row.applicant_created_at || row.applicant_created_at),
-          raw: row,
-        }));
-
-        setLoans(mapped);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error("Fetch error:", err);
-        setError(err.message);
-        setLoading(false);
-      });
+  useEffect(() => {
+    fetchLoans();
   }, []);
 
   const getStatusBadge = (status) => {
@@ -63,7 +74,6 @@ const OfficerWebLoan = () => {
       rejected: "bg-danger text-white",
       verified: "bg-success text-white",
     };
-
     return styles[status?.toLowerCase()] || "bg-secondary text-white";
   };
 
@@ -74,12 +84,61 @@ const OfficerWebLoan = () => {
 
   const handleApprove = (loan) => {
     console.log("Approve loan:", loan);
+    // TODO: implement approve API call
   };
 
-  const handleReject = (loan) => {
-    console.log("Reject loan:", loan);
+  // ----- Open confirmation modal -----
+  const openConfirmModal = (loan) => {
+    setLoanToReject(loan);
+    setShowConfirmModal(true);
   };
 
+  // ----- Perform the actual reject (called from confirm modal) -----
+  const rejectLoan = async () => {
+    if (!loanToReject) return;
+    const apiUrl = process.env.REACT_APP_API_URL;
+    const clientId = loanToReject.id;
+
+    try {
+      const response = await fetch(`${apiUrl}/api/officer-web-loans/${clientId}/reject`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to reject loan");
+      }
+
+      // Remove the rejected loan from the list (optimistic update)
+      setLoans((prev) => prev.filter((l) => l.id !== clientId));
+
+      // Close confirmation modal
+      setShowConfirmModal(false);
+      setLoanToReject(null);
+
+      // Show success modal
+      setNotificationMessage("Loan application rejected successfully.");
+      setNotificationVariant("success");
+      setShowNotificationModal(true);
+    } catch (err) {
+      console.error("Reject error:", err);
+      // Close confirmation modal
+      setShowConfirmModal(false);
+      setLoanToReject(null);
+      // Show error modal
+      setNotificationMessage(`Error: ${err.message}`);
+      setNotificationVariant("danger");
+      setShowNotificationModal(true);
+    }
+  };
+
+  // ----- Cancel rejection -----
+  const cancelReject = () => {
+    setShowConfirmModal(false);
+    setLoanToReject(null);
+  };
+
+  // ----- Loading & Error States -----
   if (loading) {
     return (
       <div className="container-fluid p-4 text-center">
@@ -101,6 +160,7 @@ const OfficerWebLoan = () => {
     );
   }
 
+  // ----- Main Render -----
   return (
     <div
       className="container-fluid p-4"
@@ -165,25 +225,20 @@ const OfficerWebLoan = () => {
                           WL-{String(loan.id).padStart(5, "0")}
                         </strong>
                       </td>
-
                       <td className="py-3 fw-semibold">
                         {loan.fullName || "N/A"}
                       </td>
-
                       <td className="py-3 text-muted">{loan.phone}</td>
-
                       <td className="py-3 fw-semibold">{loan.amount}</td>
-
                       <td className="py-3">
                         <span
                           className={`badge ${getStatusBadge(
-                            loan.status,
+                            loan.status
                           )} px-3 py-2 rounded-pill`}
                         >
                           {loan.status}
                         </span>
                       </td>
-
                       <td className="py-3 text-muted">
                         <i className="bi bi-calendar3 me-2"></i>
                         {loan.date}
@@ -242,7 +297,7 @@ const OfficerWebLoan = () => {
                             </Dropdown.Item>
 
                             <Dropdown.Item
-                              onClick={() => handleReject(loan)}
+                              onClick={() => openConfirmModal(loan)}
                               className="rounded-2 py-2"
                             >
                               <i className="bi bi-x-circle me-2 text-danger"></i>
@@ -268,6 +323,55 @@ const OfficerWebLoan = () => {
         }}
         kycData={selectedLoan}
       />
+
+      {/* ---- Confirmation Modal ---- */}
+      <Modal
+        show={showConfirmModal}
+        onHide={cancelReject}
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Confirm Rejection</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p>
+            Are you sure you want to reject the loan application for{" "}
+            <strong>{loanToReject?.fullName}</strong>?
+          </p>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={cancelReject}>
+            Cancel
+          </Button>
+          <Button variant="danger" onClick={rejectLoan}>
+            Yes, Reject
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* ---- Notification Modal ---- */}
+      <Modal
+        show={showNotificationModal}
+        onHide={() => setShowNotificationModal(false)}
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>
+            {notificationVariant === "success" ? "Success" : "Error"}
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p className="mb-0">{notificationMessage}</p>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant={notificationVariant === "success" ? "success" : "danger"}
+            onClick={() => setShowNotificationModal(false)}
+          >
+            OK
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 };

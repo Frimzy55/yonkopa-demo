@@ -1,4 +1,4 @@
-// Officerdasboard.jsx (fully updated with draft count filter and fetchWithAuth)
+// Officerdasboard.jsx (fully updated with pending resubmission component)
 import React, { useState, useEffect, useCallback } from "react";
 import {
   MdDashboard,
@@ -22,8 +22,9 @@ import KYCForm from "./KYCForm";
 import { getAllDraftsFromIndexedDB } from "../utils/draftStorage";
 import OfficerSentApplications from "./OfficerSentApplications";
 import OfficerConnect from "./OfficerConnect";
+import OfficerPendingResubmission from "./OfficerPendingResubmission"; // 👈 NEW
 
-// 👇 Import the auth helper
+// Auth helper
 import { fetchWithAuth } from "../utils/api";
 
 const API_BASE = process.env.REACT_APP_API_URL
@@ -64,7 +65,6 @@ const Officerdasboard = () => {
     try {
       const allDrafts = await getAllDraftsFromIndexedDB();
       const officerId = user?.userId || user?.id;
-      // Filter drafts belonging to this officer
       const myDrafts = officerId
         ? allDrafts.filter((draft) => draft.officerId === officerId)
         : [];
@@ -183,82 +183,69 @@ const Officerdasboard = () => {
         return <OfficerApplications user={user} />;
 
       case "pendingResubmission":
-        return (
-          <div
-            style={{
-              padding: "40px 16px",
-              textAlign: "center",
-              color: "#64748b",
-            }}
-          >
-            <h2>Pending Resubmission</h2>
-            <p>Clients awaiting resubmission will appear here.</p>
-          </div>
-        );
+        return <OfficerPendingResubmission user={user} />; // 👈 REPLACED
 
       case "sentApplications":
         return <OfficerSentApplications user={user} />;
 
       case "draft":
-  return (
-    <OfficerDrafts
-      user={user}
-      onViewDraft={handleViewDraft}
-      onDraftDeleted={handleDraftDeleted}
-    />
-  );
+        return (
+          <OfficerDrafts
+            user={user}
+            onViewDraft={handleViewDraft}
+            onDraftDeleted={handleDraftDeleted}
+          />
+        );
 
-case "connect":
-  return (
-    <OfficerConnect
-      user={user}
-      onViewDraft={handleViewDraft}
-      onDraftDeleted={handleDraftDeleted}
-    />
-  );
+      case "connect":
+        return (
+          <OfficerConnect
+            user={user}
+            onViewDraft={handleViewDraft}
+            onDraftDeleted={handleDraftDeleted}
+          />
+        );
 
-case "kyc":
-  if (!selectedDraftUuid) {
-    return (
-      <div
-        style={{
-          padding: "40px",
-          textAlign: "center",
-          color: "#64748b",
-        }}
-      >
-        <h2>No Draft Selected</h2>
-        <p>
-          Please return to Drafts and select a draft to continue.
-        </p>
-        <button
-          type="button"
-          onClick={() => setActivePage("draft")}
-          style={{
-            marginTop: "16px",
-            padding: "10px 20px",
-            border: "none",
-            borderRadius: "8px",
-            background: "#3b82f6",
-            color: "#fff",
-            cursor: "pointer",
-            fontWeight: "500",
-          }}
-        >
-          Back to Drafts
-        </button>
-      </div>
-    );
-  }
+      case "kyc":
+        if (!selectedDraftUuid) {
+          return (
+            <div
+              style={{
+                padding: "40px",
+                textAlign: "center",
+                color: "#64748b",
+              }}
+            >
+              <h2>No Draft Selected</h2>
+              <p>Please return to Drafts and select a draft to continue.</p>
+              <button
+                type="button"
+                onClick={() => setActivePage("draft")}
+                style={{
+                  marginTop: "16px",
+                  padding: "10px 20px",
+                  border: "none",
+                  borderRadius: "8px",
+                  background: "#3b82f6",
+                  color: "#fff",
+                  cursor: "pointer",
+                  fontWeight: "500",
+                }}
+              >
+                Back to Drafts
+              </button>
+            </div>
+          );
+        }
+        return (
+          <KYCForm
+            userId={user?.userId || user?.id}
+            draftUuid={selectedDraftUuid}
+            onCancel={handleBackFromKyc}
+            officerFullName={fullName}
+          />
+        );
 
-  return (
-    <KYCForm
-      userId={user?.userId || user?.id}
-      draftUuid={selectedDraftUuid}
-      onCancel={handleBackFromKyc}
-      officerFullName={fullName}
-    />
-  );
       default:
         return <OfficerDashboardContent user={user} isMobile={isMobile} />;
     }

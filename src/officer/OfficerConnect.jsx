@@ -12,6 +12,7 @@ import {
   MdDelete,
   MdClose,
   MdWarning,
+  MdErrorOutline,
 } from "react-icons/md";
 import { saveDraftToIndexedDB } from "../utils/draftStorage";
 
@@ -26,6 +27,11 @@ const OfficerConnect = ({ user, onViewDraft, onDraftDeleted }) => {
   const [draftToDelete, setDraftToDelete] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(null);
+
+  // ---- Notification Modal (replaces alert) ----
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const [notificationMessage, setNotificationMessage] = useState("");
+  const [notificationType, setNotificationType] = useState("success"); // "success" or "error"
 
   // ============================================================
   // GET FORM DATA
@@ -282,7 +288,6 @@ const OfficerConnect = ({ user, onViewDraft, onDraftDeleted }) => {
     if (!draft) return;
     const draftId = draft.id;
 
-    // Prevent double clicks
     if (actionLoading === draftId) return;
 
     try {
@@ -310,7 +315,6 @@ const OfficerConnect = ({ user, onViewDraft, onDraftDeleted }) => {
           throw new Error(data?.message || "Unable to open received draft.");
         }
 
-        // Merge server response into the draft
         const serverDraft = data?.draft || {};
         updatedDraft = {
           ...draft,
@@ -318,7 +322,6 @@ const OfficerConnect = ({ user, onViewDraft, onDraftDeleted }) => {
           status: serverDraft.status || (draft.status === "completed" ? "completed" : "opened"),
         };
 
-        // Update local drafts list with the enriched draft (including UUID and status)
         setDrafts((prev) =>
           prev.map((item) =>
             Number(item.id) === Number(draftId) ? updatedDraft : item
@@ -326,7 +329,7 @@ const OfficerConnect = ({ user, onViewDraft, onDraftDeleted }) => {
         );
       }
 
-      // 2. Extract draft UUID – prioritise server response, fallback to existing
+      // 2. Extract draft UUID
       const draftUuid =
         updatedDraft.draftUuid ||
         updatedDraft.draft_uuid ||
@@ -355,13 +358,6 @@ const OfficerConnect = ({ user, onViewDraft, onDraftDeleted }) => {
       const currentStep = Number(updatedDraft.currentStep || updatedDraft.current_step || 1);
 
       // 5. Save copy to receiving officer's IndexedDB
-      console.log("Saving received draft copy to IndexedDB:", {
-        draftUuid,
-        officerId: Number(currentOfficerId),
-        currentStep,
-        formData,
-      });
-
       await saveDraftToIndexedDB(
         draftUuid,
         {
@@ -377,8 +373,6 @@ const OfficerConnect = ({ user, onViewDraft, onDraftDeleted }) => {
         }
       );
 
-      console.log("Received draft copy saved successfully.");
-
       // 6. Open KYC application
       if (typeof onViewDraft === "function") {
         onViewDraft(draftUuid);
@@ -388,7 +382,10 @@ const OfficerConnect = ({ user, onViewDraft, onDraftDeleted }) => {
     } catch (err) {
       console.error("Open received draft error:", err);
       setError(err.message || "Unable to open this received draft.");
-      alert(`Could not open draft: ${err.message || "Unknown error"}`);
+      // Show notification modal instead of alert
+      setNotificationMessage(err.message || "Unable to open this received draft.");
+      setNotificationType("error");
+      setShowNotificationModal(true);
     } finally {
       setActionLoading(null);
     }
@@ -438,10 +435,16 @@ const OfficerConnect = ({ user, onViewDraft, onDraftDeleted }) => {
         onDraftDeleted(draftToDelete);
       }
 
-      alert("Received draft deleted successfully.");
+      // Show success notification
+      setNotificationMessage("Received draft deleted successfully.");
+      setNotificationType("success");
+      setShowNotificationModal(true);
     } catch (err) {
       console.error("Delete received draft error:", err);
       setError(err.message || "Could not delete received draft.");
+      setNotificationMessage(err.message || "Could not delete received draft.");
+      setNotificationType("error");
+      setShowNotificationModal(true);
     } finally {
       setActionLoading(null);
       setDraftToDelete(null);
@@ -822,11 +825,8 @@ const OfficerConnect = ({ user, onViewDraft, onDraftDeleted }) => {
                   </div>
                 </div>
 
-                {/* ==================================================
-                    ACTIONS
-                ================================================== */}
+                {/* ACTIONS */}
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 45px", gap: "8px" }}>
-                  {/* CONTINUE – disabled when opened/completed as well */}
                   <button
                     type="button"
                     onClick={() => handleView(draft)}
@@ -866,7 +866,6 @@ const OfficerConnect = ({ user, onViewDraft, onDraftDeleted }) => {
                       : "Continue Application"}
                   </button>
 
-                  {/* DELETE */}
                   <button
                     type="button"
                     onClick={() => confirmDelete(draft)}
@@ -1003,6 +1002,93 @@ const OfficerConnect = ({ user, onViewDraft, onDraftDeleted }) => {
                 {actionLoading === draftToDelete.id ? "Deleting..." : "Delete Draft"}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================
+          NOTIFICATION MODAL (replaces alert)
+      ====================================================== */}
+      {showNotificationModal && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(15, 23, 42, 0.55)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "20px",
+            zIndex: 9999,
+          }}
+          onClick={() => setShowNotificationModal(false)}
+        >
+          <div
+            onClick={(event) => event.stopPropagation()}
+            style={{
+              width: "100%",
+              maxWidth: "430px",
+              background: "#ffffff",
+              borderRadius: "14px",
+              padding: "24px",
+              boxShadow: "0 20px 50px rgba(0,0,0,0.2)",
+            }}
+          >
+            <div
+              style={{
+                width: "50px",
+                height: "50px",
+                borderRadius: "50%",
+                background: notificationType === "success" ? "#f0fdf4" : "#fef2f2",
+                color: notificationType === "success" ? "#15803d" : "#dc2626",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                marginBottom: "14px",
+              }}
+            >
+              {notificationType === "success" ? (
+                <MdCheckCircle size={27} />
+              ) : (
+                <MdErrorOutline size={27} />
+              )}
+            </div>
+            <h3
+              style={{
+                margin: "0 0 8px",
+                color: "#1e293b",
+                fontSize: "19px",
+              }}
+            >
+              {notificationType === "success" ? "Success" : "Error"}
+            </h3>
+            <p
+              style={{
+                margin: "0 0 22px",
+                color: "#64748b",
+                fontSize: "14px",
+                lineHeight: "1.6",
+              }}
+            >
+              {notificationMessage}
+            </p>
+
+            <button
+              type="button"
+              onClick={() => setShowNotificationModal(false)}
+              style={{
+                width: "100%",
+                padding: "11px",
+                border: "none",
+                borderRadius: "8px",
+                background: notificationType === "success" ? "#2563eb" : "#dc2626",
+                color: "#ffffff",
+                fontWeight: "600",
+                cursor: "pointer",
+              }}
+            >
+              OK
+            </button>
           </div>
         </div>
       )}
